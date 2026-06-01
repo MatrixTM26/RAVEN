@@ -462,10 +462,10 @@ public class GUI extends Application {
         T.start();
         Platform.runLater(() -> {
             ServerStatusLabel.setText("● ONLINE");
-            ServerStatusLabel.setTextFill(Color.web(GreenColor));
+            ServerStatusLabel.setTextFill(javafx.scene.paint.Color.web(GreenColor));
             ServerInfoLabel.setText(Host + ":" + Port);
             StatusLabel.setText("● Online");
-            StatusLabel.setTextFill(Color.web(GreenColor));
+            StatusLabel.setTextFill(javafx.scene.paint.Color.web(GreenColor));
             StartBtn.setDisable(true);
             StopBtn.setDisable(false);
         });
@@ -479,10 +479,10 @@ public class GUI extends Application {
         ServerStartTime = null;
         Platform.runLater(() -> {
             ServerStatusLabel.setText("● OFFLINE");
-            ServerStatusLabel.setTextFill(Color.web(RedColor));
+            ServerStatusLabel.setTextFill(javafx.scene.paint.Color.web(RedColor));
             ServerInfoLabel.setText("Not running");
             StatusLabel.setText("● Offline");
-            StatusLabel.setTextFill(Color.web(RedColor));
+            StatusLabel.setTextFill(javafx.scene.paint.Color.web(RedColor));
             StartBtn.setDisable(false);
             StopBtn.setDisable(true);
             SessionRows.clear();
@@ -650,7 +650,7 @@ public class GUI extends Application {
         Timer.start();
     }
 
-    private VBox BuildStatCard(String Icon, String Title, String Value, String Color) {
+    private VBox BuildStatCard(String Icon, String Title, String Value, String Hex) {
         VBox Card = new VBox(4);
         Card.setPadding(new Insets(12));
         Card.setStyle("-fx-background-color: " + CardColor + "; -fx-background-radius: 8;");
@@ -659,11 +659,11 @@ public class GUI extends Application {
         Row.setAlignment(Pos.CENTER_LEFT);
         Row.getChildren()
             .addAll(
-                StyledLabel(Icon, 18, Color, false),
+                StyledLabel(Icon, 18, Hex, false),
                 new VBox(2) {
                     {
                         getChildren()
-                            .addAll(StyledLabel(Title, 8, MutedColor, false), StyledLabel(Value, 14, Color, true));
+                            .addAll(StyledLabel(Title, 8, MutedColor, false), StyledLabel(Value, 14, Hex, true));
                     }
                 }
             );
@@ -682,21 +682,21 @@ public class GUI extends Application {
         return Card;
     }
 
-    private Label StyledLabel(String Text, int Size, String Color, boolean Bold) {
+    private Label StyledLabel(String Text, int Size, String Hex, boolean Bold) {
         Label L = new Label(Text);
         L.setFont(Font.font("Segoe UI", Bold ? FontWeight.BOLD : FontWeight.NORMAL, Size));
-        L.setTextFill(Color.web(Color));
+        L.setTextFill(javafx.scene.paint.Color.web(Hex));
         return L;
     }
 
-    private Button StyledButton(String Text, String Bg, boolean Outline) {
+    private Button StyledButton(String Text, String Hex, boolean Outline) {
         Button B = new Button(Text);
         B.setStyle(
             "-fx-background-color: " +
-            Bg +
+            Hex +
             ";" +
             "-fx-text-fill: " +
-            (Outline ? Bg : "#ffffff") +
+            (Outline ? Hex : "#ffffff") +
             ";" +
             "-fx-font-family: 'Segoe UI';" +
             "-fx-font-size: 9px;" +
