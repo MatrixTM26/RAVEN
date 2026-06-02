@@ -46,10 +46,24 @@ TOMCAT C2 is a modular, enterprise-grade Command & Control framework written in 
 
 ### 1. Clone the Repository
 
+- MAIN
+    > For normal usage, clone branch main
+
 ```bash
-git clone https://github.com/MatrixTM26/tomcat-c2.git
-cd tomcat-c2
+git clone --branch main https://github.com/MatrixTM26/TOMCAT-C2-Framework
+cd TOMCAT-C2-Framework
 ```
+
+- DEV
+    > For contribution commit, pull request and development, push to branch dev
+
+```bash
+git clone --branch dev https://github.com/MatrixTM26/TOMCAT-C2-Framework
+cd TOMCAT-C2-Framework
+```
+
+- MASTER
+    > Only for owner/admin commit, pull request and development
 
 ### 2. Build the Project
 
