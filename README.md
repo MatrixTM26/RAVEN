@@ -29,37 +29,44 @@ git clone https://github.com/MatrixTM26/TOMCAT-C2-Framework.git
 cd TOMCAT-C2-Framework
 ```
 
-- Docker
+- Build & Compile
+
+**General Build**
 
 ```bash
-docker build -t tmc2 .
-docker run --rm tmc2
+mvn clean package -q -X
 ```
 
-- Shell
+**Specific Build**
+
+Linux & Termux
 
 ```bash
-chmod +x install.sh
-sudo ./install.sh
+mvn clean package -Djavafx.platform=linux -q -X
 ```
 
-- Windows Bat
-
-```bat
-.\install.bat
-```
-
-- Windows Powershell
-
-```pwsh
-powershell -ExecutionPolicy Bypass -File .\install.ps1
-```
-
-- Termux Android
+Windows
 
 ```bash
-chmod +x install.sh
-bash install.sh
+mvn clean package -Djavafx.platform=windows -q -X
+```
+
+MacOS
+
+```bash
+mvn clean package -Djavafx.platform=macos -q -X
+```
+
+BSD
+
+```bash
+mvn clean package -Djavafx.platform=openbsd -q -X
+```
+
+- Run
+
+```bash
+java -jar target/tomcat-c2-2.0.0.jar
 ```
 
 ---
@@ -75,7 +82,6 @@ bash install.sh
 ## <img src="https://cdn.simpleicons.org/github/ff0000" width="18"> Credit
 
 - [@MatrixTM26](https://github.com/MatrixTM26)
-- [@SpectreX26999](https://github.com/SpectreX26999)
 
 ## <img src="https://cdn.simpleicons.org/githubsponsors/ff0000" width="18"> Support Me
 
