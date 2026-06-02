@@ -1,6 +1,14 @@
 package com.tomcat.core.crypto;
 
 import com.tomcat.core.output.Logger;
+import java.io.*;
+import java.math.BigInteger;
+import java.nio.file.*;
+import java.security.*;
+import java.security.cert.X509Certificate;
+import java.time.*;
+import java.util.*;
+import javax.net.ssl.*;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -10,19 +18,11 @@ import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-import javax.net.ssl.*;
-import java.io.*;
-import java.math.BigInteger;
-import java.nio.file.*;
-import java.security.*;
-import java.security.cert.X509Certificate;
-import java.time.*;
-import java.util.*;
-
 public class CertificateManager {
-    private static final String KeystoreType     = "PKCS12";
-    private static final String SignAlgorithm    = "SHA256WithRSAEncryption";
-    private static final int    KeySize          = 2048;
+
+    private static final String KeystoreType = "PKCS12";
+    private static final String SignAlgorithm = "SHA256WithRSAEncryption";
+    private static final int KeySize = 2048;
 
     private final String CertsDir;
     private final String ServerKeystorePath;
@@ -30,17 +30,17 @@ public class CertificateManager {
     private final String KeystorePassword;
     private final Map<String, Map<String, String>> AgentMetadata = new HashMap<>();
 
-    private KeyStore       ServerKeystore;
-    private KeyStore       Truststore;
-    private PrivateKey     CaPrivateKey;
+    private KeyStore ServerKeystore;
+    private KeyStore Truststore;
+    private PrivateKey CaPrivateKey;
     private X509Certificate CaCertificate;
-    private X500Name       CaX500Name;
+    private X500Name CaX500Name;
 
     public CertificateManager(String CertsDir, String KeystorePassword) {
-        this.CertsDir           = CertsDir;
-        this.KeystorePassword   = KeystorePassword;
+        this.CertsDir = CertsDir;
+        this.KeystorePassword = KeystorePassword;
         this.ServerKeystorePath = CertsDir + "/server.p12";
-        this.TruststorePath     = CertsDir + "/truststore.p12";
+        this.TruststorePath = CertsDir + "/truststore.p12";
         CreateDirectories();
     }
 
@@ -68,40 +68,49 @@ public class CertificateManager {
             try (InputStream In = new FileInputStream(CaPath)) {
                 CaKs.load(In, KeystorePassword.toCharArray());
             }
-            CaPrivateKey  = (PrivateKey)      CaKs.getKey("ca", KeystorePassword.toCharArray());
+            CaPrivateKey = (PrivateKey) CaKs.getKey("ca", KeystorePassword.toCharArray());
             CaCertificate = (X509Certificate) CaKs.getCertificate("ca");
-            CaX500Name    = new X500Name(CaCertificate.getSubjectX500Principal().getEncoded());
+            CaX500Name = X500Name.getInstance(
+                org.bouncycastle.asn1.ASN1Sequence.fromByteArray(CaCertificate.getSubjectX500Principal().getEncoded())
+            );
             return;
         }
 
         Logger.Messages("Generating Certificate Authority");
         KeyPairGenerator Kpg = KeyPairGenerator.getInstance("RSA");
         Kpg.initialize(4096);
-        KeyPair CaPair  = Kpg.generateKeyPair();
-        CaPrivateKey    = CaPair.getPrivate();
+        KeyPair CaPair = Kpg.generateKeyPair();
+        CaPrivateKey = CaPair.getPrivate();
 
         CaX500Name = new X500Name(
             "C=US,ST=Cybertron,L=DarkNet,O=TOMCAT C2 Frameworks V2,OU=ManInTheMatrix,CN=TOMCAT C2 Root CA"
         );
 
-        Date       NotBefore = new Date();
-        Date       NotAfter  = Date.from(Instant.now().plus(Duration.ofDays(3650)));
-        BigInteger Serial    = BigInteger.valueOf(new SecureRandom().nextLong()).abs();
+        Date NotBefore = new Date();
+        Date NotAfter = Date.from(Instant.now().plus(Duration.ofDays(3650)));
+        BigInteger Serial = BigInteger.valueOf(new SecureRandom().nextLong()).abs();
 
         X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(
-            CaX500Name, Serial, NotBefore, NotAfter, CaX500Name, CaPair.getPublic()
+            CaX500Name,
+            Serial,
+            NotBefore,
+            NotAfter,
+            CaX500Name,
+            CaPair.getPublic()
         );
         Builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
-        Builder.addExtension(Extension.keyUsage, true,
-            new KeyUsage(KeyUsage.keyCertSign | KeyUsage.cRLSign | KeyUsage.digitalSignature));
+        Builder.addExtension(
+            Extension.keyUsage,
+            true,
+            new KeyUsage(KeyUsage.keyCertSign | KeyUsage.cRLSign | KeyUsage.digitalSignature)
+        );
 
         ContentSigner Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
         CaCertificate = new JcaX509CertificateConverter().getCertificate(Builder.build(Signer));
 
         KeyStore CaKs = KeyStore.getInstance(KeystoreType);
         CaKs.load(null, null);
-        CaKs.setKeyEntry("ca", CaPrivateKey, KeystorePassword.toCharArray(),
-            new X509Certificate[]{CaCertificate});
+        CaKs.setKeyEntry("ca", CaPrivateKey, KeystorePassword.toCharArray(), new X509Certificate[] { CaCertificate });
         try (OutputStream Out = new FileOutputStream(CaPath)) {
             CaKs.store(Out, KeystorePassword.toCharArray());
         }
@@ -125,21 +134,28 @@ public class CertificateManager {
         Kpg.initialize(KeySize);
         KeyPair Pair = Kpg.generateKeyPair();
 
-        X500Name   Subject   = new X500Name(
+        X500Name Subject = new X500Name(
             "C=US,ST=Cybertron,L=DarkNet,O=TOMCAT C2 Frameworks,OU=ManInTheMatrix,CN=TOMCAT C2 Server"
         );
-        Date       NotBefore = new Date();
-        Date       NotAfter  = Date.from(Instant.now().plus(Duration.ofDays(365)));
-        BigInteger Serial    = BigInteger.valueOf(new SecureRandom().nextLong()).abs();
+        Date NotBefore = new Date();
+        Date NotAfter = Date.from(Instant.now().plus(Duration.ofDays(365)));
+        BigInteger Serial = BigInteger.valueOf(new SecureRandom().nextLong()).abs();
 
         X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(
-            CaX500Name, Serial, NotBefore, NotAfter, Subject, Pair.getPublic()
+            CaX500Name,
+            Serial,
+            NotBefore,
+            NotAfter,
+            Subject,
+            Pair.getPublic()
         );
         Builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
-        Builder.addExtension(Extension.keyUsage, true,
-            new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
-        Builder.addExtension(Extension.extendedKeyUsage, true,
-            new ExtendedKeyUsage(KeyPurposeId.id_kp_serverAuth));
+        Builder.addExtension(
+            Extension.keyUsage,
+            true,
+            new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment)
+        );
+        Builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(KeyPurposeId.id_kp_serverAuth));
 
         GeneralNamesBuilder SanBuilder = new GeneralNamesBuilder();
         SanBuilder.addName(new GeneralName(GeneralName.dNSName, "localhost"));
@@ -148,15 +164,19 @@ public class CertificateManager {
         }
         Builder.addExtension(Extension.subjectAlternativeName, false, SanBuilder.build());
 
-        ContentSigner   Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
-        X509Certificate Cert   = new JcaX509CertificateConverter().getCertificate(Builder.build(Signer));
+        ContentSigner Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
+        X509Certificate Cert = new JcaX509CertificateConverter().getCertificate(Builder.build(Signer));
 
         Cert.verify(CaCertificate.getPublicKey());
 
         ServerKeystore = KeyStore.getInstance(KeystoreType);
         ServerKeystore.load(null, null);
-        ServerKeystore.setKeyEntry("server", Pair.getPrivate(), KeystorePassword.toCharArray(),
-            new X509Certificate[]{Cert, CaCertificate});
+        ServerKeystore.setKeyEntry(
+            "server",
+            Pair.getPrivate(),
+            KeystorePassword.toCharArray(),
+            new X509Certificate[] { Cert, CaCertificate }
+        );
         try (OutputStream Out = new FileOutputStream(ServerKeystorePath)) {
             ServerKeystore.store(Out, KeystorePassword.toCharArray());
         }
@@ -177,31 +197,42 @@ public class CertificateManager {
         Kpg.initialize(KeySize);
         KeyPair Pair = Kpg.generateKeyPair();
 
-        X500Name   Subject   = new X500Name(
+        X500Name Subject = new X500Name(
             "C=US,ST=Cybertron,L=DarkNet,O=TOMCAT C2 Frameworks,OU=C2Agents,CN=" + AgentName
         );
-        Date       NotBefore = new Date();
-        Date       NotAfter  = Date.from(Instant.now().plus(Duration.ofDays(ValidDays)));
-        BigInteger Serial    = BigInteger.valueOf(new SecureRandom().nextLong()).abs();
+        Date NotBefore = new Date();
+        Date NotAfter = Date.from(Instant.now().plus(Duration.ofDays(ValidDays)));
+        BigInteger Serial = BigInteger.valueOf(new SecureRandom().nextLong()).abs();
 
         X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(
-            CaX500Name, Serial, NotBefore, NotAfter, Subject, Pair.getPublic()
+            CaX500Name,
+            Serial,
+            NotBefore,
+            NotAfter,
+            Subject,
+            Pair.getPublic()
         );
         Builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
-        Builder.addExtension(Extension.keyUsage, true,
-            new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
-        Builder.addExtension(Extension.extendedKeyUsage, true,
-            new ExtendedKeyUsage(KeyPurposeId.id_kp_clientAuth));
+        Builder.addExtension(
+            Extension.keyUsage,
+            true,
+            new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment)
+        );
+        Builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(KeyPurposeId.id_kp_clientAuth));
 
-        ContentSigner   Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
-        X509Certificate Cert   = new JcaX509CertificateConverter().getCertificate(Builder.build(Signer));
+        ContentSigner Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
+        X509Certificate Cert = new JcaX509CertificateConverter().getCertificate(Builder.build(Signer));
 
         Cert.verify(CaCertificate.getPublicKey());
 
         KeyStore AgentKs = KeyStore.getInstance(KeystoreType);
         AgentKs.load(null, null);
-        AgentKs.setKeyEntry("agent", Pair.getPrivate(), KeystorePassword.toCharArray(),
-            new X509Certificate[]{Cert, CaCertificate});
+        AgentKs.setKeyEntry(
+            "agent",
+            Pair.getPrivate(),
+            KeystorePassword.toCharArray(),
+            new X509Certificate[] { Cert, CaCertificate }
+        );
         try (OutputStream Out = new FileOutputStream(AgentPath)) {
             AgentKs.store(Out, KeystorePassword.toCharArray());
         }
