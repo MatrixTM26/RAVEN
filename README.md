@@ -1,11 +1,13 @@
 # TOMCAT-C2-Framework
 
-![AGPL](https://img.shields.io/badge/AGPL-v3-000000?style=for-the-badge&logo=gnu&logoColor=ffffff&labelColor=000000&color=8b0000)
-![OpenJDK](https://img.shields.io/badge/OpenJDK-17-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=8b0000)
-![Red Teaming](https://img.shields.io/badge/RED%20TEAMING-000000?style=for-the-badge&logo=keepassxc&logoColor=ff0000&labelColor=000000&color=8b0000)
-![Cyber Security](https://img.shields.io/badge/CYBER%20SECURITY-000000?style=for-the-badge&logo=hackthebox&logoColor=ff0000&labelColor=000000&color=8b0000)
-![Cryptography](https://img.shields.io/badge/CRYPTOGRAPHY-000000?style=for-the-badge&logo=letsencrypt&logoColor=ff0000&labelColor=000000&color=8b0000)
-![Maven](https://img.shields.io/badge/Maven-000000?style=for-the-badge&logo=apachemaven&logoColor=ee6a2a&labelColor=000000&color=8b0000)
+![AGPL](https://img.shields.io/badge/AGPL-v3-000000?style=for-the-badge&logo=gnu&logoColor=ffffff&labelColor=000000&color=03001a)
+![OpenJDK](https://img.shields.io/badge/OpenJDK-17+-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=03001a)
+![Red Teaming](https://img.shields.io/badge/RED%20TEAMING-000000?style=for-the-badge&logo=keepassxc&logoColor=ff0000&labelColor=000000&color=03001a)
+![Cyber Security](https://img.shields.io/badge/CYBER%20SECURITY-000000?style=for-the-badge&logo=socket&logoColor=009ceb&labelColor=000000&color=03001a)
+![Cryptography](https://img.shields.io/badge/CRYPTOGRAPHY-000000?style=for-the-badge&logo=letsencrypt&logoColor=0eff39&labelColor=000000&color=03001a)
+![Maven](https://img.shields.io/badge/Maven-000000?style=for-the-badge&logo=apachemaven&logoColor=ee6a2a&labelColor=000000&color=03001a)
+![GITHUB ACTION](https://img.shields.io/badge/GITHUB%20ACTION-000000?style=for-the-badge&logo=githubactions&logoColor=001fbc&labelColor=000000&color=03001a)
+![Networking](https://img.shields.io/badge/Networking-000000?style=for-the-badge&logo=cloudflare&logoColor=26ff7d&labelColor=000000&color=03001a)
 
 ```txt
         ___________________      _____  _________     ________________ _________  ________
@@ -67,13 +69,25 @@ cd TOMCAT-C2-Framework
 
 ### 2. Build the Project
 
-**General Build**
+#### Ready to use (Already compiled)
+
+> Ready to use build (created by github action and ready to run file). located at `output/tomcat-c2-2.0.0.jar`
+
+```bash
+java -jar output/tomcat-c2-2.0.0.jar
+```
+
+[![Download JAR](https://img.shields.io/badge/Download%20Latest%20JAR-000000?style=for-the-badge&logo=electron&logoColor=07ff18&labelColor=000000&color=03001a)](https://raw.githubusercontent.com/MatrixTM26/TOMCAT-C2-Framework/dev/output/tomcat-c2-2.0.0.jar)
+
+#### Manual compile
+
+> General Build
 
 ```bash
 mvn clean package -q
 ```
 
-**Specific Build**
+> Specific Build
 
 - **Linux & Termux**
 
@@ -174,9 +188,9 @@ java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar \
 
 ## <img src="https://cdn.simpleicons.org/githubsponsors/ff0000" width="18"> Support Me
 
-[![Ko-fi](https://img.shields.io/badge/KO--FI-000000?style=for-the-badge&logo=kofi&logoColor=ff0000)](https://ko-fi.com/MatrixTM26)
-[![Trakteer](https://img.shields.io/badge/TRAKTEER-000000?style=for-the-badge&logo=buymeacoffee&logoColor=ff0000)](https://trakteer.id/MatrixTM26)
-[![PayPal](https://img.shields.io/badge/PAYPAL-000000?style=for-the-badge&logo=paypal&logoColor=ff0000)](https://paypal.me/TeukuMaulana)
+[![Ko-fi](https://img.shields.io/badge/KO--FI-000000?style=for-the-badge&logo=kofi&logoColor=fff707)](https://ko-fi.com/MatrixTM26)
+[![Trakteer](https://img.shields.io/badge/TRAKTEER-000000?style=for-the-badge&logo=buymeacoffee&logoColor=ff6a6a)](https://trakteer.id/MatrixTM26)
+[![PayPal](https://img.shields.io/badge/PAYPAL-000000?style=for-the-badge&logo=paypal&logoColor=0000ff)](https://paypal.me/TeukuMaulana)
 
 ---
 
