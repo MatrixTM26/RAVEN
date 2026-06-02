@@ -1,87 +1,162 @@
 # TOMCAT-C2-Framework
 
 ![AGPL](https://img.shields.io/badge/AGPL-v3-000000?style=for-the-badge&logo=gnu&logoColor=ffffff&labelColor=000000&color=8b0000)
-![OpenJDK](https://img.shields.io/badge/OpenJDK-21-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=8b0000)
+![OpenJDK](https://img.shields.io/badge/OpenJDK-17-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=8b0000)
 ![Red Teaming](https://img.shields.io/badge/RED%20TEAMING-000000?style=for-the-badge&logo=keepassxc&logoColor=ff0000&labelColor=000000&color=8b0000)
 ![Cyber Security](https://img.shields.io/badge/CYBER%20SECURITY-000000?style=for-the-badge&logo=hackthebox&logoColor=ff0000&labelColor=000000&color=8b0000)
 ![Cryptography](https://img.shields.io/badge/CRYPTOGRAPHY-000000?style=for-the-badge&logo=letsencrypt&logoColor=ff0000&labelColor=000000&color=8b0000)
-![Gradle](https://img.shields.io/badge/Gradle-v9.5.1-000000?style=for-the-badge&logo=gradle&logoColor=5400e8&labelColor=000000&color=8b0000)
+![Maven](https://img.shields.io/badge/Maven-000000?style=for-the-badge&logo=apachemaven&logoColor=ee6a2a&labelColor=000000&color=8b0000)
 
-TOMCAT-C2 Framework is C2 (Command and Control) Server Framework Build For Many Shell Session Handler &amp; Red Teaming Enterprise
+```txt
+        ___________________      _____  _________     ________________ _________  ________
+        \__    ___/\_____  \    /     \ \_   ___ \   /  _  \__    ___/ \_   ___ \ \_____  \
+          |    |    /   |   \  /  \ /  \/    \  \/  /  /_\  \|    |    /    \  \/  /  ____/
+          |    |   /    |    \/    Y    \     \____/    |    \    |    \     \____/       \
+          |____|   \_______  /\____|__  /\______  /\____|__  /____|     \______  /\_______ \
+                           \/         \/        \/         \/                  \/         \/
+                                            Framework V2.0 (Java)
+```
+
+> **Author:** MatrixTM26 | **GitHub:** [MatrixTM26](https://github.com/MatrixTM26) | **Language:** Java 17
 
 ---
 
 ## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/circle-info.svg" width="18"> Overview
 
-TOMCAT-C2 Framework is currently the same with [TOMCAT-C2](https://github.com/MatrixTM26/TOMCAT-C2) , but instead of using python, i use java for scalability and more advanced experiences.
+TOMCAT C2 is a modular, enterprise-grade Command & Control framework written in Java. It supports multiple interface modes (Web, CLI, JavaFX GUI), mutual TLS authentication using PKCS12 keystores, AES-256-GCM encrypted agent communication, and multi-protocol session handling.
 
-> [!IMPORTANT]
-> This version is not fully implemented yet. And its currently on development.
+---
+
+## <img src="https://cdn.simpleicons.org/gnubash/ff0000" width="18"> Features
+
+- **Multi-Interface Support** — Web Panel (HTTP), CLI, JavaFX GUI
+- **AES-256-GCM Encryption** — All agent communication is encrypted end-to-end
+- **Mutual TLS (mTLS)** — Agent authentication via PKCS12 certificates
+- **Multi-Protocol Sessions** — TOMCAT agents, Meterpreter, Reverse Shells
+- **Certificate Manager** — Full CA, server, and agent cert lifecycle management
+- **File Transfer** — Upload and download files to/from agents
+- **Session Management** — Thread-safe concurrent session handling
+- **Event System** — Decoupled event-driven architecture
+- **Cross-Platform** — Runs on Windows, Linux, macOS via JVM
+- **Configurable** — All settings via `server.properties`
 
 ---
 
 ## <img src="https://cdn.simpleicons.org/gnubash/ff0000" width="18"> Installation & Usage
 
-- Clone
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/MatrixTM26/TOMCAT-C2-Framework.git
-cd TOMCAT-C2-Framework
+git clone https://github.com/MatrixTM26/tomcat-c2.git
+cd tomcat-c2
 ```
 
-- Build & Compile
+### 2. Build the Project
 
 **General Build**
 
 ```bash
-mvn clean package -q -X
+mvn clean package -q
 ```
 
 **Specific Build**
 
-Linux & Termux
+- **Linux & Termux**
+
+    ```bash
+    mvn clean package -Djavafx.platform=linux -q
+    ```
+
+- **Windows**
+
+    ```bash
+    mvn clean package -Djavafx.platform=windows -q
+    ```
+
+- **MacOS**
+
+    ```bash
+    mvn clean package -Djavafx.platform=macos -q
+    ```
+
+- **BSD**
+    ```bash
+    mvn clean package -Djavafx.platform=openbsd -q
+    ```
+
+### 3. Run the Server
 
 ```bash
-mvn clean package -Djavafx.platform=linux -q -X
-```
+# Web Panel Mode (Default)
+java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar
 
-Windows
+# CLI Mode
+java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar -C
 
-```bash
-mvn clean package -Djavafx.platform=windows -q -X
-```
-
-MacOS
-
-```bash
-mvn clean package -Djavafx.platform=macos -q -X
-```
-
-BSD
-
-```bash
-mvn clean package -Djavafx.platform=openbsd -q -X
-```
-
-- Run
-
-```bash
-java -jar target/tomcat-c2-2.0.0.jar
+# JavaFX GUI Mode
+java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar -G
 ```
 
 ---
 
-## FEATURE
+## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/key.svg" width="18"> Certificate Management (MTLS)
 
-- Communication security over the Mutual-TLS (mTLS)
-- Multi-Connection Support (RAW, TLS, MTLS)
-- PKCS12 Security Key
+### Initialize CA and Server Certificate
+
+```bash
+java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar --init-certs
+```
+
+### Generate Agent Certificates
+
+```bash
+# Single Agent
+java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar \
+  -a myagent -ah 192.168.1.10 -ap 4444 -am
+
+# Multiple Agents
+java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar \
+  -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
+```
+
+---
+
+## <img src="https://cdn.simpleicons.org/gnubash/ff0000" width="18"> Command Line Arguments
+
+| Option                  | Description                               |
+| ----------------------- | ----------------------------------------- |
+| `-S, --host <addr>`     | C2 server bind address (default: 0.0.0.0) |
+| `-p, --port <port>`     | Web panel port (default: 5000)            |
+| `-T, --mtls`            | Enable Mutual TLS authentication          |
+| `-M, --meterpreter`     | Enable multi-protocol mode                |
+| `-C, --cli-mode`        | Start in CLI interface mode               |
+| `-G, --gui-mode`        | Start in JavaFX GUI mode                  |
+| `--init-certs`          | Initialize CA and server certificates     |
+| `-a, --gen-agent <id>`  | Generate single agent certificate         |
+| `-m, --gen-multi-agent` | Generate multiple agent certificates      |
+| `-l, --list-agents`     | List all generated agents                 |
+
+---
+
+## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/circle-info.svg" width="18"> Interface Modes
+
+- **Web Panel** — Access via browser at `http://localhost:5000`
+- **CLI Mode** — Powerful terminal interface (`-C`)
+- **JavaFX GUI** — Full desktop application with sidebar navigation (`-G`)
+
+---
+
+## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/shield-halved.svg" width="18"> Security Features
+
+- **AES-256-GCM** encryption for all agent communication
+- **Mutual TLS (mTLS)** with PKCS12 keystores
+- Full certificate lifecycle management (CA → Server → Agent)
 
 ---
 
 ## <img src="https://cdn.simpleicons.org/github/ff0000" width="18"> Credit
 
-- [@MatrixTM26](https://github.com/MatrixTM26)
+- **Author:** [@MatrixTM26](https://github.com/MatrixTM26)
 
 ## <img src="https://cdn.simpleicons.org/githubsponsors/ff0000" width="18"> Support Me
 
@@ -91,4 +166,4 @@ java -jar target/tomcat-c2-2.0.0.jar
 
 ---
 
-<p align="center">&copy; 2023-2026 MatrixTM26</p>
+<p align="center">Copyright &copy;2023-2026 MatrixTM26 • All Rights Reserved</p>
