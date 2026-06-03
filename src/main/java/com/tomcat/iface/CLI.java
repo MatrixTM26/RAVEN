@@ -172,7 +172,7 @@ public class CLI {
             "  %sServer Key     %s%s%n",
             AnsiColor.Red,
             AnsiColor.White,
-            java.util.Base64.getEncoder().encodeToString(Server.GetCrypto().GetKey())
+            Server.GetCrypto().GetKeyAsBase64Url()
         );
         System.out.printf(
             "  %sServer Address %s%s:%d%n",

@@ -132,7 +132,7 @@ public class WebApp {
             Resp.put("StartedAt", ServerStartTime != null ? ServerStartTime.getEpochSecond() : 0);
             Resp.put("Uptime", GetUptime());
             Resp.put("Agents", Server.GetSessions().Count());
-            Resp.put("Key", java.util.Base64.getEncoder().encodeToString(Server.GetCrypto().GetKey()));
+            Resp.put("Key", Server.GetCrypto().GetKeyAsBase64Url());
             Resp.put("MtlsEnabled", UseMtls);
             return GsonInst.toJson(Resp);
         }
@@ -156,7 +156,7 @@ public class WebApp {
         }
         ServerStartTime = Instant.now();
         AddLog("[+] Server started on " + Host + ":" + Port);
-        AddLog("[+] Session Key: " + new String(Server.GetCrypto().GetKey()));
+        AddLog("[+] Session Key: " + Server.GetCrypto().GetKeyAsBase64Url());
         Thread AccThread = new Thread(Server::AcceptConnections, "AcceptConnections");
         AccThread.setDaemon(true);
         AccThread.start();
