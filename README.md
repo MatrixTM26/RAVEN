@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="public/logo.png" width="50%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/logo.png" width="50%" height="auto" alt="TOMCAT-C2 WEB UI">
 </div>
 
 # TOMCAT-C2-Framework
@@ -23,13 +23,13 @@ TOMCAT C2 is a modular, enterprise-grade Command & Control framework written in 
 ### WEB UI
 
 <div align="center">
-    <img src="public/w1.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w1.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
     <hr />
-    <img src="public/w2.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w2.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
     <hr />
-    <img src="public/w3.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w3.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
     <hr />
-    <img src="public/w4.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w4.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
 </div>
 
 ---
