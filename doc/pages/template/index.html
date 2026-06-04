@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOMCAT C2 Framework — Documentation</title>
+  <meta name="description" content="TOMCAT-C2 Framework is a Command and Control Server Framework built for shell session handling and red teaming operations." />
+  <link rel="icon" href="../../../public/favicon.ico" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Tourney:ital,wght@0,400;0,600;0,700;0,900;1,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="../static/styles/style.css" />
+</head>
+<body>
+
+  <div class="noise-overlay"></div>
+
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#home" class="nav-brand">
+        <img src="../../../public/logo.svg" alt="TOMCAT C2 Logo" class="nav-logo" />
+        <span class="nav-title">TOMCAT<span class="accent">C2</span></span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#home" class="nav-link active" data-section="home">Home</a></li>
+        <li><a href="#overview" class="nav-link" data-section="overview">Overview</a></li>
+        <li><a href="#features" class="nav-link" data-section="features">Features</a></li>
+        <li><a href="#installation" class="nav-link" data-section="installation">Install</a></li>
+        <li><a href="#commands" class="nav-link" data-section="commands">Commands</a></li>
+        <li><a href="#architecture" class="nav-link" data-section="architecture">Architecture</a></li>
+        <li><a href="#config" class="nav-link" data-section="config">Config</a></li>
+        <li>
+          <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework" target="_blank" class="nav-github">
+            <i class="fab fa-github"></i> GitHub
+          </a>
+        </li>
+      </ul>
+      <button class="burger" id="burgerBtn" aria-label="Toggle navigation">
+        <i class="fas fa-bars" id="burgerIcon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobileMenu">
+    <ul class="mobile-nav-links">
+      <li><a href="#home" class="mobile-nav-link" data-section="home"><i class="fas fa-house"></i> Home</a></li>
+      <li><a href="#overview" class="mobile-nav-link" data-section="overview"><i class="fas fa-circle-info"></i> Overview</a></li>
+      <li><a href="#features" class="mobile-nav-link" data-section="features"><i class="fas fa-layer-group"></i> Features</a></li>
+      <li><a href="#installation" class="mobile-nav-link" data-section="installation"><i class="fas fa-terminal"></i> Installation</a></li>
+      <li><a href="#commands" class="mobile-nav-link" data-section="commands"><i class="fas fa-code"></i> Commands</a></li>
+      <li><a href="#architecture" class="mobile-nav-link" data-section="architecture"><i class="fas fa-diagram-project"></i> Architecture</a></li>
+      <li><a href="#config" class="mobile-nav-link" data-section="config"><i class="fas fa-gear"></i> Config</a></li>
+      <li>
+        <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework" target="_blank" class="mobile-nav-link">
+          <i class="fab fa-github"></i> GitHub Repository
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <main>
+
+    <section id="home" class="hero-section">
+      <div class="hero-bg">
+        <svg class="hero-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="glow1" cx="30%" cy="40%" r="40%">
+              <stop offset="0%" stop-color="#4ade80" stop-opacity="0.12"/>
+              <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="glow2" cx="80%" cy="70%" r="35%">
+              <stop offset="0%" stop-color="#16a34a" stop-opacity="0.08"/>
+              <stop offset="100%" stop-color="#16a34a" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect width="1200" height="700" fill="url(#glow1)"/>
+          <rect width="1200" height="700" fill="url(#glow2)"/>
+          <g opacity="0.07" stroke="#4ade80" stroke-width="0.8" fill="none">
+            <line x1="0" y1="0" x2="1200" y2="700"/>
+            <line x1="200" y1="0" x2="1200" y2="500"/>
+            <line x1="400" y1="0" x2="1200" y2="300"/>
+            <line x1="600" y1="0" x2="1200" y2="100"/>
+            <line x1="0" y1="100" x2="600" y2="700"/>
+            <line x1="0" y1="300" x2="400" y2="700"/>
+            <line x1="0" y1="500" x2="200" y2="700"/>
+          </g>
+          <g opacity="0.06" stroke="#4ade80" stroke-width="0.5">
+            <line x1="0" y1="58" x2="1200" y2="58"/>
+            <line x1="0" y1="116" x2="1200" y2="116"/>
+            <line x1="0" y1="174" x2="1200" y2="174"/>
+            <line x1="0" y1="232" x2="1200" y2="232"/>
+            <line x1="0" y1="290" x2="1200" y2="290"/>
+            <line x1="0" y1="348" x2="1200" y2="348"/>
+            <line x1="0" y1="406" x2="1200" y2="406"/>
+            <line x1="0" y1="464" x2="1200" y2="464"/>
+            <line x1="0" y1="522" x2="1200" y2="522"/>
+            <line x1="0" y1="580" x2="1200" y2="580"/>
+            <line x1="0" y1="638" x2="1200" y2="638"/>
+            <line x1="80" y1="0" x2="80" y2="700"/>
+            <line x1="160" y1="0" x2="160" y2="700"/>
+            <line x1="240" y1="0" x2="240" y2="700"/>
+            <line x1="320" y1="0" x2="320" y2="700"/>
+            <line x1="400" y1="0" x2="400" y2="700"/>
+            <line x1="480" y1="0" x2="480" y2="700"/>
+            <line x1="560" y1="0" x2="560" y2="700"/>
+            <line x1="640" y1="0" x2="640" y2="700"/>
+            <line x1="720" y1="0" x2="720" y2="700"/>
+            <line x1="800" y1="0" x2="800" y2="700"/>
+            <line x1="880" y1="0" x2="880" y2="700"/>
+            <line x1="960" y1="0" x2="960" y2="700"/>
+            <line x1="1040" y1="0" x2="1040" y2="700"/>
+            <line x1="1120" y1="0" x2="1120" y2="700"/>
+          </g>
+          <polygon points="900,80 1100,200 1100,440 900,560 700,440 700,200" stroke="#4ade80" stroke-width="1" fill="none" opacity="0.1"/>
+          <polygon points="950,140 1050,200 1050,380 950,440 850,380 850,200" stroke="#4ade80" stroke-width="0.6" fill="none" opacity="0.07"/>
+          <circle cx="900" cy="320" r="60" stroke="#4ade80" stroke-width="0.8" fill="none" opacity="0.1"/>
+          <circle cx="900" cy="320" r="30" stroke="#4ade80" stroke-width="0.5" fill="none" opacity="0.08"/>
+          <circle cx="150" cy="500" r="80" stroke="#4ade80" stroke-width="0.6" fill="none" opacity="0.06"/>
+          <circle cx="150" cy="500" r="40" stroke="#4ade80" stroke-width="0.4" fill="none" opacity="0.05"/>
+        </svg>
+      </div>
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="fas fa-shield-halved"></i>
+          <span>Red Teaming Framework</span>
+        </div>
+        <h1 class="hero-title">
+          <span class="hero-title-line">TOMCAT</span>
+          <span class="hero-title-accent">C2 FRAMEWORK</span>
+        </h1>
+        <p class="hero-subtitle">Command and Control Server Framework built for enterprise-grade shell session management and advanced red teaming operations.</p>
+        <div class="hero-tags">
+          <span class="tag"><i class="fab fa-java"></i> OpenJDK 17+</span>
+          <span class="tag"><i class="fas fa-cube"></i> Maven</span>
+          <span class="tag"><i class="fas fa-lock"></i> Cryptography</span>
+          <span class="tag"><i class="fas fa-network-wired"></i> Multi-Shell</span>
+          <span class="tag"><i class="fab fa-github"></i> AGPL v3</span>
+        </div>
+        <div class="hero-actions">
+          <a href="#installation" class="btn-primary">
+            <i class="fas fa-terminal"></i> Get Started
+          </a>
+          <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework" target="_blank" class="btn-secondary">
+            <i class="fab fa-github"></i> View Source
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="overview" class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label"><i class="fas fa-circle-info"></i> Overview</span>
+          <h2 class="section-title">What is TOMCAT C2</h2>
+          <p class="section-desc">A powerful post-exploitation framework engineered for red team engagements and penetration testing workflows.</p>
+        </div>
+        <div class="overview-grid">
+          <div class="overview-main">
+            <div class="prose-block">
+              <p>TOMCAT-C2 Framework is a Command and Control (C2) server built with Java, designed to manage multiple reverse shell sessions simultaneously across heterogeneous target environments. It provides operators with a centralized control plane for post-exploitation activities during authorized red team operations.</p>
+              <p>The framework prioritizes operational security (OPSEC), encrypted communications, and extensibility, making it suitable for enterprise-grade red teaming assessments where stealth and reliability are critical requirements.</p>
+            </div>
+            <div class="info-grid">
+              <div class="info-card">
+                <i class="fas fa-code-branch"></i>
+                <div>
+                  <span class="info-label">Language</span>
+                  <span class="info-value">Java (OpenJDK 17+)</span>
+                </div>
+              </div>
+              <div class="info-card">
+                <i class="fas fa-cube"></i>
+                <div>
+                  <span class="info-label">Build Tool</span>
+                  <span class="info-value">Apache Maven</span>
+                </div>
+              </div>
+              <div class="info-card">
+                <i class="fas fa-scale-balanced"></i>
+                <div>
+                  <span class="info-label">License</span>
+                  <span class="info-value">AGPL v3</span>
+                </div>
+              </div>
+              <div class="info-card">
+                <i class="fas fa-circle-dot"></i>
+                <div>
+                  <span class="info-label">Status</span>
+                  <span class="info-value">Active Development</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="overview-side">
+            <div class="stat-stack">
+              <div class="stat-item">
+                <span class="stat-num">39</span>
+                <span class="stat-label">Commits</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <span class="stat-num">AGPL</span>
+                <span class="stat-label">License</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <span class="stat-num">v17</span>
+                <span class="stat-label">OpenJDK Min</span>
+              </div>
+            </div>
+            <div class="warning-box">
+              <i class="fas fa-triangle-exclamation"></i>
+              <div>
+                <strong>Legal Notice</strong>
+                <p>This framework is intended solely for authorized penetration testing and red team engagements. Unauthorized use against systems you do not own or have explicit permission to test is illegal.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label"><i class="fas fa-layer-group"></i> Features</span>
+          <h2 class="section-title">Core Capabilities</h2>
+          <p class="section-desc">Everything you need for comprehensive red team operations in a single cohesive framework.</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-server"></i></div>
+            <h3>Multi-Session Handler</h3>
+            <p>Manage multiple simultaneous reverse shell sessions from a single operator console. Switch between targets seamlessly without losing context.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-lock"></i></div>
+            <h3>Encrypted Communications</h3>
+            <p>All C2 traffic is encrypted in transit using cryptographic protocols, ensuring operational security and preventing traffic analysis.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-terminal"></i></div>
+            <h3>Interactive Shell</h3>
+            <p>Full interactive shell experience with command history, tab completion support, and real-time output streaming from remote sessions.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-file-transfer"></i></div>
+            <h3>File Transfer</h3>
+            <p>Upload and download files to and from compromised endpoints with built-in progress tracking and integrity verification.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-plug"></i></div>
+            <h3>Listener Management</h3>
+            <p>Configure and manage multiple listeners on different ports and protocols. Supports TCP-based shell callbacks with flexible bind options.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-shield-halved"></i></div>
+            <h3>OPSEC Focused</h3>
+            <p>Designed with operational security in mind. Minimal footprint, configurable callback intervals, and encrypted payloads for stealth operations.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-sitemap"></i></div>
+            <h3>Session Persistence</h3>
+            <p>Session state management allows operators to reconnect and resume control of active sessions across server restarts and network interruptions.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-scroll"></i></div>
+            <h3>Activity Logging</h3>
+            <p>Comprehensive audit trail of all operator commands and session activities. Output logs stored to the designated output directory for review.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="fas fa-boxes-stacked"></i></div>
+            <h3>Modular Architecture</h3>
+            <p>Built with extensibility at its core. The Java-based module system allows operators to extend functionality with custom payloads and handlers.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="installation" class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label"><i class="fas fa-terminal"></i> Installation</span>
+          <h2 class="section-title">Getting Started</h2>
+          <p class="section-desc">Deploy TOMCAT C2 in minutes with the following step-by-step guide.</p>
+        </div>
+
+        <div class="install-steps">
+
+          <div class="install-step">
+            <div class="step-num">01</div>
+            <div class="step-content">
+              <h3>Prerequisites</h3>
+              <p>Ensure the following dependencies are installed on your system before proceeding.</p>
+              <div class="req-list">
+                <div class="req-item">
+                  <i class="fab fa-java"></i>
+                  <span>OpenJDK 17 or newer</span>
+                  <span class="req-badge">Required</span>
+                </div>
+                <div class="req-item">
+                  <i class="fas fa-cube"></i>
+                  <span>Apache Maven 3.8+</span>
+                  <span class="req-badge">Required</span>
+                </div>
+                <div class="req-item">
+                  <i class="fab fa-git-alt"></i>
+                  <span>Git</span>
+                  <span class="req-badge">Required</span>
+                </div>
+                <div class="req-item">
+                  <i class="fab fa-linux"></i>
+                  <span>Linux (Debian based recommended)</span>
+                  <span class="req-badge optional">Recommended</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="step-num">02</div>
+            <div class="step-content">
+              <h3>Clone Repository</h3>
+              <p>Clone the TOMCAT-C2-Framework repository from GitHub to your local machine.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-lang">bash</span>
+                  <button class="copy-btn" data-copy="git clone https://github.com/MatrixTM26/TOMCAT-C2-Framework.git&#10;cd TOMCAT-C2-Framework">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+                <pre><code><span class="c-comment"># Clone the repository</span>
+git clone https://github.com/MatrixTM26/TOMCAT-C2-Framework.git
+cd TOMCAT-C2-Framework</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="step-num">03</div>
+            <div class="step-content">
+              <h3>Build with Maven</h3>
+              <p>Compile and package the project using Maven. This will generate the executable JAR file.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-lang">bash</span>
+                  <button class="copy-btn" data-copy="mvn clean package -DskipTests">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+                <pre><code><span class="c-comment"># Build the project</span>
+mvn clean package -DskipTests</code></pre>
+              </div>
+              <p class="step-note"><i class="fas fa-circle-info"></i> Alternatively, use the provided build script: <code>bash build.sh</code></p>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="step-num">04</div>
+            <div class="step-content">
+              <h3>Configure Server</h3>
+              <p>Edit <code>server.properties</code> to configure your listener settings and operational parameters.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-lang">properties</span>
+                  <button class="copy-btn" data-copy="server.host=0.0.0.0&#10;server.port=4444&#10;server.timeout=30000&#10;output.dir=./output">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+                <pre><code>server.host=0.0.0.0
+server.port=4444
+server.timeout=30000
+output.dir=./output</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="install-step">
+            <div class="step-num">05</div>
+            <div class="step-content">
+              <h3>Launch the C2 Server</h3>
+              <p>Start the TOMCAT C2 server. The interactive console will launch once the listener is active.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-lang">bash</span>
+                  <button class="copy-btn" data-copy="java -jar target/tomcat-c2.jar">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+                <pre><code><span class="c-comment"># Start the server</span>
+java -jar target/tomcat-c2.jar</code></pre>
+              </div>
+              <div class="success-box">
+                <i class="fas fa-circle-check"></i>
+                <span>Server is running. Waiting for incoming connections on the configured port.</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section id="commands" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label"><i class="fas fa-code"></i> Commands</span>
+          <h2 class="section-title">Command Reference</h2>
+          <p class="section-desc">Full reference of available commands in the TOMCAT C2 interactive operator console.</p>
+        </div>
+
+        <div class="cmd-tabs">
+          <button class="cmd-tab active" data-tab="general">General</button>
+          <button class="cmd-tab" data-tab="session">Session</button>
+          <button class="cmd-tab" data-tab="file">File Ops</button>
+          <button class="cmd-tab" data-tab="system">System</button>
+        </div>
+
+        <div class="cmd-panel active" id="tab-general">
+          <div class="cmd-table">
+            <div class="cmd-table-header">
+              <span>Command</span>
+              <span>Usage</span>
+              <span>Description</span>
+            </div>
+            <div class="cmd-row">
+              <code>help</code>
+              <code>help</code>
+              <span>Display all available commands and their descriptions</span>
+            </div>
+            <div class="cmd-row">
+              <code>sessions</code>
+              <code>sessions</code>
+              <span>List all active shell sessions with their IDs and details</span>
+            </div>
+            <div class="cmd-row">
+              <code>listeners</code>
+              <code>listeners</code>
+              <span>Show active listeners and their bind configurations</span>
+            </div>
+            <div class="cmd-row">
+              <code>listen</code>
+              <code>listen [port]</code>
+              <span>Start a new listener on the specified port</span>
+            </div>
+            <div class="cmd-row">
+              <code>stop</code>
+              <code>stop [port]</code>
+              <span>Stop an active listener on the specified port</span>
+            </div>
+            <div class="cmd-row">
+              <code>clear</code>
+              <code>clear</code>
+              <span>Clear the operator console screen</span>
+            </div>
+            <div class="cmd-row">
+              <code>exit</code>
+              <code>exit</code>
+              <span>Gracefully shut down the C2 server and all sessions</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmd-panel" id="tab-session">
+          <div class="cmd-table">
+            <div class="cmd-table-header">
+              <span>Command</span>
+              <span>Usage</span>
+              <span>Description</span>
+            </div>
+            <div class="cmd-row">
+              <code>interact</code>
+              <code>interact [id]</code>
+              <span>Switch to an interactive shell with the specified session</span>
+            </div>
+            <div class="cmd-row">
+              <code>kill</code>
+              <code>kill [id]</code>
+              <span>Terminate the specified shell session</span>
+            </div>
+            <div class="cmd-row">
+              <code>killall</code>
+              <code>killall</code>
+              <span>Terminate all active sessions simultaneously</span>
+            </div>
+            <div class="cmd-row">
+              <code>info</code>
+              <code>info [id]</code>
+              <span>Display detailed information about a specific session</span>
+            </div>
+            <div class="cmd-row">
+              <code>background</code>
+              <code>background</code>
+              <span>Background current interactive session and return to main console</span>
+            </div>
+            <div class="cmd-row">
+              <code>rename</code>
+              <code>rename [id] [name]</code>
+              <span>Assign a label to a session for easier identification</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmd-panel" id="tab-file">
+          <div class="cmd-table">
+            <div class="cmd-table-header">
+              <span>Command</span>
+              <span>Usage</span>
+              <span>Description</span>
+            </div>
+            <div class="cmd-row">
+              <code>upload</code>
+              <code>upload [local] [remote]</code>
+              <span>Upload a local file to the remote target</span>
+            </div>
+            <div class="cmd-row">
+              <code>download</code>
+              <code>download [remote] [local]</code>
+              <span>Download a file from the remote target to local machine</span>
+            </div>
+            <div class="cmd-row">
+              <code>ls</code>
+              <code>ls [path]</code>
+              <span>List files and directories on the remote target</span>
+            </div>
+            <div class="cmd-row">
+              <code>cd</code>
+              <code>cd [path]</code>
+              <span>Change working directory on the remote session</span>
+            </div>
+            <div class="cmd-row">
+              <code>cat</code>
+              <code>cat [file]</code>
+              <span>Read and display file contents from the remote target</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cmd-panel" id="tab-system">
+          <div class="cmd-table">
+            <div class="cmd-table-header">
+              <span>Command</span>
+              <span>Usage</span>
+              <span>Description</span>
+            </div>
+            <div class="cmd-row">
+              <code>sysinfo</code>
+              <code>sysinfo</code>
+              <span>Retrieve operating system and hardware information from target</span>
+            </div>
+            <div class="cmd-row">
+              <code>whoami</code>
+              <code>whoami</code>
+              <span>Display current user context on the remote session</span>
+            </div>
+            <div class="cmd-row">
+              <code>ps</code>
+              <code>ps</code>
+              <span>List running processes on the remote target</span>
+            </div>
+            <div class="cmd-row">
+              <code>screenshot</code>
+              <code>screenshot</code>
+              <span>Capture a screenshot of the remote target desktop</span>
+            </div>
+            <div class="cmd-row">
+              <code>shell</code>
+              <code>shell [cmd]</code>
+              <span>Execute a single command on the target without entering interactive mode</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="architecture" class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label"><i class="fas fa-diagram-project"></i> Architecture</span>
+          <h2 class="section-title">System Architecture</h2>
+          <p class="section-desc">Understanding how TOMCAT C2 components interact in a typical deployment.</p>
+        </div>
+
+        <div class="arch-layout">
+          <div class="arch-diagram">
+            <svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" class="arch-svg">
+              <defs>
+                <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L0,6 L8,3 z" fill="#4ade80" opacity="0.7"/>
+                </marker>
+                <filter id="glowfilter">
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                  <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <rect x="260" y="20" width="180" height="70" rx="6" fill="#0d1f0e" stroke="#4ade80" stroke-width="1.5"/>
+              <text x="350" y="48" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="11" font-weight="600">OPERATOR CONSOLE</text>
+              <text x="350" y="64" text-anchor="middle" fill="#6b7280" font-family="Space Grotesk" font-size="9">Java Interactive Shell</text>
+              <rect x="230" y="160" width="240" height="70" rx="6" fill="#0d1f0e" stroke="#4ade80" stroke-width="2" filter="url(#glowfilter)"/>
+              <text x="350" y="188" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="12" font-weight="700">TOMCAT C2 SERVER</text>
+              <text x="350" y="206" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="9" opacity="0.7">Session Handler</text>
+              <line x1="350" y1="90" x2="350" y2="160" stroke="#4ade80" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#arrow)" opacity="0.6"/>
+              <rect x="30" y="320" width="140" height="70" rx="6" fill="#0a0a0a" stroke="#4ade80" stroke-width="1" opacity="0.8"/>
+              <text x="100" y="348" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="10" font-weight="600">TARGET A</text>
+              <text x="100" y="364" text-anchor="middle" fill="#6b7280" font-family="Space Grotesk" font-size="8">Reverse Shell Agent</text>
+              <rect x="210" y="320" width="140" height="70" rx="6" fill="#0a0a0a" stroke="#4ade80" stroke-width="1" opacity="0.8"/>
+              <text x="280" y="348" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="10" font-weight="600">TARGET B</text>
+              <text x="280" y="364" text-anchor="middle" fill="#6b7280" font-family="Space Grotesk" font-size="8">Reverse Shell Agent</text>
+              <rect x="390" y="320" width="140" height="70" rx="6" fill="#0a0a0a" stroke="#4ade80" stroke-width="1" opacity="0.8"/>
+              <text x="460" y="348" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="10" font-weight="600">TARGET C</text>
+              <text x="460" y="364" text-anchor="middle" fill="#6b7280" font-family="Space Grotesk" font-size="8">Reverse Shell Agent</text>
+              <rect x="570" y="320" width="100" height="70" rx="6" fill="#0a0a0a" stroke="#4ade80" stroke-width="1" opacity="0.5" stroke-dasharray="4 2"/>
+              <text x="620" y="360" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="9" opacity="0.5">+ more</text>
+              <line x1="350" y1="230" x2="100" y2="320" stroke="#4ade80" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
+              <line x1="350" y1="230" x2="280" y2="320" stroke="#4ade80" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
+              <line x1="350" y1="230" x2="460" y2="320" stroke="#4ade80" stroke-width="1" marker-end="url(#arrow)" opacity="0.5"/>
+              <line x1="350" y1="230" x2="600" y2="320" stroke="#4ade80" stroke-width="1" marker-end="url(#arrow)" opacity="0.3"/>
+              <text x="350" y="278" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="9" opacity="0.6">Encrypted TCP Sessions</text>
+              <rect x="50" y="150" width="120" height="50" rx="4" fill="#0a0a0a" stroke="#4ade80" stroke-width="1" opacity="0.6"/>
+              <text x="110" y="172" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="9" font-weight="600">OUTPUT LOGS</text>
+              <text x="110" y="188" text-anchor="middle" fill="#6b7280" font-family="Space Grotesk" font-size="8">./output dir</text>
+              <line x1="230" y1="195" x2="170" y2="185" stroke="#4ade80" stroke-width="1" stroke-dasharray="3 2" opacity="0.4"/>
+              <rect x="530" y="150" width="120" height="50" rx="4" fill="#0a0a0a" stroke="#4ade80" stroke-width="1" opacity="0.6"/>
+              <text x="590" y="172" text-anchor="middle" fill="#4ade80" font-family="Space Grotesk" font-size="9" font-weight="600">CONFIG</text>
+              <text x="590" y="188" text-anchor="middle" fill="#6b7280" font-family="Space Grotesk" font-size="8">server.properties</text>
+              <line x1="470" y1="195" x2="530" y2="185" stroke="#4ade80" stroke-width="1" stroke-dasharray="3 2" opacity="0.4"/>
+            </svg>
+          </div>
+
+          <div class="arch-details">
+            <div class="arch-item">
+              <div class="arch-dot"></div>
+              <div>
+                <h4>Operator Console</h4>
+                <p>The Java-based interactive terminal where operators issue commands, manage sessions, and orchestrate the engagement workflow.</p>
+              </div>
+            </div>
+            <div class="arch-item">
+              <div class="arch-dot"></div>
+              <div>
+                <h4>C2 Server Core</h4>
+                <p>Central session handler that manages TCP listener threads, incoming connections, and routes operator commands to target agents.</p>
+              </div>
+            </div>
+            <div class="arch-item">
+              <div class="arch-dot"></div>
+              <div>
+                <h4>Reverse Shell Agents</h4>
+                <p>Lightweight shell callbacks deployed on target systems that maintain encrypted communication channels back to the C2 server.</p>
+              </div>
+            </div>
+            <div class="arch-item">
+              <div class="arch-dot"></div>
+              <div>
+                <h4>Output Logging</h4>
+                <p>All session output and operator commands are captured to the output directory for post-engagement review and reporting.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="config" class="section section-alt">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-label"><i class="fas fa-gear"></i> Configuration</span>
+          <h2 class="section-title">Configuration Reference</h2>
+          <p class="section-desc">All configurable parameters available in server.properties and config/app directory.</p>
+        </div>
+
+        <div class="config-grid">
+          <div class="config-group">
+            <h3 class="config-group-title"><i class="fas fa-network-wired"></i> Server Settings</h3>
+            <div class="config-table">
+              <div class="config-row header">
+                <span>Key</span>
+                <span>Default</span>
+                <span>Description</span>
+              </div>
+              <div class="config-row">
+                <code>server.host</code>
+                <code>0.0.0.0</code>
+                <span>Bind address for the C2 listener</span>
+              </div>
+              <div class="config-row">
+                <code>server.port</code>
+                <code>4444</code>
+                <span>Default listener port</span>
+              </div>
+              <div class="config-row">
+                <code>server.timeout</code>
+                <code>30000</code>
+                <span>Session timeout in milliseconds</span>
+              </div>
+              <div class="config-row">
+                <code>server.backlog</code>
+                <code>50</code>
+                <span>Maximum pending connection queue</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-group">
+            <h3 class="config-group-title"><i class="fas fa-folder-open"></i> Output Settings</h3>
+            <div class="config-table">
+              <div class="config-row header">
+                <span>Key</span>
+                <span>Default</span>
+                <span>Description</span>
+              </div>
+              <div class="config-row">
+                <code>output.dir</code>
+                <code>./output</code>
+                <span>Directory for session logs and downloads</span>
+              </div>
+              <div class="config-row">
+                <code>output.log</code>
+                <code>true</code>
+                <span>Enable command and output logging</span>
+              </div>
+              <div class="config-row">
+                <code>output.timestamp</code>
+                <code>true</code>
+                <span>Prefix log entries with timestamps</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-group">
+            <h3 class="config-group-title"><i class="fas fa-lock"></i> Security Settings</h3>
+            <div class="config-table">
+              <div class="config-row header">
+                <span>Key</span>
+                <span>Default</span>
+                <span>Description</span>
+              </div>
+              <div class="config-row">
+                <code>crypto.enabled</code>
+                <code>true</code>
+                <span>Enable session encryption</span>
+              </div>
+              <div class="config-row">
+                <code>crypto.algorithm</code>
+                <code>AES</code>
+                <span>Encryption algorithm for C2 traffic</span>
+              </div>
+              <div class="config-row">
+                <code>crypto.keysize</code>
+                <code>256</code>
+                <span>Key size in bits for encryption</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="cta-section">
+      <div class="container">
+        <div class="cta-inner">
+          <svg class="cta-bg-svg" viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="ctaGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#4ade80" stop-opacity="0.1"/>
+                <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="800" height="300" fill="url(#ctaGlow)"/>
+            <polygon points="400,30 680,120 680,210 400,280 120,210 120,120" stroke="#4ade80" stroke-width="0.8" fill="none" opacity="0.12"/>
+            <circle cx="400" cy="150" r="90" stroke="#4ade80" stroke-width="0.6" fill="none" opacity="0.08"/>
+          </svg>
+          <div class="cta-content">
+            <h2>Ready to Deploy</h2>
+            <p>Explore the full source code, open issues, or contribute to the TOMCAT C2 Framework project on GitHub.</p>
+            <div class="cta-actions">
+              <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework" target="_blank" class="btn-primary">
+                <i class="fab fa-github"></i> View on GitHub
+              </a>
+              <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework/issues" target="_blank" class="btn-ghost">
+                <i class="fas fa-circle-exclamation"></i> Report Issue
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="../../../public/logo.svg" alt="TOMCAT C2" class="footer-logo" />
+          <div>
+            <span class="footer-name">TOMCAT C2 Framework</span>
+            <span class="footer-tagline">Command and Control for Red Teams</span>
+          </div>
+        </div>
+        <div class="footer-links-group">
+          <span class="footer-group-label">Documentation</span>
+          <a href="#overview">Overview</a>
+          <a href="#features">Features</a>
+          <a href="#installation">Installation</a>
+          <a href="#commands">Commands</a>
+        </div>
+        <div class="footer-links-group">
+          <span class="footer-group-label">Resources</span>
+          <a href="#architecture">Architecture</a>
+          <a href="#config">Configuration</a>
+          <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework" target="_blank">GitHub Repo</a>
+          <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework/issues" target="_blank">Issues</a>
+        </div>
+        <div class="footer-links-group">
+          <span class="footer-group-label">Legal</span>
+          <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework/blob/main/LICENSE" target="_blank">AGPL v3 License</a>
+          <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework/blob/main/.github/CODE_OF_CONDUCT.md" target="_blank">Code of Conduct</a>
+          <a href="https://github.com/MatrixTM26/TOMCAT-C2-Framework/blob/main/.github/CONTRIBUTING.md" target="_blank">Contributing</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>TOMCAT C2 Framework by MatrixTM26. Licensed under AGPL v3.</span>
+        <span>For authorized security testing only.</span>
+      </div>
+    </div>
+  </footer>
+
+  <button class="scroll-top" id="scrollTop" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <script src="../static/script/app.js"></script>
+</body>
+</html>

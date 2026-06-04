@@ -1,0 +1,6 @@
+.env
+.env*
+venv/
+Certs/
+*.pem
+*.p12
