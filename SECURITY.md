@@ -26,7 +26,7 @@ If you discover a security vulnerability in TOMCAT-C2-Framework:
 
 1. **DO NOT** open a public GitHub issue
 2. **DO NOT** post vulnerability details on social media or public forums
-3. **Email privately** to: [your-security-email@example.com]
+3. **Email privately** to: anonymous.matrixtm26.dev@gmail.com
 
 ### Information to Include in Your Report
 
@@ -46,7 +46,7 @@ Please provide:
 
 ### Supported Contact Methods
 
-- **Email**: [your-security-email@example.com]
+- **Email**: anonymous.matrixtm26.dev@gmail.com
 - **GitHub Security Advisory**: [Enable private vulnerability reporting]
 
 ---
@@ -200,7 +200,7 @@ If you become aware of a security incident involving TOMCAT-C2-Framework:
 1. **Cease operations** immediately if unauthorized access is suspected
 2. **Preserve evidence** of the incident
 3. **Report to authorities** if applicable in your jurisdiction
-4. **Notify the project** at [your-security-email@example.com]
+4. **Notify the project** at anonymous.matrixtm26.dev@gmail.com
 5. **Follow local incident response procedures**
 
 ---
@@ -234,7 +234,7 @@ When a version reaches end of life, no further security patches will be provided
 
 ### Security Contact
 
-- **Email**: [your-security-email@example.com]
+- **Email**: anonymous.matrixtm26.dev@gmail.com
 - **GitHub**: @MatrixTM26
 - **Response Time**: 48 hours maximum
 
