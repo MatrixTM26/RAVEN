@@ -267,7 +267,9 @@ public abstract class BaseServer {
         }
     }
 
-    public void RemoveSession(int SessionId) {
+    public String GetKeyBase64() {
+        return java.util.Base64.getEncoder().encodeToString(Crypto.GetKey());
+    }
         Sessions.Remove(SessionId);
         CommandLocks.remove(SessionId);
         Events.Trigger(EventType.AgentRemoved, EventManager.BuildData("ID", SessionId));

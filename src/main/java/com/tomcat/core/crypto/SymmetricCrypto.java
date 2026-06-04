@@ -38,6 +38,10 @@ public class SymmetricCrypto {
         return RawKey;
     }
 
+    public String GetKeyAsBase64Url() {
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(RawKey);
+    }
+
     public byte[] Encrypt(byte[] Data) throws Exception {
         if (Key == null) throw new IllegalStateException("No encryption key set");
         byte[] Iv = new byte[GcmIvLength];

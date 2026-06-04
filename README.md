@@ -1,3 +1,7 @@
+<div align="center">
+    <img src="public/logo.png" width="50%" height="auto" alt="TOMCAT-C2 WEB UI">
+</div>
+
 # TOMCAT-C2-Framework
 
 ![AGPL](https://img.shields.io/badge/AGPL-v3-000000?style=for-the-badge&logo=gnu&logoColor=ffffff&labelColor=000000&color=03001a)
@@ -6,26 +10,27 @@
 ![Cyber Security](https://img.shields.io/badge/CYBER%20SECURITY-000000?style=for-the-badge&logo=socket&logoColor=009ceb&labelColor=000000&color=03001a)
 ![Cryptography](https://img.shields.io/badge/CRYPTOGRAPHY-000000?style=for-the-badge&logo=letsencrypt&logoColor=0eff39&labelColor=000000&color=03001a)
 ![Maven](https://img.shields.io/badge/Maven-000000?style=for-the-badge&logo=apachemaven&logoColor=ee6a2a&labelColor=000000&color=03001a)
-![GITHUB ACTION](https://img.shields.io/badge/GITHUB%20ACTION-000000?style=for-the-badge&logo=githubactions&logoColor=001fbc&labelColor=000000&color=03001a)
 ![Networking](https://img.shields.io/badge/Networking-000000?style=for-the-badge&logo=cloudflare&logoColor=26ff7d&labelColor=000000&color=03001a)
 
-```txt
-        ___________________      _____  _________     ________________ _________  ________
-        \__    ___/\_____  \    /     \ \_   ___ \   /  _  \__    ___/ \_   ___ \ \_____  \
-          |    |    /   |   \  /  \ /  \/    \  \/  /  /_\  \|    |    /    \  \/  /  ____/
-          |    |   /    |    \/    Y    \     \____/    |    \    |    \     \____/       \
-          |____|   \_______  /\____|__  /\______  /\____|__  /____|     \______  /\_______ \
-                           \/         \/        \/         \/                  \/         \/
-                                            Framework V2.0 (Java)
-```
-
-> **Author:** MatrixTM26 | **GitHub:** [MatrixTM26](https://github.com/MatrixTM26) | **Language:** Java 17
+> **_Author:_** _MatrixTM26_ **_GitHub:_** _[MatrixTM26](https://github.com/MatrixTM26)_
 
 ---
 
 ## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/circle-info.svg" width="18"> Overview
 
 TOMCAT C2 is a modular, enterprise-grade Command & Control framework written in Java. It supports multiple interface modes (Web, CLI, JavaFX GUI), mutual TLS authentication using PKCS12 keystores, AES-256-GCM encrypted agent communication, and multi-protocol session handling.
+
+### WEB UI
+
+<div align="center">
+    <img src="public/w1.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <hr />
+    <img src="public/w2.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <hr />
+    <img src="public/w3.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <hr />
+    <img src="public/w4.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+</div>
 
 ---
 
@@ -71,13 +76,13 @@ cd TOMCAT-C2-Framework
 
 #### Ready to use (Already compiled)
 
-> Ready to use build (created by github action and ready to run file). located at `output/tomcat-c2-2.0.0.jar`
+> Ready to use build (created by github action and ready to run file). located at `output/tomcat-c2.jar`
 
 ```bash
-java -jar output/tomcat-c2-2.0.0.jar
+java -jar output/tomcat-c2.jar
 ```
 
-[![Download JAR](https://img.shields.io/badge/Download%20Latest%20JAR-000000?style=for-the-badge&logo=electron&logoColor=07ff18&labelColor=000000&color=03001a)](https://raw.githubusercontent.com/MatrixTM26/TOMCAT-C2-Framework/dev/output/tomcat-c2-2.0.0.jar)
+[![Download JAR](https://img.shields.io/badge/Download%20Latest%20JAR-000000?style=for-the-badge&logo=electron&logoColor=07ff18&labelColor=000000&color=03001a)](https://raw.githubusercontent.com/MatrixTM26/TOMCAT-C2-Framework/dev/output/tomcat-c2.jar)
 
 #### Manual compile
 
@@ -116,13 +121,13 @@ mvn clean package -q
 
 ```bash
 # Web Panel Mode (Default)
-java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar
+java -jar target/tomcat-c2.jar
 
 # CLI Mode
-java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar -C
+java -jar target/tomcat-c2.jar -C
 
 # JavaFX GUI Mode
-java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar -G
+java -jar target/tomcat-c2.jar -G
 ```
 
 ---
@@ -132,18 +137,18 @@ java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar -G
 ### Initialize CA and Server Certificate
 
 ```bash
-java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar --init-certs
+java -jar target/tomcat-c2.jar --init-certs
 ```
 
 ### Generate Agent Certificates
 
 ```bash
 # Single Agent
-java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar \
+java -jar target/tomcat-c2.jar \
   -a myagent -ah 192.168.1.10 -ap 4444 -am
 
 # Multiple Agents
-java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar \
+java -jar target/tomcat-c2.jar \
   -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
 ```
 
@@ -182,9 +187,14 @@ java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar \
 
 ---
 
+## <img src="https://cdn.simpleicons.org/readme/ff0000" width="18"> Documentation
+
+- **Open:** [Sites](https://matrixtm26.github.io/TOMCAT-C2-Framework)
+
 ## <img src="https://cdn.simpleicons.org/github/ff0000" width="18"> Credit
 
 - **Author:** [@MatrixTM26](https://github.com/MatrixTM26)
+- **License:** [AGPL-V3](./LICENSE)
 
 ## <img src="https://cdn.simpleicons.org/githubsponsors/ff0000" width="18"> Support Me
 
@@ -194,4 +204,4 @@ java -jar target/tomcat-c2-2.0.0-jar-with-dependencies.jar \
 
 ---
 
-<p align="center">Copyright &copy;2023-2026 MatrixTM26 • All Rights Reserved</p>
+<p align="center">Copyright &copy;2023-2026 MatrixTM26 &middot; All Rights Reserved</p>
