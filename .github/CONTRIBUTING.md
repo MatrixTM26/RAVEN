@@ -47,8 +47,8 @@
 1. Clone your fork:
 
 ```bash
-    git clone https://github.com/MatrixTM26/TOMCAT-C2.git
-    cd TOMCAT-C2
+    git clone https://github.com/MatrixTM26/TOMCAT-C2-Framework.git
+    cd TOMCAT-C2-Framework
 ```
 
 1. Create a branch:
@@ -214,7 +214,7 @@ Benefits:
 
 - [GitHub](https://github.com/MatrixTM26)
 - [Email](mailto:anonymous999tm@gmail.com)
-- [Instagram](https://instagram.com/xtm26.xp)
+- [Instagram](https://instagram.com/matrixtm26.xp)
 
 ---
 

@@ -1,38 +1,34 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
-
+labels:
 ---
 
 **Describe the bug**
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+Explain how the issue can be reproduced.
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
+If applicable, add screenshots or paste terminal output to help explain your problem.
+Feel free to hide sensitive information like the URL of the target.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+**Potential cause or fix**
+Do you know what could be causing the problem or how to fix it?
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+**Environment:**
 
-**Additional context**
-Add any other context about the problem here.
+- OS: [e.g. Kali Rolling 2025.2]
+- Browser [e.g. Firefox 60.2]
+- OpenJDK version [e.g. 17]
+
+**Some Questions**
+
+- [ ] I am using the latest version of tools.
+- [ ] I installed the dependecies using `OpenJDK-21` instead of `OpenJDK-17`
+- [ ] I have read the documentation before submitting this issue.
+- [ ] I have checked the other issues to see if someone reported this before.
+
+**Other comments**
+Do you have something else to say?
