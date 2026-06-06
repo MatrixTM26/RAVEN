@@ -63,6 +63,11 @@ public final class ServerConfig {
         set("logging.max.entries", "1000");
         set("logging.file", "logs/tomcat-c2.log");
         set("logging.file.enabled", "false");
+        set("db.type", "none");
+        set("db.url", "");
+        set("db.name", "tomcat_c2");
+        set("db.user", "tomcat");
+        set("db.password", "tomcat");
         set("mode.interface", "web");
     }
 
@@ -291,5 +296,25 @@ public final class ServerConfig {
 
     private boolean bool(String K) {
         return Boolean.parseBoolean(Props.getProperty(K, "false").trim());
+    }
+
+    public String GetDbType() {
+        return str("db.type").toLowerCase();
+    }
+
+    public String GetDbUrl() {
+        return str("db.url");
+    }
+
+    public String GetDbName() {
+        return str("db.name");
+    }
+
+    public String GetDbUser() {
+        return str("db.user");
+    }
+
+    public String GetDbPassword() {
+        return str("db.password");
     }
 }
