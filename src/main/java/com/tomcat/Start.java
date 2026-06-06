@@ -283,8 +283,8 @@ public final class Start {
                 Agent Certificates:
                   -a / --gen-agent <id>     Generate single agent cert
                   -m / --gen-multi-agent    Generate multiple agent certs
-                    -c / --gen-agent-count  Count  (default: 10)
-                    -u / --gen-agent-prefix Prefix (default: agent)
+                  -c / --gen-agent-count    Count  (default: 10)
+                  -u / --gen-agent-prefix   Prefix (default: agent)
                   -l / --list-agents        List agents
                   -r / --revoke-agent <id>  Revoke agent cert
                   -ah / --agent-host        C2 host embedded in agent

