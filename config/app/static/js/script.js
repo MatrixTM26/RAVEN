@@ -169,9 +169,9 @@ function updateServerBtns() {
 
 function updateSphere() {
     let online = state.serverRunning;
-    let core = document.querySelector(".sphere-core");
+    let wrap = document.getElementById("sphere-wrap");
     let pulse = document.querySelector(".sphere-pulse");
-    if (core) core.classList.toggle("online", online);
+    if (wrap) wrap.classList.toggle("online", online);
     if (pulse) pulse.classList.toggle("active", online);
     let val = document.getElementById("sphere-val");
     if (val) {

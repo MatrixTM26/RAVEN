@@ -5,3 +5,5 @@ Certs/
 *.pem
 *.p12
 target/*.jar
+logs/
+*.log

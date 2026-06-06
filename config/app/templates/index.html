@@ -7,6 +7,9 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
         <title>TOMCAT C2 Framework</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Tourney:wght@400;600;700;900&display=swap" rel="stylesheet" />
         <link
             rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -385,39 +388,14 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="sphere-section">
-                                        <div class="sphere-wrap">
-                                            <div
-                                                class="sphere-core"
-                                                id="sphere-core"
-                                            ></div>
-                                            <div class="sphere-rings">
-                                                <div class="ring ring-1"></div>
-                                                <div class="ring ring-2"></div>
-                                                <div class="ring ring-3"></div>
-                                                <div class="ring ring-4"></div>
-                                                <div class="ring ring-5"></div>
-                                            </div>
-                                            <div
-                                                class="sphere-pulse"
-                                                id="sphere-pulse"
-                                            ></div>
+                                        <div class="sphere-wrap" id="sphere-wrap">
+                                            <img src="/static/svg/core.svg" class="core-svg" id="core-svg" alt="C2 Core" draggable="false" />
+                                            <div class="sphere-pulse" id="sphere-pulse"></div>
                                         </div>
                                         <div class="sphere-info">
-                                            <div class="sphere-label">
-                                                STATUS
-                                            </div>
-                                            <div
-                                                class="sphere-val"
-                                                id="sphere-val"
-                                            >
-                                                OFFLINE
-                                            </div>
-                                            <div
-                                                class="sphere-detail"
-                                                id="sphere-detail"
-                                            >
-                                                Server not running
-                                            </div>
+                                            <div class="sphere-label">STATUS</div>
+                                            <div class="sphere-val" id="sphere-val">OFFLINE</div>
+                                            <div class="sphere-detail" id="sphere-detail">Server not running</div>
                                         </div>
                                     </div>
                                     <button
