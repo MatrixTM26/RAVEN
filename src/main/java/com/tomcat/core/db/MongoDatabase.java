@@ -6,7 +6,6 @@ import com.mongodb.client.model.*;
 import com.tomcat.core.output.Logger;
 import com.tomcat.utils.ServerConfig;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.bson.Document;
 
 public final class MongoDatabase extends TeamDatabase {
@@ -14,7 +13,7 @@ public final class MongoDatabase extends TeamDatabase {
     private static final Gson GsonInst = new Gson();
 
     private final MongoClient Client;
-    private final MongoDatabase Db;
+    private final com.mongodb.client.MongoDatabase MongoDatabaseRef;
 
     private final MongoCollection<Document> ColLogs;
     private final MongoCollection<Document> ColCommands;
@@ -24,11 +23,11 @@ public final class MongoDatabase extends TeamDatabase {
     public MongoDatabase(ServerConfig Config) throws Exception {
         try {
             Client = MongoClients.create(Config.GetDbUrl());
-            Db = Client.getDatabase(Config.GetDbName());
-            ColLogs = Db.getCollection("tc2_logs");
-            ColCommands = Db.getCollection("tc2_commands");
-            ColSessions = Db.getCollection("tc2_sessions");
-            ColNotes = Db.getCollection("tc2_notes");
+            MongoDatabaseRef = Client.getDatabase(Config.GetDbName());
+            ColLogs = MongoDatabaseRef.getCollection("tc2_logs");
+            ColCommands = MongoDatabaseRef.getCollection("tc2_commands");
+            ColSessions = MongoDatabaseRef.getCollection("tc2_sessions");
+            ColNotes = MongoDatabaseRef.getCollection("tc2_notes");
             ColCommands.createIndex(Indexes.descending("created"));
             ColSessions.createIndex(Indexes.descending("created"));
             Logger.Info("MongoDB connected: " + Config.GetDbUrl() + "/" + Config.GetDbName());

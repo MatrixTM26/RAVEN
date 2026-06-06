@@ -124,7 +124,7 @@ public final class KeystoreLoader {
                 "pem-key",
                 PrivKey,
                 Password == null ? null : Password.toCharArray(),
-                Certs.toArray(new Certificate[0])
+                Certs.toArray(new java.security.cert.Certificate[0])
             );
             Logger.Verbose("PEM: loaded key + " + Certs.size() + " cert(s)");
         } else {
