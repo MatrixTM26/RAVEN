@@ -95,9 +95,10 @@ public final class Start {
         }
 
         String Interface = Config.GetInterfaceMode();
-        if (Args.contains("-C") || Args.contains("--cli-mode"))  Interface = "cli";
-        else if (Args.contains("-G") || Args.contains("--gui-mode"))  Interface = "gui";
-        else if (Args.contains("-W") || Args.contains("--web-mode"))  Interface = "web";
+        if (Args.contains("-C")  || Args.contains("--cli-mode"))        Interface = "cli";
+        else if (Args.contains("-G") || Args.contains("--gui-mode"))    Interface = "gui";
+        else if (Args.contains("-W") || Args.contains("--web-mode"))    Interface = "web";
+        else if (Args.contains("-TS")|| Args.contains("--teamserver"))  Interface = "teamserver";
 
         Logger.Info("Mode: " + Mode.name() + " | Interface: " + Interface.toUpperCase());
         StartInterface(Host, Port, Mode, Interface, Args);
