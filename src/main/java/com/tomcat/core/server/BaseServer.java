@@ -25,11 +25,6 @@ public abstract class BaseServer {
     private static final long PeekTimeout = 2000;
     private static final int RawIdleMs = 800;
     private static final int RawMaxWaitMs = 30_000;
-    private static final String AnsiStripPattern =
-        "\u001B(\u005B[;\u005C\u005Cd?]*[A-Za-z]|[=>]|\u005C(B|\u005C[\u005Cd*[ABCDEFGHJKSTfmnsul])" +
-        "|\u001B[\u005C\u005C\u005D()#;?]*(\u005Cd+;)*\u005Cd*[A-PRZcf-ntqry=><~]" +
-        "|[\r\u0007\u001B\u009B]\u005C[[\u005Cd;]*[A-Za-z]";
-
     protected final String Host;
     protected final int Port;
     protected final ListenerMode Mode;
