@@ -24,21 +24,13 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
-            - name: Validate Pages Directory
-              run: |
-                  if [ ! -d "./doc/" ]; then
-                    echo "ERROR: ./doc/pages directory not found!"
-                    exit 1
-                  fi
-                  echo "Pages directory found at ./doc/page, proceeding..."
-
             - name: Setup Pages
               uses: actions/configure-pages@v4
 
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3
               with:
-                  path: ./docs/
+                  path: ./doc/pages
 
             - name: Deploy to GitHub Pages
               id: deployment
