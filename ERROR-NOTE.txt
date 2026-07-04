@@ -1,0 +1,23 @@
+java -jar target\raven-3.0.0.jar -TSG
+
+  [INFO] Mode: MULTI | Interface: TEAMSERVER-GUI
+Jul 04, 2026 12:29:29 PM com.sun.javafx.application.PlatformImpl startup
+WARNING: Unsupported JavaFX configuration: classes were loaded from 'unnamed module @31f01d95'
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by com.sun.glass.utils.NativeLibLoader in an unnamed module (file:/C:/Users/anony/Desktop/NEW-PROJECT/RAVEN/target/raven-3.0.0.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+  [INFO] DB disabled ? using in-memory store
+Exception in Application start method
+  [ERROR] Fatal: Exception in Application start method
+
+java -jar target\raven-3.0.0.jar -G
+GUI terlalu bear dan tidak rapi/jebol melebihi ukuran layar
+
+CLI:
+ukuran border frame dari header di cli tidak menyesuaikan ukuran terminal terutama untuk windows (hanya work untuk linux dan termux)
+
+mengapa ukuran border frame dari header di cli tidak menyesuaikan ukuran terminal terutama untuk windows (hanya work untuk linux dan termux)
+
+
