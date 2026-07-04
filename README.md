@@ -27,7 +27,6 @@
 
 ## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/circle-info.svg" width="18"> Overview
 
-
 > [!IMPORTANT]
 > This project is currently under development and for some features it's maybe not fully implemented yet until we finish it all.
 
@@ -76,17 +75,17 @@
 ### UI OVERVIEW
 
 <div align="center">
-    <img src="doc/pages/public/w1.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w1.png" width="100%" height="auto" alt="RAVEN UI">
     <hr />
-    <img src="doc/pages/public/w2.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w2.png" width="100%" height="auto" alt="RAVEN UI">
     <hr />
-    <img src="doc/pages/public/w3.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w3.png" width="100%" height="auto" alt="RAVEN UI">
     <hr />
-    <img src="doc/pages/public/w4.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w4.png" width="100%" height="auto" alt="RAVEN UI">
     <hr />
-    <img src="doc/pages/public/w5.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w5.png" width="100%" height="auto" alt="RAVEN UI">
     <hr />
-    <img src="doc/pages/public/w6.png" width="100%" height="auto" alt="TOMCAT-C2 WEB UI">
+    <img src="doc/pages/public/w6.png" width="100%" height="auto" alt="RAVEN UI">
 </div>
 
 ---
@@ -138,10 +137,10 @@ cd RAVEN
 
 #### Ready to use (Already compiled)
 
-> Ready to use build (created by github action and ready to run file). located at `output/tomcat-c2.jar`
+> Ready to use build (created by github action and ready to run file). located at `output/raven.jar`
 
 ```bash
-java -jar output/tomcat-c2.jar
+java -jar output/raven.jar
 ```
 
 #### Manual compile
@@ -181,13 +180,13 @@ mvn clean package -q
 
 ```bash
 # Web Panel Mode (Default)
-java -jar target/tomcat-c2.jar
+java -jar target/raven.jar
 
 # CLI Mode
-java -jar target/tomcat-c2.jar -C
+java -jar target/raven.jar -C
 
 # JavaFX GUI Mode
-java -jar target/tomcat-c2.jar -G
+java -jar target/raven.jar -G
 ```
 
 ---
@@ -197,17 +196,17 @@ java -jar target/tomcat-c2.jar -G
 ### Initialize CA and Server Certificate
 
 ```bash
-java -jar target/tomcat-c2.jar --init-certs
+java -jar target/raven.jar --init-certs
 ```
 
 ### Generate Agent Certificates
 
 ```bash
 # Single Agent
-java -jar target/tomcat-c2.jar -a myagent -ah 192.168.1.10 -ap 4444 -am
+java -jar target/raven.jar -a myagent -ah 192.168.1.10 -ap 4444 -am
 
 # Multiple Agents
-java -jar target/tomcat-c2.jar -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
+java -jar target/raven.jar -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
 ```
 
 ---
@@ -224,10 +223,10 @@ java -jar target/tomcat-c2.jar -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
 
 ```bash
 # Show help
-java -jar tomcat-c2.jar -h
+java -jar raven.jar -h
 
 # Start with custom host and port
-java -jar tomcat-c2.jar -s 0.0.0.0 -p 4444
+java -jar raven.jar -s 0.0.0.0 -p 4444
 ```
 
 - LISTENER MODE
@@ -243,13 +242,13 @@ java -jar tomcat-c2.jar -s 0.0.0.0 -p 4444
 | `-F`   | `--fmtls`   | Full mTLS + HTTPS beacon   |
 
 ```bash
-java -jar tomcat-c2.jar -A   # multi-protocol
-java -jar tomcat-c2.jar -R   # raw TCP
-java -jar tomcat-c2.jar -b   # HTTP beacon
-java -jar tomcat-c2.jar -B   # HTTPS beacon
-java -jar tomcat-c2.jar -T   # TLS
-java -jar tomcat-c2.jar -M   # mTLS
-java -jar tomcat-c2.jar -F   # full mTLS + HTTPS beacon
+java -jar raven.jar -A   # multi-protocol
+java -jar raven.jar -R   # raw TCP
+java -jar raven.jar -b   # HTTP beacon
+java -jar raven.jar -B   # HTTPS beacon
+java -jar raven.jar -T   # TLS
+java -jar raven.jar -M   # mTLS
+java -jar raven.jar -F   # full mTLS + HTTPS beacon
 ```
 
 - INTERFACE MODE
@@ -265,17 +264,17 @@ java -jar tomcat-c2.jar -F   # full mTLS + HTTPS beacon
 | `-tp <port>` | `--teamserver-port <port>` | TeamServer API port (default: `server.properties`) |
 
 ```bash
-java -jar tomcat-c2.jar -C              # CLI mode
-java -jar tomcat-c2.jar -G              # JavaFX GUI mode
-java -jar tomcat-c2.jar -W              # Web Panel mode
-java -jar tomcat-c2.jar -TSC            # TeamServer CLI
-java -jar tomcat-c2.jar -TSW -tp 5001   # TeamServer Web on port 5001
-java -jar tomcat-c2.jar -TSG            # TeamServer GUI
+java -jar raven.jar -C              # CLI mode
+java -jar raven.jar -G              # JavaFX GUI mode
+java -jar raven.jar -W              # Web Panel mode
+java -jar raven.jar -TSC            # TeamServer CLI
+java -jar raven.jar -TSW -tp 5001   # TeamServer Web on port 5001
+java -jar raven.jar -TSG            # TeamServer GUI
 
 # Combine listener + interface
-java -jar tomcat-c2.jar -M -C -s 0.0.0.0 -p 4444   # mTLS + CLI
-java -jar tomcat-c2.jar -A -W -s 0.0.0.0 -p 4444   # multi + Web Panel
-java -jar tomcat-c2.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
+java -jar raven.jar -M -C -s 0.0.0.0 -p 4444   # mTLS + CLI
+java -jar raven.jar -A -W -s 0.0.0.0 -p 4444   # multi + Web Panel
+java -jar raven.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
 ```
 
 - CLI COMMANDS
@@ -328,25 +327,25 @@ java -jar tomcat-c2.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
 
 ```bash
 # Initialize CA + server certificate
-java -jar tomcat-c2.jar -i
+java -jar raven.jar -i
 
 # Initialize with specific server host
-java -jar tomcat-c2.jar -i -s 192.168.1.10
+java -jar raven.jar -i -s 192.168.1.10
 
 # Generate single agent cert
-java -jar tomcat-c2.jar -a myagent -ah 192.168.1.10 -ap 4444
+java -jar raven.jar -a myagent -ah 192.168.1.10 -ap 4444
 
 # Generate single agent cert with mTLS + persistence + hidden console
-java -jar tomcat-c2.jar -a myagent -ah 192.168.1.10 -ap 4444 -am -ps -hc
+java -jar raven.jar -a myagent -ah 192.168.1.10 -ap 4444 -am -ps -hc
 
 # Generate 10 agent certs with prefix "agent"
-java -jar tomcat-c2.jar -m -c 10 -u agent -ah 192.168.1.10 -ap 4444 -am
+java -jar raven.jar -m -c 10 -u agent -ah 192.168.1.10 -ap 4444 -am
 
 # List all generated agents
-java -jar tomcat-c2.jar -l
+java -jar raven.jar -l
 
 # Revoke agent certificate
-java -jar tomcat-c2.jar -r myagent
+java -jar raven.jar -r myagent
 ```
 
 - OPERATOR MANAGEMENT
@@ -362,19 +361,19 @@ java -jar tomcat-c2.jar -r myagent
 
 ```bash
 # Add operator with default role (OPERATOR)
-java -jar tomcat-c2.jar -AO -u op1 -pw securepass
+java -jar raven.jar -AO -u op1 -pw securepass
 
 # Add operator with specific role
-java -jar tomcat-c2.jar -AO -u op1 -pw securepass -r ADMIN
+java -jar raven.jar -AO -u op1 -pw securepass -r ADMIN
 
 # Remove operator
-java -jar tomcat-c2.jar -RO -u op1
+java -jar raven.jar -RO -u op1
 
 # Update operator role
-java -jar tomcat-c2.jar -OP -u op1 -r VIEWER
+java -jar raven.jar -OP -u op1 -r VIEWER
 
 # List all available roles
-java -jar tomcat-c2.jar -OP
+java -jar raven.jar -OP
 ```
 
 > OPERATOR ROLES
