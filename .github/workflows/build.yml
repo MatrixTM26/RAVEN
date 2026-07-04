@@ -2,7 +2,7 @@ name: Build RAVEN Framework
 
 on:
     push:
-        branches: ["main", "dev"]
+        branches: ["main"]
     workflow_dispatch:
 
 permissions:
