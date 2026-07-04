@@ -3,7 +3,6 @@ package com.raven.core.session;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class SessionManager {
 
@@ -26,8 +25,7 @@ public class SessionManager {
         if (S != null) {
             try {
                 S.GetSocket().close();
-            } catch (Exception Ignored) {
-            }
+            } catch (Exception Ignored) {}
         }
     }
 
@@ -40,17 +38,18 @@ public class SessionManager {
     }
 
     public int CountByType(Session.Type Type) {
-        return (int) Sessions.values().stream().filter(S -> S.GetSessionType() == Type).count();
+        return (int) Sessions.values()
+            .stream()
+            .filter(S -> S.GetSessionType() == Type)
+            .count();
     }
 
     public void Clear() {
-        Sessions.values()
-                .forEach(S -> {
-                    try {
-                        S.GetSocket().close();
-                    } catch (Exception Ignored) {
-                    }
-                });
+        Sessions.values().forEach(S -> {
+            try {
+                S.GetSocket().close();
+            } catch (Exception Ignored) {}
+        });
         Sessions.clear();
     }
 

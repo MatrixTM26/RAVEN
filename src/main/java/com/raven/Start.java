@@ -1,9 +1,5 @@
 package com.raven;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
-
 import com.raven.core.crypto.CertificateManager;
 import com.raven.core.db.TeamDatabase;
 import com.raven.core.db.TeamDatabase.OperatorRole;
@@ -17,6 +13,9 @@ import com.raven.iface.banner.TBanner;
 import com.raven.utils.Helper;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.SystemHelper;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
 public final class Start {
 
@@ -24,12 +23,7 @@ public final class Start {
 
     public static void main(String[] Args) {
         Config = new ServerConfig();
-        Logger.Configure(
-                Config.GetLoggingLevel(),
-                Config.IsVerbose(),
-                Config.IsFileLoggingEnabled(),
-                Config.GetLogFile(),
-                Config.GetMaxLogEntries());
+        Logger.Configure(Config.GetLoggingLevel(), Config.IsVerbose(), Config.IsFileLoggingEnabled(), Config.GetLogFile(), Config.GetMaxLogEntries());
         ProcessArgs(Arrays.asList(Args));
     }
 
@@ -90,9 +84,7 @@ public final class Start {
         ShowBanner();
 
         String Host = Helper.Arg(Args, "-s", "--host", Config.GetServerHost());
-        int Port = Helper.ParseInt(
-                Helper.Arg(Args, "-p", "--port", String.valueOf(Config.GetServerPort())),
-                Config.GetServerPort());
+        int Port = Helper.ParseInt(Helper.Arg(Args, "-p", "--port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
         ListenerMode Mode = ResolveMode(Args);
 
         if (Mode.RequiresTls() && !Files.exists(Paths.get(Config.GetKeystorePath()))) {
@@ -112,38 +104,24 @@ public final class Start {
     }
 
     private static ListenerMode ResolveMode(List<String> Args) {
-        if (Args.contains("--fmtls") || Args.contains("-F"))
-            return ListenerMode.FMTLS;
-        if (Args.contains("--mtls") || Args.contains("-T"))
-            return ListenerMode.MTLS;
-        if (Args.contains("--tls"))
-            return ListenerMode.TLS;
-        if (Args.contains("--https"))
-            return ListenerMode.HTTPS;
-        if (Args.contains("--http"))
-            return ListenerMode.HTTP;
-        if (Args.contains("--raw") || Args.contains("-R"))
-            return ListenerMode.RAW;
-        if (Args.contains("--multi") || Args.contains("-M"))
-            return ListenerMode.MULTI;
+        if (Args.contains("--fmtls") || Args.contains("-F")) return ListenerMode.FMTLS;
+        if (Args.contains("--mtls") || Args.contains("-T")) return ListenerMode.MTLS;
+        if (Args.contains("--tls")) return ListenerMode.TLS;
+        if (Args.contains("--https")) return ListenerMode.HTTPS;
+        if (Args.contains("--http")) return ListenerMode.HTTP;
+        if (Args.contains("--raw") || Args.contains("-R")) return ListenerMode.RAW;
+        if (Args.contains("--multi") || Args.contains("-M")) return ListenerMode.MULTI;
         return ListenerMode.FromString(Config.GetServerMode());
     }
 
     private static String ResolveInterface(List<String> Args) {
-        if (Args.contains("--teamclient") || Args.contains("-TC"))
-            return "teamclient";
-        if (Args.contains("--teamserver-cli") || Args.contains("-TSC"))
-            return "teamserver-cli";
-        if (Args.contains("--teamserver-web") || Args.contains("-TSW"))
-            return "teamserver-web";
-        if (Args.contains("--teamserver-gui") || Args.contains("-TSG"))
-            return "teamserver-gui";
-        if (Args.contains("--cli-mode") || Args.contains("-C"))
-            return "cli";
-        if (Args.contains("--gui-mode") || Args.contains("-G"))
-            return "gui";
-        if (Args.contains("--web-mode") || Args.contains("-W"))
-            return "web";
+        if (Args.contains("--teamclient") || Args.contains("-TC")) return "teamclient";
+        if (Args.contains("--teamserver-cli") || Args.contains("-TSC")) return "teamserver-cli";
+        if (Args.contains("--teamserver-web") || Args.contains("-TSW")) return "teamserver-web";
+        if (Args.contains("--teamserver-gui") || Args.contains("-TSG")) return "teamserver-gui";
+        if (Args.contains("--cli-mode") || Args.contains("-C")) return "cli";
+        if (Args.contains("--gui-mode") || Args.contains("-G")) return "gui";
+        if (Args.contains("--web-mode") || Args.contains("-W")) return "web";
         return Config.GetInterfaceMode();
     }
 
@@ -153,18 +131,14 @@ public final class Start {
                 case "cli" -> new CLI(Config).Run(Host, Port, Mode);
                 case "teamclient" -> {
                     String TsHost = Helper.Arg(Args, "-ts", "--ts-host", "127.0.0.1");
-                    int TsPort = Helper.ParseInt(
-                            Helper.Arg(Args, "-tp", "--ts-port", String.valueOf(Config.GetTeamServerPort())),
-                            Config.GetTeamServerPort());
+                    int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "--ts-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new com.raven.iface.TeamClient(Config, TsHost, TsPort).Run();
                 }
                 case "teamserver-cli" -> new CLI(Config).RunTeamServer(Host, Port, Mode);
                 case "gui" -> GUI.Launch(Config);
                 case "teamserver-gui" -> GUI.LaunchTeamServer(Config);
                 case "teamserver-web" -> {
-                    int TsPort = Helper.ParseInt(
-                            Helper.Arg(Args, "-tp", "--teamserver-port", String.valueOf(Config.GetTeamServerPort())),
-                            Config.GetTeamServerPort());
+                    int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "--teamserver-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new TeamServer(Config, Mode).Run(Config.GetWebHost(), TsPort);
                     Thread.currentThread().join();
                 }
@@ -196,9 +170,7 @@ public final class Start {
         try {
             AssertCaExists();
             String Host = Helper.Arg(Args, "-ah", "--agent-host", Config.GetServerHost());
-            int Port = Helper.ParseInt(
-                    Helper.Arg(Args, "-ap", "--agent-port", String.valueOf(Config.GetServerPort())),
-                    Config.GetServerPort());
+            int Port = Helper.ParseInt(Helper.Arg(Args, "-ap", "--agent-port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
             boolean Mtls = Args.contains("-am") || Args.contains("--agent-mtls");
             boolean Pers = Args.contains("-ps") || Args.contains("--persistent");
             boolean Hide = Args.contains("-hc") || Args.contains("--hide-console");
@@ -236,8 +208,8 @@ public final class Start {
                 return;
             }
             Files.list(AgentDir)
-                    .filter(P -> P.toString().endsWith(".p12"))
-                    .forEach(P -> Logger.Info("Agent: " + P.getFileName()));
+                .filter(P -> P.toString().endsWith(".p12"))
+                .forEach(P -> Logger.Info("Agent: " + P.getFileName()));
         } catch (Exception E) {
             Logger.Error("List agents failed: " + E.getMessage());
         }
@@ -251,15 +223,7 @@ public final class Start {
         }
     }
 
-    private static void DeployAgent(
-            String Id,
-            String CertPath,
-            String Host,
-            int Port,
-            boolean Mtls,
-            boolean Persist,
-            boolean HideCon,
-            String Lang) throws IOException {
+    private static void DeployAgent(String Id, String CertPath, String Host, int Port, boolean Mtls, boolean Persist, boolean HideCon, String Lang) throws IOException {
         String AgentDir = "IMPLANT/" + Id.toUpperCase();
         Files.createDirectories(Paths.get(AgentDir));
 
@@ -268,12 +232,11 @@ public final class Start {
         Files.copy(Paths.get(Config.GetCaPath()), Paths.get(AgentDir + "/ca.p12"), StandardCopyOption.REPLACE_EXISTING);
 
         // Generate agent source
-        String LangNorm = (Lang != null && !Lang.isEmpty()) ? Lang.toLowerCase() : "java";
+        String LangNorm = Lang != null && !Lang.isEmpty() ? Lang.toLowerCase() : "java";
         String SrcFile = AgentDir + "/" + com.raven.utils.AgentSourceGen.Filename(LangNorm);
         String SrcCode = com.raven.utils.AgentSourceGen.Generate(LangNorm, Id, Host, Port, Mtls, Persist, HideCon);
         Files.writeString(Paths.get(SrcFile), SrcCode);
-        if (LangNorm.equals("bash") || LangNorm.equals("sh"))
-            Paths.get(SrcFile).toFile().setExecutable(true);
+        if (LangNorm.equals("bash") || LangNorm.equals("sh")) Paths.get(SrcFile).toFile().setExecutable(true);
 
         // README
         try (PrintWriter W = new PrintWriter(AgentDir + "/README.txt")) {
@@ -289,8 +252,7 @@ public final class Start {
                 case "java" -> {
                     W.println("  javac " + com.raven.utils.AgentSourceGen.Filename(LangNorm));
                     W.println("  java RavenAgent");
-                    if (Mtls)
-                        W.println("  (keep agent.p12 + ca.p12 in same dir)");
+                    if (Mtls) W.println("  (keep agent.p12 + ca.p12 in same dir)");
                 }
                 case "python", "py" -> W.println("  python3 agent.py");
                 case "go" -> {
@@ -311,8 +273,7 @@ public final class Start {
         String Pass = Helper.Arg(Args, "-pw", "--password", null);
         String Role = Helper.Arg(Args, "-r", "--role", "OPERATOR");
         if (User == null || Pass == null) {
-            Logger.Error(
-                    "Usage: -AO | --add-operator -u | --username <user> -pw | --password <pass> [-r | --role ROLE]");
+            Logger.Error("Usage: -AO | --add-operator -u | --username <user> -pw | --password <pass> [-r | --role ROLE]");
             return;
         }
         if (Pass.length() < 8) {
@@ -321,11 +282,8 @@ public final class Start {
         }
         TeamDatabase Db = TeamDatabase.Connect(Config);
         OperatorRole R = OperatorRole.FromString(Role);
-        if (Db.CreateOperator(User, TeamDatabase.HashPassword(Pass), R))
-            Logger.Success(
-                    "Operator created: " + User + " [" + R + "] — " + R.PermissionString());
-        else
-            Logger.Error("Failed — username may already exist");
+        if (Db.CreateOperator(User, TeamDatabase.HashPassword(Pass), R)) Logger.Success("Operator created: " + User + " [" + R + "] — " + R.PermissionString());
+        else Logger.Error("Failed — username may already exist");
         Db.Close();
     }
 
@@ -340,10 +298,8 @@ public final class Start {
             return;
         }
         TeamDatabase Db = TeamDatabase.Connect(Config);
-        if (Db.DeleteOperator(User))
-            Logger.Success("Operator removed: " + User);
-        else
-            Logger.Error("Operator not found: " + User);
+        if (Db.DeleteOperator(User)) Logger.Success("Operator removed: " + User);
+        else Logger.Error("Operator not found: " + User);
         Db.Close();
     }
 
@@ -352,8 +308,7 @@ public final class Start {
         String Role = Helper.Arg(Args, "-r", "--role", null);
         if (User == null && Role == null) {
             Logger.Info("Available roles:");
-            for (OperatorRole R : OperatorRole.values())
-                Logger.Info("  " + R.name() + " — " + R.PermissionString());
+            for (OperatorRole R : OperatorRole.values()) Logger.Info("  " + R.name() + " — " + R.PermissionString());
             return;
         }
         if (User == null || Role == null) {
@@ -366,11 +321,8 @@ public final class Start {
         }
         TeamDatabase Db = TeamDatabase.Connect(Config);
         OperatorRole R = OperatorRole.FromString(Role);
-        if (Db.UpdateOperatorRole(User, R))
-            Logger.Success(
-                    "Role updated: " + User + " → " + R + " — " + R.PermissionString());
-        else
-            Logger.Error("Failed to update role for: " + User);
+        if (Db.UpdateOperatorRole(User, R)) Logger.Success("Role updated: " + User + " → " + R + " — " + R.PermissionString());
+        else Logger.Error("Failed to update role for: " + User);
         Db.Close();
     }
 

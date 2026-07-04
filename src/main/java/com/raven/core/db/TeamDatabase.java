@@ -1,9 +1,8 @@
 package com.raven.core.db;
 
-import java.util.*;
-
 import com.raven.core.output.Logger;
 import com.raven.utils.ServerConfig;
+import java.util.*;
 
 public abstract class TeamDatabase {
 
@@ -72,8 +71,7 @@ public abstract class TeamDatabase {
         }
 
         public static OperatorRole FromString(String S) {
-            if (S == null)
-                return MEMBER;
+            if (S == null) return MEMBER;
             return switch (S.trim().toUpperCase()) {
                 case "SUPER", "SUPER_ADMIN", "SUPERADMIN" -> SUPER;
                 case "ADMIN" -> ADMIN;
@@ -146,8 +144,7 @@ public abstract class TeamDatabase {
             java.security.MessageDigest Md = java.security.MessageDigest.getInstance("SHA-256");
             byte[] Hash = Md.digest((Password + "RAVEN-SALT").getBytes("UTF-8"));
             StringBuilder Hex = new StringBuilder();
-            for (byte B : Hash)
-                Hex.append(String.format("%02x", B));
+            for (byte B : Hash) Hex.append(String.format("%02x", B));
             return Hex.toString();
         } catch (Exception E) {
             throw new RuntimeException("Hash failed: " + E.getMessage());

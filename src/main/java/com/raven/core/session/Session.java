@@ -218,10 +218,8 @@ public class Session {
     }
 
     public String GetDisplayName() {
-        if (CertCn != null && !CertCn.equals("N/A") && !CertCn.isBlank())
-            return CertCn.toUpperCase();
-        if (AgentName != null && !AgentName.isBlank() && !AgentName.equals("Unknown"))
-            return AgentName.toUpperCase();
+        if (CertCn != null && !CertCn.equals("N/A") && !CertCn.isBlank()) return CertCn.toUpperCase();
+        if (AgentName != null && !AgentName.isBlank() && !AgentName.equals("Unknown")) return AgentName.toUpperCase();
         return "AGENT-" + Id;
     }
 }

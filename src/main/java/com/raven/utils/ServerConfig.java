@@ -81,8 +81,7 @@ public final class ServerConfig {
 
     private void LoadFromFile(String Path) {
         File F = new File(Path);
-        if (!F.exists())
-            return;
+        if (!F.exists()) return;
         try (InputStream In = new FileInputStream(F)) {
             Props.load(In);
         } catch (IOException E) {

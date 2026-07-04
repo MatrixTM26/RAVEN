@@ -1,5 +1,7 @@
 package com.raven.core.crypto;
 
+import com.raven.core.output.Logger;
+import com.raven.utils.ServerConfig;
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.*;
@@ -15,9 +17,6 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-
-import com.raven.core.output.Logger;
-import com.raven.utils.ServerConfig;
 
 public final class CertificateManager {
 
@@ -37,12 +36,7 @@ public final class CertificateManager {
     }
 
     private void EnsureDirs() {
-        for (String Dir : new String[] {
-                Config.GetAgentCertDir(),
-                Paths.get(Config.GetKeystorePath()).getParent().toString(),
-                Paths.get(Config.GetCaPath()).getParent().toString(),
-                Paths.get(Config.GetTruststorePath()).getParent().toString(),
-        }) {
+        for (String Dir : new String[] { Config.GetAgentCertDir(), Paths.get(Config.GetKeystorePath()).getParent().toString(), Paths.get(Config.GetCaPath()).getParent().toString(), Paths.get(Config.GetTruststorePath()).getParent().toString() }) {
             try {
                 Files.createDirectories(Paths.get(Dir));
             } catch (IOException E) {
@@ -59,15 +53,7 @@ public final class CertificateManager {
     }
 
     public SSLContext BuildSslContext(boolean NeedClientAuth) throws Exception {
-        SSLContext Ctx = KeystoreLoader.BuildSslContext(
-                Config.GetKeystorePath(),
-                Config.GetKeystoreType(),
-                Config.GetKeystorePassword(),
-                Config.GetTruststorePath(),
-                Config.GetTruststoreType(),
-                Config.GetTruststorePassword(),
-                Config.GetTlsProtocol(),
-                NeedClientAuth);
+        SSLContext Ctx = KeystoreLoader.BuildSslContext(Config.GetKeystorePath(), Config.GetKeystoreType(), Config.GetKeystorePassword(), Config.GetTruststorePath(), Config.GetTruststoreType(), Config.GetTruststorePassword(), Config.GetTlsProtocol(), NeedClientAuth);
         Logger.Verbose("SSLContext built — clientAuth=" + NeedClientAuth);
         return Ctx;
     }
@@ -84,12 +70,8 @@ public final class CertificateManager {
                 String Alias = FirstAlias(CaKs);
                 CaPrivateKey = (PrivateKey) CaKs.getKey(Alias, CaPass.toCharArray());
                 CaCertificate = (X509Certificate) CaKs.getCertificate(Alias);
-                CaX500Name = X500Name.getInstance(
-                        org.bouncycastle.asn1.ASN1Sequence.fromByteArray(
-                                CaCertificate.getSubjectX500Principal().getEncoded()));
-                if (CaPrivateKey == null)
-                    throw new KeyStoreException(
-                            "CA keystore has no private key — " + "ensure cert.ca.type matches the file format");
+                CaX500Name = X500Name.getInstance(org.bouncycastle.asn1.ASN1Sequence.fromByteArray(CaCertificate.getSubjectX500Principal().getEncoded()));
+                if (CaPrivateKey == null) throw new KeyStoreException("CA keystore has no private key — " + "ensure cert.ca.type matches the file format");
                 Logger.Verbose("CA loaded — " + CaCertificate.getSubjectX500Principal());
                 return;
             } catch (Exception E) {
@@ -103,30 +85,15 @@ public final class CertificateManager {
             Kpg.initialize(CaKeySize);
             KeyPair Pair = Kpg.generateKeyPair();
             CaPrivateKey = Pair.getPrivate();
-            CaX500Name = BuildDn(
-                    Config.GetCaDnCn(),
-                    Config.GetCaDnO(),
-                    Config.GetCaDnOu(),
-                    Config.GetCaDnL(),
-                    Config.GetCaDnSt(),
-                    Config.GetCaDnC());
+            CaX500Name = BuildDn(Config.GetCaDnCn(), Config.GetCaDnO(), Config.GetCaDnOu(), Config.GetCaDnL(), Config.GetCaDnSt(), Config.GetCaDnC());
 
             Date NotBefore = new Date();
             Date NotAfter = DateFromNow(Config.GetCaValidityDays());
             BigInteger Serial = RandomSerial();
 
-            X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(
-                    CaX500Name,
-                    Serial,
-                    NotBefore,
-                    NotAfter,
-                    CaX500Name,
-                    Pair.getPublic());
+            X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(CaX500Name, Serial, NotBefore, NotAfter, CaX500Name, Pair.getPublic());
             Builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(true));
-            Builder.addExtension(
-                    Extension.keyUsage,
-                    true,
-                    new KeyUsage(KeyUsage.keyCertSign | KeyUsage.cRLSign | KeyUsage.digitalSignature));
+            Builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.keyCertSign | KeyUsage.cRLSign | KeyUsage.digitalSignature));
 
             ContentSigner Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
             CaCertificate = new JcaX509CertificateConverter().getCertificate(Builder.build(Signer));
@@ -151,14 +118,7 @@ public final class CertificateManager {
                 KeyStore Ks = KeystoreLoader.Load(KsPath, KsType, KsPass);
                 String Alias = FirstAlias(Ks);
                 PrivateKey Key = (PrivateKey) Ks.getKey(Alias, KsPass.toCharArray());
-                if (Key == null)
-                    throw new KeyStoreException(
-                            "Server keystore has no private key — " +
-                                    "ensure cert.keystore.type matches the actual file format (" +
-                                    KsType +
-                                    " specified, path=" +
-                                    KsPath +
-                                    ")");
+                if (Key == null) throw new KeyStoreException("Server keystore has no private key — " + "ensure cert.keystore.type matches the actual file format (" + KsType + " specified, path=" + KsPath + ")");
                 Logger.Verbose("Server keystore loaded from " + KsPath);
                 return;
             } catch (Exception E) {
@@ -171,37 +131,20 @@ public final class CertificateManager {
             KeyPairGenerator Kpg = KeyPairGenerator.getInstance("RSA");
             Kpg.initialize(LeafKeySize);
             KeyPair Pair = Kpg.generateKeyPair();
-            X500Name Subject = BuildDn(
-                    Config.GetDnCn(),
-                    Config.GetDnO(),
-                    Config.GetDnOu(),
-                    Config.GetDnL(),
-                    Config.GetDnSt(),
-                    Config.GetDnC());
+            X500Name Subject = BuildDn(Config.GetDnCn(), Config.GetDnO(), Config.GetDnOu(), Config.GetDnL(), Config.GetDnSt(), Config.GetDnC());
 
             Date NotBefore = new Date();
             Date NotAfter = DateFromNow(Config.GetServerValidityDays());
             BigInteger Serial = RandomSerial();
 
-            X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(
-                    CaX500Name,
-                    Serial,
-                    NotBefore,
-                    NotAfter,
-                    Subject,
-                    Pair.getPublic());
+            X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(CaX500Name, Serial, NotBefore, NotAfter, Subject, Pair.getPublic());
             Builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
-            Builder.addExtension(
-                    Extension.keyUsage,
-                    true,
-                    new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
+            Builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
             Builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(KeyPurposeId.id_kp_serverAuth));
 
             GeneralNamesBuilder San = new GeneralNamesBuilder();
             San.addName(new GeneralName(GeneralName.dNSName, "localhost"));
-            if (!ServerHost.equals("0.0.0.0") && !ServerHost.isEmpty())
-                San.addName(
-                        new GeneralName(GeneralName.iPAddress, ServerHost));
+            if (!ServerHost.equals("0.0.0.0") && !ServerHost.isEmpty()) San.addName(new GeneralName(GeneralName.iPAddress, ServerHost));
             Builder.addExtension(Extension.subjectAlternativeName, false, San.build());
 
             ContentSigner Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
@@ -225,51 +168,29 @@ public final class CertificateManager {
             return AgentPath;
         }
 
-        if (CaCertificate == null || CaPrivateKey == null)
-            throw new IllegalStateException(
-                    "CA not loaded — call Initialize() first");
+        if (CaCertificate == null || CaPrivateKey == null) throw new IllegalStateException("CA not loaded — call Initialize() first");
 
         Logger.Info("Generating agent certificate: " + AgentName);
         try {
             KeyPairGenerator Kpg = KeyPairGenerator.getInstance("RSA");
             Kpg.initialize(LeafKeySize);
             KeyPair Pair = Kpg.generateKeyPair();
-            X500Name Subject = BuildDn(
-                    AgentName,
-                    Config.GetDnO(),
-                    "C2Agents",
-                    Config.GetDnL(),
-                    Config.GetDnSt(),
-                    Config.GetDnC());
+            X500Name Subject = BuildDn(AgentName, Config.GetDnO(), "C2Agents", Config.GetDnL(), Config.GetDnSt(), Config.GetDnC());
 
             Date NotBefore = new Date();
             Date NotAfter = DateFromNow(Config.GetAgentValidityDays());
             BigInteger Serial = RandomSerial();
 
-            X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(
-                    CaX500Name,
-                    Serial,
-                    NotBefore,
-                    NotAfter,
-                    Subject,
-                    Pair.getPublic());
+            X509v3CertificateBuilder Builder = new JcaX509v3CertificateBuilder(CaX500Name, Serial, NotBefore, NotAfter, Subject, Pair.getPublic());
             Builder.addExtension(Extension.basicConstraints, true, new BasicConstraints(false));
-            Builder.addExtension(
-                    Extension.keyUsage,
-                    true,
-                    new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
+            Builder.addExtension(Extension.keyUsage, true, new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment));
             Builder.addExtension(Extension.extendedKeyUsage, true, new ExtendedKeyUsage(KeyPurposeId.id_kp_clientAuth));
 
             ContentSigner Signer = new JcaContentSignerBuilder(SignAlgorithm).build(CaPrivateKey);
             X509Certificate Cert = new JcaX509CertificateConverter().getCertificate(Builder.build(Signer));
             Cert.verify(CaCertificate.getPublicKey());
 
-            SaveP12(
-                    AgentPath,
-                    Config.GetKeystorePassword(),
-                    "agent",
-                    Pair.getPrivate(),
-                    new X509Certificate[] { Cert, CaCertificate });
+            SaveP12(AgentPath, Config.GetKeystorePassword(), "agent", Pair.getPrivate(), new X509Certificate[] { Cert, CaCertificate });
             ExportPem(AgentPath.replace(".p12", ".pem"), Cert, Pair.getPrivate());
             AddToTruststore(Cert, AgentName);
             Logger.Success("Agent cert created: " + AgentPath);
@@ -283,8 +204,7 @@ public final class CertificateManager {
         for (String Ext : new String[] { ".p12", ".pem" }) {
             String Path = Config.GetAgentCertDir() + "/Agent-" + AgentName + Ext;
             boolean Deleted = Files.deleteIfExists(Paths.get(Path));
-            if (Deleted)
-                Logger.Info("Agent cert revoked: " + Path);
+            if (Deleted) Logger.Info("Agent cert revoked: " + Path);
         }
         RemoveFromTruststore("Agent-" + AgentName);
     }
@@ -310,8 +230,7 @@ public final class CertificateManager {
 
     private void RemoveFromTruststore(String Alias) throws Exception {
         String TsPath = Config.GetTruststorePath();
-        if (!Files.exists(Paths.get(TsPath)))
-            return;
+        if (!Files.exists(Paths.get(TsPath))) return;
         try {
             KeyStore Ts = KeystoreLoader.Load(TsPath, Config.GetTruststoreType(), Config.GetTruststorePassword());
             if (Ts.containsAlias(Alias)) {
@@ -324,8 +243,7 @@ public final class CertificateManager {
         }
     }
 
-    private void SaveP12(String Path, String Password, String Alias, PrivateKey Key, X509Certificate[] Chain)
-            throws Exception {
+    private void SaveP12(String Path, String Password, String Alias, PrivateKey Key, X509Certificate[] Chain) throws Exception {
         Files.createDirectories(Paths.get(Path).getParent());
         KeyStore Ks = EmptyPkcs12();
         Ks.setKeyEntry(Alias, Key, Password.toCharArray(), Chain);
@@ -366,8 +284,7 @@ public final class CertificateManager {
 
     private static String FirstAlias(KeyStore Ks) throws KeyStoreException {
         Enumeration<String> Aliases = Ks.aliases();
-        if (!Aliases.hasMoreElements())
-            throw new KeyStoreException("Keystore is empty — no aliases found");
+        if (!Aliases.hasMoreElements()) throw new KeyStoreException("Keystore is empty — no aliases found");
         return Aliases.nextElement();
     }
 

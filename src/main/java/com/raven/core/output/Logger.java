@@ -1,5 +1,6 @@
 package com.raven.core.output;
 
+import com.raven.utils.AnsiColor;
 import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDateTime;
@@ -7,12 +8,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import com.raven.utils.AnsiColor;
-
 public final class Logger {
 
     public enum Level {
-        VERBOSE, DEBUG, INFO, WARN, ERROR
+        VERBOSE,
+        DEBUG,
+        INFO,
+        WARN,
+        ERROR,
     }
 
     private static final DateTimeFormatter TimeFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -24,8 +27,7 @@ public final class Logger {
     private static final BlockingQueue<String> FileQueue = new ArrayBlockingQueue<>(4096);
     private static Thread WriterThread;
 
-    private Logger() {
-    }
+    private Logger() {}
 
     public static void Configure(String Level, boolean IsVerbose, boolean EnableFile, String FilePath, int MaxEnt) {
         CurrentLevel = parseLevel(Level);
@@ -33,8 +35,7 @@ public final class Logger {
         FileEnabled = EnableFile;
         LogFilePath = FilePath;
         MaxEntries = MaxEnt;
-        if (EnableFile)
-            StartFileWriter(FilePath);
+        if (EnableFile) StartFileWriter(FilePath);
     }
 
     private static Level parseLevel(String S) {
@@ -48,8 +49,7 @@ public final class Logger {
     private static void StartFileWriter(String Path) {
         try {
             Files.createDirectories(Paths.get(Path).getParent());
-        } catch (Exception Ignored) {
-        }
+        } catch (Exception Ignored) {}
         WriterThread = new Thread(() -> {
             try (BufferedWriter W = new BufferedWriter(new FileWriter(Path, true))) {
                 while (!Thread.currentThread().isInterrupted()) {
@@ -75,14 +75,12 @@ public final class Logger {
     }
 
     private static void Emit(Level MsgLevel, String PlainTag, String ColorCode, String Msg) {
-        if (MsgLevel.ordinal() < CurrentLevel.ordinal())
-            return;
+        if (MsgLevel.ordinal() < CurrentLevel.ordinal()) return;
         String Ts = Timestamp();
         String PlainLine = "  [" + Ts + "] [" + PlainTag + "] " + Msg;
         String ColorLine = AnsiColor.White + "  [" + ColorCode + PlainTag + AnsiColor.White + "] " + AnsiColor.Dim + Msg + AnsiColor.Reset;
         System.out.println(ColorLine);
-        if (FileEnabled)
-            FileQueue.offer(PlainLine);
+        if (FileEnabled) FileQueue.offer(PlainLine);
     }
 
     public static void Info(String Msg) {
@@ -114,8 +112,7 @@ public final class Logger {
         if (DelayMs > 0) {
             try {
                 Thread.sleep(DelayMs);
-            } catch (InterruptedException Ignored) {
-            }
+            } catch (InterruptedException Ignored) {}
         }
     }
 
@@ -124,8 +121,7 @@ public final class Logger {
     }
 
     public static void Verbose(String Msg) {
-        if (!Verbose)
-            return;
+        if (!Verbose) return;
         Emit(Level.VERBOSE, "TRACE", AnsiColor.Dim, Msg);
     }
 
@@ -146,7 +142,6 @@ public final class Logger {
     }
 
     public static void Shutdown() {
-        if (WriterThread != null)
-            WriterThread.interrupt();
+        if (WriterThread != null) WriterThread.interrupt();
     }
 }

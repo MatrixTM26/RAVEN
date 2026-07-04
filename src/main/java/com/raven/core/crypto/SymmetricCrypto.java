@@ -19,8 +19,7 @@ public class SymmetricCrypto {
     private SecretKey Key;
     private byte[] RawKey;
 
-    public SymmetricCrypto() {
-    }
+    public SymmetricCrypto() {}
 
     public byte[] GenerateKey() throws Exception {
         KeyGenerator Kg = KeyGenerator.getInstance(Algorithm);
@@ -31,8 +30,7 @@ public class SymmetricCrypto {
     }
 
     public void SetKey(byte[] KeyBytes) {
-        if (KeyBytes == null || !(KeyBytes.length == 16 || KeyBytes.length == 24 || KeyBytes.length == 32))
-            throw new IllegalArgumentException("AES key must be 16, 24, or 32 bytes");
+        if (KeyBytes == null || !(KeyBytes.length == 16 || KeyBytes.length == 24 || KeyBytes.length == 32)) throw new IllegalArgumentException("AES key must be 16, 24, or 32 bytes");
         RawKey = KeyBytes.clone();
         Key = new SecretKeySpec(RawKey, Algorithm);
     }
@@ -42,14 +40,12 @@ public class SymmetricCrypto {
     }
 
     public String GetKeyAsBase64Url() {
-        if (RawKey == null)
-            throw new IllegalStateException("No encryption key set");
+        if (RawKey == null) throw new IllegalStateException("No encryption key set");
         return Base64.getUrlEncoder().withoutPadding().encodeToString(RawKey);
     }
 
     public byte[] Encrypt(byte[] Data) throws Exception {
-        if (Key == null)
-            throw new IllegalStateException("No encryption key set");
+        if (Key == null) throw new IllegalStateException("No encryption key set");
         byte[] Iv = new byte[GcmIvLength];
         new SecureRandom().nextBytes(Iv);
         Cipher C = Cipher.getInstance(Transformation);
@@ -62,10 +58,8 @@ public class SymmetricCrypto {
     }
 
     public byte[] Decrypt(byte[] Data) throws Exception {
-        if (Key == null)
-            throw new IllegalStateException("No encryption key set");
-        if (Data == null || Data.length <= GcmIvLength)
-            throw new IllegalArgumentException("Ciphertext is too short");
+        if (Key == null) throw new IllegalStateException("No encryption key set");
+        if (Data == null || Data.length <= GcmIvLength) throw new IllegalArgumentException("Ciphertext is too short");
         byte[] Iv = new byte[GcmIvLength];
         System.arraycopy(Data, 0, Iv, 0, GcmIvLength);
         byte[] Ciphertext = new byte[Data.length - GcmIvLength];

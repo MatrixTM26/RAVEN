@@ -1,12 +1,5 @@
 package com.raven.core.server;
 
-import java.io.*;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.*;
-import javax.net.ssl.*;
-
 import com.raven.core.crypto.CertificateManager;
 import com.raven.core.crypto.SymmetricCrypto;
 import com.raven.core.event.EventManager;
@@ -14,6 +7,12 @@ import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
 import com.raven.core.session.Session;
 import com.raven.utils.ServerConfig;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.concurrent.*;
+import javax.net.ssl.*;
 
 public final class RavenServer extends BaseServer {
 
@@ -43,9 +42,7 @@ public final class RavenServer extends BaseServer {
             OpenSockets();
             Running = true;
             Logger.Info("Server started — " + Host + ":" + Port + " [" + Mode.name() + "]");
-            Events.Trigger(
-                    EventType.ServerStarted,
-                    EventManager.BuildData("Host", Host, "Port", Port, "Mode", Mode.name()));
+            Events.Trigger(EventType.ServerStarted, EventManager.BuildData("Host", Host, "Port", Port, "Mode", Mode.name()));
             return new boolean[] { true };
         } catch (Exception E) {
             Logger.Error("Server start failed [" + Mode + "]: " + E.getMessage());
@@ -67,41 +64,33 @@ public final class RavenServer extends BaseServer {
                 }
             }
             case HTTP -> {
-                if (BeaconPort <= 0)
-                    BeaconPort = Port;
+                if (BeaconPort <= 0) BeaconPort = Port;
                 BeaconSocket = new ServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
                 BeaconSocket.setReuseAddress(true);
             }
             case TLS, MTLS -> {
                 SSLContext Ctx = BuildSslContext(Mode == ListenerMode.MTLS);
-                TlsSocket = (SSLServerSocket) Ctx.getServerSocketFactory()
-                        .createServerSocket(Port, 50, InetAddress.getByName(Host));
+                TlsSocket = (SSLServerSocket) Ctx.getServerSocketFactory().createServerSocket(Port, 50, InetAddress.getByName(Host));
                 TlsSocket.setNeedClientAuth(Mode == ListenerMode.MTLS);
                 TlsSocket.setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
             }
             case HTTPS -> {
-                if (BeaconPort <= 0)
-                    BeaconPort = Port;
+                if (BeaconPort <= 0) BeaconPort = Port;
                 SSLContext Ctx = BuildSslContext(false);
-                BeaconSocket = Ctx.getServerSocketFactory()
-                        .createServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
+                BeaconSocket = Ctx.getServerSocketFactory().createServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
                 ((SSLServerSocket) BeaconSocket).setNeedClientAuth(false);
-                ((SSLServerSocket) BeaconSocket).setEnabledProtocols(
-                        new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
+                ((SSLServerSocket) BeaconSocket).setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
             }
             case FMTLS -> {
                 SSLContext TcpCtx = BuildSslContext(true);
-                TlsSocket = (SSLServerSocket) TcpCtx.getServerSocketFactory()
-                        .createServerSocket(Port, 50, InetAddress.getByName(Host));
+                TlsSocket = (SSLServerSocket) TcpCtx.getServerSocketFactory().createServerSocket(Port, 50, InetAddress.getByName(Host));
                 TlsSocket.setNeedClientAuth(true);
                 TlsSocket.setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
                 if (BeaconPort > 0) {
                     SSLContext BeaconCtx = BuildSslContext(true);
-                    BeaconSocket = BeaconCtx.getServerSocketFactory()
-                            .createServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
+                    BeaconSocket = BeaconCtx.getServerSocketFactory().createServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
                     ((SSLServerSocket) BeaconSocket).setNeedClientAuth(true);
-                    ((SSLServerSocket) BeaconSocket).setEnabledProtocols(
-                            new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
+                    ((SSLServerSocket) BeaconSocket).setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
                 }
             }
         }
@@ -119,10 +108,8 @@ public final class RavenServer extends BaseServer {
         CloseQuietly(TcpSocket);
         CloseQuietly(TlsSocket);
         CloseQuietly(BeaconSocket);
-        if (AcceptTcpThread != null)
-            AcceptTcpThread.interrupt();
-        if (AcceptBeaconThread != null)
-            AcceptBeaconThread.interrupt();
+        if (AcceptTcpThread != null) AcceptTcpThread.interrupt();
+        if (AcceptBeaconThread != null) AcceptBeaconThread.interrupt();
         Sessions.Clear();
         Pool.shutdown();
         Events.Trigger(EventType.ServerStopped);
@@ -132,13 +119,13 @@ public final class RavenServer extends BaseServer {
     @Override
     public void AcceptConnections() {
         if (BeaconSocket != null) {
-            boolean IsTls = (BeaconSocket instanceof SSLServerSocket);
+            boolean IsTls = BeaconSocket instanceof SSLServerSocket;
             AcceptBeaconThread = new Thread(() -> BeaconAcceptLoop(BeaconSocket, IsTls), "BeaconAccept");
             AcceptBeaconThread.setDaemon(true);
             AcceptBeaconThread.start();
         }
 
-        ServerSocket Active = (TlsSocket != null) ? TlsSocket : TcpSocket;
+        ServerSocket Active = TlsSocket != null ? TlsSocket : TcpSocket;
         if (Active == null) {
             Logger.Warn("No TCP socket open for mode " + Mode + " — beacon-only mode");
             while (Running) {
@@ -159,8 +146,7 @@ public final class RavenServer extends BaseServer {
                 Pool.submit(() -> HandleTcp(Client));
             } catch (SocketTimeoutException Ignored) {
             } catch (IOException E) {
-                if (Running)
-                    Logger.Error("TCP accept error: " + E.getMessage());
+                if (Running) Logger.Error("TCP accept error: " + E.getMessage());
                 break;
             }
         }
@@ -173,8 +159,7 @@ public final class RavenServer extends BaseServer {
                 Pool.submit(() -> HandleBeacon(Client, IsTls));
             } catch (SocketTimeoutException Ignored) {
             } catch (IOException E) {
-                if (Running)
-                    Logger.Error("Beacon accept error: " + E.getMessage());
+                if (Running) Logger.Error("Beacon accept error: " + E.getMessage());
                 break;
             }
         }
@@ -187,13 +172,7 @@ public final class RavenServer extends BaseServer {
             String RemoteAddr = Client.getRemoteSocketAddress().toString();
 
             if (Mode == ListenerMode.RAW) {
-                SessionId = RegisterRaw(
-                        Client,
-                        new DetectionResult(
-                                ConnectionType.RAW,
-                                new PushbackInputStream(Client.getInputStream(), 512),
-                                new byte[0]),
-                        RemoteAddr);
+                SessionId = RegisterRaw(Client, new DetectionResult(ConnectionType.RAW, new PushbackInputStream(Client.getInputStream(), 512), new byte[0]), RemoteAddr);
                 return;
             }
 
@@ -233,8 +212,7 @@ public final class RavenServer extends BaseServer {
         } catch (Exception E) {
             Logger.Error("TCP handler error: " + E.getMessage());
             CloseQuietly(Client);
-            if (SessionId > 0)
-                RemoveSession(SessionId);
+            if (SessionId > 0) RemoveSession(SessionId);
         }
     }
 
@@ -248,11 +226,7 @@ public final class RavenServer extends BaseServer {
 
         SymmetricCrypto Crypto = NewSessionCrypto();
 
-        Map<String, Object> Info = RavenHandshake(
-                Det.Stream,
-                Client.getOutputStream(),
-                Config.GetConnectionTimeout(),
-                Crypto);
+        Map<String, Object> Info = RavenHandshake(Det.Stream, Client.getOutputStream(), Config.GetConnectionTimeout(), Crypto);
 
         Session S = BuildSession(Client, RemoteAddr, Info, false);
         S.SetSessionType(Session.Type.RAVEN);
@@ -305,8 +279,7 @@ public final class RavenServer extends BaseServer {
             String Line;
             while (!(Line = ReadLine(In)).isEmpty()) {
                 int C = Line.indexOf(':');
-                if (C > 0)
-                    Headers.put(Line.substring(0, C).trim().toLowerCase(), Line.substring(C + 1).trim());
+                if (C > 0) Headers.put(Line.substring(0, C).trim().toLowerCase(), Line.substring(C + 1).trim());
             }
 
             int ContentLen = ParseInt(Headers.getOrDefault("content-length", "0"), 0);
@@ -317,18 +290,13 @@ public final class RavenServer extends BaseServer {
             String Path = Full.contains("?") ? Full.substring(0, Full.indexOf('?')) : Full;
             Map<String, String> Query = ParseQuery(Full.contains("?") ? Full.substring(Full.indexOf('?') + 1) : "");
 
-            if (Path.equals("/register") && Method.equals("POST"))
-                SessionId = BeaconRegister(Client, Out, Body, IsTls);
-            else if (Path.equals("/beacon") && Method.equals("GET"))
-                BeaconGet(Out, Query);
-            else if (Path.equals("/beacon") && Method.equals("POST"))
-                BeaconPost(Out, Query, Body);
-            else
-                HttpReply(Out, 404, "Not Found", new byte[0]);
+            if (Path.equals("/register") && Method.equals("POST")) SessionId = BeaconRegister(Client, Out, Body, IsTls);
+            else if (Path.equals("/beacon") && Method.equals("GET")) BeaconGet(Out, Query);
+            else if (Path.equals("/beacon") && Method.equals("POST")) BeaconPost(Out, Query, Body);
+            else HttpReply(Out, 404, "Not Found", new byte[0]);
         } catch (Exception E) {
             Logger.Error("Beacon handler: " + E.getMessage());
-            if (SessionId > 0)
-                RemoveSession(SessionId);
+            if (SessionId > 0) RemoveSession(SessionId);
         } finally {
             CloseQuietly(Client);
         }
@@ -410,20 +378,17 @@ public final class RavenServer extends BaseServer {
     @Override
     public String[] ExecuteCommand(int SessionId, String Command) {
         Optional<Session> Opt = Sessions.Get(SessionId);
-        if (Opt.isEmpty())
-            return Fail("Session not found");
+        if (Opt.isEmpty()) return Fail("Session not found");
         if (Opt.get().GetShellMode().startsWith("HTTP")) {
             Object Lck = CommandLocks.get(SessionId);
-            if (Lck == null)
-                return Fail("Lock missing");
+            if (Lck == null) return Fail("Lock missing");
             synchronized (Lck) {
                 PendingCommands.put(SessionId, Command);
                 PendingOutputs.remove(SessionId);
                 long Dead = System.currentTimeMillis() + Config.GetCommandTimeout();
                 while (System.currentTimeMillis() < Dead) {
                     String Result = PendingOutputs.remove(SessionId);
-                    if (Result != null)
-                        return new String[] { "true", Result };
+                    if (Result != null) return new String[] { "true", Result };
                     try {
                         Thread.sleep(300);
                     } catch (InterruptedException E) {
@@ -440,8 +405,7 @@ public final class RavenServer extends BaseServer {
     private Integer ResolveToken(Map<String, String> Query) {
         String Token = Query.getOrDefault("token", "");
         Integer Id = TokenMap.get(Token);
-        if (Id == null || !Sessions.Exists(Id))
-            return null;
+        if (Id == null || !Sessions.Exists(Id)) return null;
         return Id;
     }
 
@@ -461,8 +425,7 @@ public final class RavenServer extends BaseServer {
         S.SetHostname(Str(Info, "hostname"));
         S.SetUser(Str(Info, "user"));
         S.SetArch(Str(Info, "architecture"));
-        S.SetAgentIp(
-                Str(Info, "agentip", RemoteAddr.contains("/") ? RemoteAddr.split("/")[1].split(":")[0] : RemoteAddr));
+        S.SetAgentIp(Str(Info, "agentip", RemoteAddr.contains("/") ? RemoteAddr.split("/")[1].split(":")[0] : RemoteAddr));
         S.SetRawMode(IsRaw);
         String Name = Str(Info, "hostname");
         S.SetAgentName(Name.equals("Unknown") ? "Agent-" + (Sessions.Count() + 1) : Name);
@@ -470,73 +433,21 @@ public final class RavenServer extends BaseServer {
     }
 
     private void FireConnected(Session S, int Id) {
-        Logger.Info(
-                String.format(
-                        "[+] Session-%d [%s] %s@%s %s key=%s",
-                        Id,
-                        S.GetSessionType().name(),
-                        S.GetUser(),
-                        S.GetHostname(),
-                        S.GetOs(),
-                        S.GetSessionKey()));
-        Events.Trigger(
-                EventType.AgentConnected,
-                EventManager.BuildData(
-                        "ID",
-                        Id,
-                        "Hostname",
-                        S.GetHostname(),
-                        "OS",
-                        S.GetOs(),
-                        "User",
-                        S.GetUser(),
-                        "Arch",
-                        S.GetArch(),
-                        "AgentIP",
-                        S.GetAgentIp(),
-                        "AgentName",
-                        S.GetAgentName(),
-                        "AgentId",
-                        S.GetAgentId(),
-                        "SessionKey",
-                        S.GetSessionKey(),
-                        "Address",
-                        S.GetRemoteAddress(),
-                        "Type",
-                        S.GetSessionType().name(),
-                        "ShellMode",
-                        S.GetShellMode(),
-                        "Encrypted",
-                        S.IsEncrypted(),
-                        "MtlsEnabled",
-                        S.IsMtlsEnabled(),
-                        "CertCN",
-                        S.GetCertCn()));
-        Logger.Info(
-                String.format(
-                        "[+] Session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s",
-                        Id,
-                        S.GetSessionType().name(),
-                        S.GetUser(),
-                        S.GetHostname(),
-                        S.GetOs(),
-                        S.IsEncrypted(),
-                        S.IsMtlsEnabled()));
+        Logger.Info(String.format("[+] Session-%d [%s] %s@%s %s key=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.GetSessionKey()));
+        Events.Trigger(EventType.AgentConnected, EventManager.BuildData("ID", Id, "Hostname", S.GetHostname(), "OS", S.GetOs(), "User", S.GetUser(), "Arch", S.GetArch(), "AgentIP", S.GetAgentIp(), "AgentName", S.GetAgentName(), "AgentId", S.GetAgentId(), "SessionKey", S.GetSessionKey(), "Address", S.GetRemoteAddress(), "Type", S.GetSessionType().name(), "ShellMode", S.GetShellMode(), "Encrypted", S.IsEncrypted(), "MtlsEnabled", S.IsMtlsEnabled(), "CertCN", S.GetCertCn()));
+        Logger.Info(String.format("[+] Session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.IsEncrypted(), S.IsMtlsEnabled()));
     }
 
     private String ValidateMtlsCert(Socket Sock) {
-        if (!(Sock instanceof SSLSocket))
-            return null;
+        if (!(Sock instanceof SSLSocket)) return null;
         try {
             java.security.cert.Certificate[] Chain = ((SSLSocket) Sock).getSession().getPeerCertificates();
-            if (Chain == null || Chain.length == 0)
-                return null;
+            if (Chain == null || Chain.length == 0) return null;
             java.security.cert.X509Certificate Cert = (java.security.cert.X509Certificate) Chain[0];
             String Dn = Cert.getSubjectX500Principal().getName();
             for (String Part : Dn.split(",")) {
                 Part = Part.trim();
-                if (Part.startsWith("CN="))
-                    return Part.substring(3);
+                if (Part.startsWith("CN=")) return Part.substring(3);
             }
         } catch (javax.net.ssl.SSLPeerUnverifiedException E) {
             Logger.Verbose("No peer cert: " + E.getMessage());
@@ -556,10 +467,8 @@ public final class RavenServer extends BaseServer {
         StringBuilder Sb = new StringBuilder();
         int B;
         while ((B = In.read()) != -1) {
-            if (B == '\r')
-                continue;
-            if (B == '\n')
-                break;
+            if (B == '\r') continue;
+            if (B == '\n') break;
             Sb.append((char) B);
         }
         return Sb.toString();
@@ -567,11 +476,9 @@ public final class RavenServer extends BaseServer {
 
     private static Map<String, String> ParseQuery(String Q) {
         Map<String, String> M = new LinkedHashMap<>();
-        if (Q == null || Q.isBlank())
-            return M;
+        if (Q == null || Q.isBlank()) return M;
         for (String Pair : Q.split("&")) {
-            if (Pair.isEmpty())
-                continue;
+            if (Pair.isEmpty()) continue;
             int Eq = Pair.indexOf('=');
             String Key = Eq >= 0 ? Pair.substring(0, Eq) : Pair;
             String Value = Eq >= 0 ? Pair.substring(Eq + 1) : "";
@@ -589,29 +496,17 @@ public final class RavenServer extends BaseServer {
     }
 
     private static void HttpReply(OutputStream Out, int Status, String Reason, byte[] Body) throws IOException {
-        String H = "HTTP/1.1 " +
-                Status +
-                " " +
-                Reason +
-                "\r\n" +
-                "Content-Length: " +
-                Body.length +
-                "\r\n" +
-                "Content-Type: application/octet-stream\r\n" +
-                "Connection: close\r\n\r\n";
+        String H = "HTTP/1.1 " + Status + " " + Reason + "\r\n" + "Content-Length: " + Body.length + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Connection: close\r\n\r\n";
         Out.write(H.getBytes("UTF-8"));
-        if (Body.length > 0)
-            Out.write(Body);
+        if (Body.length > 0) Out.write(Body);
         Out.flush();
     }
 
     private static void CloseQuietly(Closeable C) {
-        if (C == null)
-            return;
+        if (C == null) return;
         try {
             C.close();
-        } catch (Exception Ignored) {
-        }
+        } catch (Exception Ignored) {}
     }
 
     private static String Str(Map<String, Object> M, String K) {

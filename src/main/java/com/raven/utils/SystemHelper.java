@@ -6,8 +6,7 @@ import java.net.Socket;
 
 public final class SystemHelper {
 
-    private SystemHelper() {
-    }
+    private SystemHelper() {}
 
     public static boolean IsWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");

