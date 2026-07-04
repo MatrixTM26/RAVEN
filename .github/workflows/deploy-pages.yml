@@ -26,11 +26,11 @@ jobs:
 
             - name: Validate Pages Directory
               run: |
-                  if [ ! -d "./docs/pages" ]; then
-                    echo "ERROR: ./docs/pages directory not found!"
+                  if [ ! -d "./doc/pages" ]; then
+                    echo "ERROR: ./doc/pages directory not found!"
                     exit 1
                   fi
-                  echo "Pages directory found at ./docs/pages, proceeding..."
+                  echo "Pages directory found at ./doc/pages, proceeding..."
 
             - name: Setup Pages
               uses: actions/configure-pages@v4
