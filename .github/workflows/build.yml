@@ -42,7 +42,9 @@ jobs:
               run: |
                   git config user.name "github-actions"
                   git config user.email "github-actions@github.com"
+                  git stash --include-untracked
                   git pull --rebase origin main
+                  git stash pop || true
                   git add output/raven.jar
                   git diff --cached --quiet || git commit -m "ci: build #${{ github.run_number }} [skip ci]"
                   git push
