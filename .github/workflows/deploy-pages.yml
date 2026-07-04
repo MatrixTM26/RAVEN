@@ -26,11 +26,11 @@ jobs:
 
             - name: Validate Pages Directory
               run: |
-                  if [ ! -d "./doc/pages" ]; then
-                    echo "ERROR: ./doc/pages directory not found!"
+                  if [ ! -d "./docs/pages" ]; then
+                    echo "ERROR: ./docs/pages directory not found!"
                     exit 1
                   fi
-                  echo "Pages directory found, proceeding..."
+                  echo "Pages directory found at ./docs/pages, proceeding..."
 
             - name: Setup Pages
               uses: actions/configure-pages@v4
@@ -38,7 +38,7 @@ jobs:
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3
               with:
-                  path: ./doc/pages
+                  path: ./docs/pages
 
             - name: Deploy to GitHub Pages
               id: deployment
