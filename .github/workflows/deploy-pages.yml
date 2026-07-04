@@ -24,6 +24,14 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
 
+            - name: Validate Pages Directory
+              run: |
+                  if [ ! -d "./doc/pages" ]; then
+                    echo "ERROR: ./doc/pages directory not found!"
+                    exit 1
+                  fi
+                  echo "Pages directory found, proceeding..."
+
             - name: Setup Pages
               uses: actions/configure-pages@v4
 
