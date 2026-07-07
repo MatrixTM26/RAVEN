@@ -27,8 +27,8 @@
 
 ## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/circle-info.svg" width="18"> Overview
 
-> [!IMPORTANT]
-> This project is currently under development and for some features it's maybe not fully implemented yet until we finish it all.
+> [!CAUTION]
+> This tool is currently under development, in some release versions, you may encounter functional errors or logic flaws.
 
 <details>
 <summary>LEGAL DISCLAIMER</summary>
@@ -110,7 +110,7 @@
 ### 1. Clone the Repository
 
 - MAIN
-    > For normal usage, clone branch main
+  > For normal usage, clone branch main
 
 ```bash
 git clone --branch main https://github.com/MatrixTM26/RAVEN.git
@@ -121,7 +121,7 @@ cd RAVEN
     <summary>Other</summary>
 
 - DEV
-    > For contribution commit, pull request and development, push to branch dev
+  > For contribution commit, pull request and development, push to branch dev
 
 ```bash
 git clone --branch dev https://github.com/MatrixTM26/RAVEN.git
@@ -129,52 +129,17 @@ cd RAVEN
 ```
 
 - MASTER
-    > Only for owner/admin commit, pull request and upcoming version of development
+  > Only for owner/admin commit, pull request and upcoming version of development
 
 </details>
 
 ### 2. Build the Project
 
-#### Ready to use (Already compiled)
-
-> Ready to use build (created by github action and ready to run file). located at `output/raven.jar`
-
-```bash
-java -jar output/raven.jar
-```
-
-#### Manual compile
-
 > General Build
 
 ```bash
-mvn clean package -q
+mvn clean package -q -X
 ```
-
-> Specific Build
-
-- **Linux & Termux**
-
-    ```bash
-    mvn clean package -Djavafx.platform=linux -q
-    ```
-
-- **Windows**
-
-    ```bash
-    mvn clean package -Djavafx.platform=windows -q
-    ```
-
-- **MacOS**
-
-    ```bash
-    mvn clean package -Djavafx.platform=macos -q
-    ```
-
-- **BSD**
-    ```bash
-    mvn clean package -Djavafx.platform=openbsd -q
-    ```
 
 ### 3. Run the Server
 
@@ -185,7 +150,7 @@ java -jar target/raven.jar
 # CLI Mode
 java -jar target/raven.jar -C
 
-# JavaFX GUI Mode
+# GUI Mode
 java -jar target/raven.jar -G
 ```
 
@@ -223,10 +188,10 @@ java -jar target/raven.jar -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
 
 ```bash
 # Show help
-java -jar raven.jar -h
+java -jar target/raven.jar -h
 
 # Start with custom host and port
-java -jar raven.jar -s 0.0.0.0 -p 4444
+java -jar target/raven.jar -s 0.0.0.0 -p 4444
 ```
 
 - LISTENER MODE
@@ -242,13 +207,13 @@ java -jar raven.jar -s 0.0.0.0 -p 4444
 | `-F`   | `--fmtls`   | Full mTLS + HTTPS beacon   |
 
 ```bash
-java -jar raven.jar -A   # multi-protocol
-java -jar raven.jar -R   # raw TCP
-java -jar raven.jar -b   # HTTP beacon
-java -jar raven.jar -B   # HTTPS beacon
-java -jar raven.jar -T   # TLS
-java -jar raven.jar -M   # mTLS
-java -jar raven.jar -F   # full mTLS + HTTPS beacon
+java -jar target/raven.jar -A   # multi-protocol
+java -jar target/raven.jar -R   # raw TCP
+java -jar target/raven.jar -b   # HTTP beacon
+java -jar target/raven.jar -B   # HTTPS beacon
+java -jar target/raven.jar -T   # TLS
+java -jar target/raven.jar -M   # mTLS
+java -jar target/raven.jar -F   # full mTLS + HTTPS beacon
 ```
 
 - INTERFACE MODE
@@ -264,17 +229,17 @@ java -jar raven.jar -F   # full mTLS + HTTPS beacon
 | `-tp <port>` | `--teamserver-port <port>` | TeamServer API port (default: `server.properties`) |
 
 ```bash
-java -jar raven.jar -C              # CLI mode
-java -jar raven.jar -G              # JavaFX GUI mode
-java -jar raven.jar -W              # Web Panel mode
-java -jar raven.jar -TSC            # TeamServer CLI
-java -jar raven.jar -TSW -tp 5001   # TeamServer Web on port 5001
-java -jar raven.jar -TSG            # TeamServer GUI
+java -jar target/raven.jar -C              # CLI mode
+java -jar target/raven.jar -G              # JavaFX GUI mode
+java -jar target/raven.jar -W              # Web Panel mode
+java -jar target/raven.jar -TSC            # TeamServer CLI
+java -jar target/raven.jar -TSW -tp 5001   # TeamServer Web on port 5001
+java -jar target/raven.jar -TSG            # TeamServer GUI
 
 # Combine listener + interface
-java -jar raven.jar -M -C -s 0.0.0.0 -p 4444   # mTLS + CLI
-java -jar raven.jar -A -W -s 0.0.0.0 -p 4444   # multi + Web Panel
-java -jar raven.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
+java -jar target/raven.jar -M -C -s 0.0.0.0 -p 4444   # mTLS + CLI
+java -jar target/raven.jar -A -W -s 0.0.0.0 -p 4444   # multi + Web Panel
+java -jar target/raven.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
 ```
 
 - CLI COMMANDS
@@ -327,25 +292,25 @@ java -jar raven.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
 
 ```bash
 # Initialize CA + server certificate
-java -jar raven.jar -i
+java -jar target/raven.jar -i
 
 # Initialize with specific server host
-java -jar raven.jar -i -s 192.168.1.10
+java -jar target/raven.jar -i -s 192.168.1.10
 
 # Generate single agent cert
-java -jar raven.jar -a myagent -ah 192.168.1.10 -ap 4444
+java -jar target/raven.jar -a myagent -ah 192.168.1.10 -ap 4444
 
 # Generate single agent cert with mTLS + persistence + hidden console
-java -jar raven.jar -a myagent -ah 192.168.1.10 -ap 4444 -am -ps -hc
+java -jar target/raven.jar -a myagent -ah 192.168.1.10 -ap 4444 -am -ps -hc
 
 # Generate 10 agent certs with prefix "agent"
-java -jar raven.jar -m -c 10 -u agent -ah 192.168.1.10 -ap 4444 -am
+java -jar target/raven.jar -m -c 10 -u agent -ah 192.168.1.10 -ap 4444 -am
 
 # List all generated agents
-java -jar raven.jar -l
+java -jar target/raven.jar -l
 
 # Revoke agent certificate
-java -jar raven.jar -r myagent
+java -jar target/raven.jar -r myagent
 ```
 
 - OPERATOR MANAGEMENT
@@ -361,19 +326,19 @@ java -jar raven.jar -r myagent
 
 ```bash
 # Add operator with default role (OPERATOR)
-java -jar raven.jar -AO -u op1 -pw securepass
+java -jar target/raven.jar -AO -u op1 -pw securepass
 
 # Add operator with specific role
-java -jar raven.jar -AO -u op1 -pw securepass -r ADMIN
+java -jar target/raven.jar -AO -u op1 -pw securepass -r ADMIN
 
 # Remove operator
-java -jar raven.jar -RO -u op1
+java -jar target/raven.jar -RO -u op1
 
 # Update operator role
-java -jar raven.jar -OP -u op1 -r VIEWER
+java -jar target/raven.jar -OP -u op1 -r VIEWER
 
 # List all available roles
-java -jar raven.jar -OP
+java -jar target/raven.jar -OP
 ```
 
 > OPERATOR ROLES

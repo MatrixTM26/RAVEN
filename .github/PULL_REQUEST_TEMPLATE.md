@@ -9,7 +9,7 @@ What does this PR do?
 - [x] Bug Fix
 - [ ] New Feature
 - [x] Performance Improvement
-- [ ] Documentation Update
+- [x] Documentation Update
 - [x] Code Refactor
 - [ ] Security Enhancement
 - [ ] Other (describe below)
@@ -28,7 +28,7 @@ Related to #
 
 Type of Change
 
-- [ ] Patch (non-breaking bug fix)
+- [x] Patch (non-breaking bug fix)
 - [x] Minor (new feature, backward compatible)
 - [ ] Major (breaking change)
 
@@ -38,20 +38,19 @@ Changes Made
 
 Added
 
-- 
+-
 
 Changed
 
-- Web UI design changed
-- Add per sessions key
+-
 
 Removed
 
-- 
+-
 
 Fixed
 
-- 
+- cli char formatting and clean repo from unnecessaries files
 
 ---
 
@@ -70,7 +69,7 @@ Testing
 
 Testing Environment
 
-- OS: ubuntu-lts
+- OS: 7.0.12+kali-amd64 x86_64
 - OpenJDK Version: 17
 - RAVEN-C2 Version: v3.0
 
@@ -79,7 +78,7 @@ Test Results
 - [x] Build Successful
 - [x] Unit Tests Passed
 - [x] Manual Testing Completed
-- [ ] No Regressions Found
+- [x] No Regressions Found
 
 Provide details:
 
@@ -97,10 +96,10 @@ Checklist
 
 Code Quality
 
-- [ ] My code follows the project's coding standards.
+- [x] My code follows the project's coding standards.
 - [x] I have reviewed my own code.
 - [ ] I have commented complex sections where necessary.
-- [ ] No sensitive information or credentials are included.
+- [x] No sensitive information or credentials are included.
 
 Documentation
 
@@ -109,7 +108,7 @@ Documentation
 
 Testing
 
-- [ ] Existing functionality remains unaffected.
+- [x] Existing functionality remains unaffected.
 - [x] New functionality has been tested.
 - [ ] Security implications have been considered.
 
@@ -128,6 +127,7 @@ I confirm that:
 Additional Notes
 
 <!-- Anything maintainers should know -->---
+
 If you interest about this project and want to contribute, please read all guidelines.
 Thank You
 
