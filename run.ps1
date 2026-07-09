@@ -44,7 +44,7 @@ function CheckJava {
 
 function CopyArtifact {
     PrintInfo "Copying artifact from output directory"
-    $SourcePath = "output\raven.jar"
+    $SourcePath = "output\raven-3.0.0.jar"
     if (-not (Test-Path $SourcePath)) {
         PrintError "Artifact not found: $SourcePath"
         exit 1
@@ -55,7 +55,7 @@ function CopyArtifact {
 
 function RunApp {
     PrintInfo "Launching application"
-    & java -jar raven.jar -h
+    & java -jar raven-3.0.0.jar -h
 }
 
 function Main {

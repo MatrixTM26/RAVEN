@@ -1,11 +1,5 @@
 package com.raven.iface;
 
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-
 import com.raven.core.db.TeamDatabase;
 import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
@@ -14,7 +8,11 @@ import com.raven.core.server.RavenServer;
 import com.raven.core.session.Session;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.SystemHelper;
-
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.Optional;
+import java.util.concurrent.Executors;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -183,8 +181,7 @@ public class GUI extends Application {
         Scene MainScene = new Scene(Root);
         PrimaryStage.setScene(MainScene);
         PrimaryStage.setOnCloseRequest(E -> {
-            if (Server != null)
-                Server.StopServer();
+            if (Server != null) Server.StopServer();
             Platform.exit();
         });
         PrimaryStage.show();
@@ -207,25 +204,14 @@ public class GUI extends Application {
 
         VBox Meta = new VBox(12);
         Meta.setPadding(new Insets(18, 22, 18, 22));
-        Meta
-                .getChildren()
-                .addAll(
-                        MiniInfo("VERSION", "3.0.0"),
-                        MiniInfo("MODE", Config.GetServerMode().toUpperCase()),
-                        MiniInfo("INTERFACE", TeamMode ? "TEAM GUI" : "SOLO GUI"));
+        Meta.getChildren().addAll(MiniInfo("VERSION", "3.0.0"), MiniInfo("MODE", Config.GetServerMode().toUpperCase()), MiniInfo("INTERFACE", TeamMode ? "TEAM GUI" : "SOLO GUI"));
         VBox.setVgrow(Meta, Priority.ALWAYS);
         Sidebar.getChildren().add(Meta);
 
         VBox Footer = new VBox(8);
         Footer.setPadding(new Insets(14, 22, 18, 22));
-        Footer
-                .setStyle(
-                        "-fx-border-color: " + BorderColor + " transparent transparent transparent; -fx-border-width: 1;");
-        Footer
-                .getChildren()
-                .addAll(
-                        StatusLabel = StyledLabel("● Offline", 11, RedColor, true),
-                        StyledLabel("MatrixTM26", 9, MutedColor, false));
+        Footer.setStyle("-fx-border-color: " + BorderColor + " transparent transparent transparent; -fx-border-width: 1;");
+        Footer.getChildren().addAll((StatusLabel = StyledLabel("● Offline", 11, RedColor, true)), StyledLabel("MatrixTM26", 9, MutedColor, false));
         Sidebar.getChildren().add(Footer);
         return Sidebar;
     }
@@ -260,33 +246,17 @@ public class GUI extends Application {
         Right.setAlignment(Pos.CENTER_RIGHT);
         HBox.setHgrow(Right, Priority.ALWAYS);
         Right.getChildren().addAll(UptimeLabel, VDivider(), SessionCountLabel);
-        Label OpLabel = OperatorName != null
-                ? StyledLabel(
-                        "Op: " + OperatorName + " [" + (OperatorRole != null ? OperatorRole.name() : "?") + "]",
-                        8,
-                        AccentColor,
-                        false)
-                : null;
+        Label OpLabel = OperatorName != null ? StyledLabel("Op: " + OperatorName + " [" + (OperatorRole != null ? OperatorRole.name() : "?") + "]", 8, AccentColor, false) : null;
         VBox Heading = new VBox(2);
         Heading.getChildren().addAll(StyledLabel("RAVEN Operations Console", 20, TextColor, true), StyledLabel("Listener control • Session ops • CLI-aligned command center", 10, MutedColor, false));
-        if (OpLabel != null)
-            TopBar.getChildren().addAll(Heading, OpLabel, Right);
-        else
-            TopBar.getChildren().addAll(Heading, Right);
+        if (OpLabel != null) TopBar.getChildren().addAll(Heading, OpLabel, Right);
+        else TopBar.getChildren().addAll(Heading, Right);
         Main.setTop(TopBar);
 
         TabPane Tabs = new TabPane();
         Tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         Tabs.setStyle("-fx-background-color: " + BgColor + "; -fx-tab-min-height: 42px; -fx-tab-max-height: 42px;");
-        Tabs
-                .getTabs()
-                .addAll(
-                        BuildNavTab("Dashboard", BuildDashboardTab()),
-                        BuildNavTab("Sessions", BuildSessionsTab()),
-                        BuildNavTab("Terminal", BuildTerminalTab()),
-                        BuildNavTab("Commands", BuildCommandCenterTab()),
-                        BuildNavTab("Logs", BuildLogsTab()),
-                        BuildNavTab("Settings", BuildSettingsTab()));
+        Tabs.getTabs().addAll(BuildNavTab("Dashboard", BuildDashboardTab()), BuildNavTab("Sessions", BuildSessionsTab()), BuildNavTab("Terminal", BuildTerminalTab()), BuildNavTab("Commands", BuildCommandCenterTab()), BuildNavTab("Logs", BuildLogsTab()), BuildNavTab("Settings", BuildSettingsTab()));
         Main.setCenter(Tabs);
         return Main;
     }
@@ -313,18 +283,7 @@ public class GUI extends Application {
         Content.getChildren().add(Cards);
 
         VBox Info = BuildCard("TOOL INFORMATION");
-        TextArea InfoText = new TextArea(
-                " Author  : MatrixTM26\n" +
-                        " Github  : MatrixTM26\n" +
-                        " Version : 3.0\n\n" +
-                        " Use Sessions for fast actions and Commands for CLI-aligned workflows.\n" +
-                        " Terminal executes agent commands; Command Center executes server/session utilities.\n\n" +
-                        " GUI Commands:\n" +
-                        "   • sessions | status | stats | tasks\n" +
-                        "   • kill <id> | sysinfo <id> | note <id> <text> | getnote <id>\n" +
-                        "   • history [id] [limit] | broadcast <cmd>\n" +
-                        "   • exec <id> <cmd> | whoami <id> | sleep <id> <seconds>\n" +
-                        "   • screenshot <id> | download <id> <path> | upload <id> <local> <remote>");
+        TextArea InfoText = new TextArea(" Author  : MatrixTM26\n" + " Github  : MatrixTM26\n" + " Version : 3.0\n\n" + " Use Sessions for fast actions and Commands for CLI-aligned workflows.\n" + " Terminal executes agent commands; Command Center executes server/session utilities.\n\n" + " GUI Commands:\n" + "   • sessions | status | stats | tasks\n" + "   • kill <id> | sysinfo <id> | note <id> <text> | getnote <id>\n" + "   • history [id] [limit] | broadcast <cmd>\n" + "   • exec <id> <cmd> | whoami <id> | sleep <id> <seconds>\n" + "   • screenshot <id> | download <id> <path> | upload <id> <local> <remote>");
         InfoText.setEditable(false);
         InfoText.setPrefHeight(200);
         ApplyTermStyle(InfoText);
@@ -376,10 +335,7 @@ public class GUI extends Application {
         Content.getChildren().add(SrvCmdRow);
 
         SessionTable = new TableView<>(SessionRows);
-        SessionTable
-                .setStyle(
-                        "-fx-background-color: " + CardColor + "; -fx-control-inner-background: " + CardColor + "; -fx-table-cell-border-color: " + BorderColor + "; -fx-table-header-border-color: "
-                                + BorderColor + "; -fx-text-fill: " + TextColor + "; -fx-background-radius: 12;");
+        SessionTable.setStyle("-fx-background-color: " + CardColor + "; -fx-control-inner-background: " + CardColor + "; -fx-table-cell-border-color: " + BorderColor + "; -fx-table-header-border-color: " + BorderColor + "; -fx-text-fill: " + TextColor + "; -fx-background-radius: 12;");
         String[] ColNames = { "ID", "Type", "Name/Cert", "IP", "OS", "User", "Host", "Session Key" };
         String[] Props = { "id", "type", "name", "ip", "os", "user", "host", "joined" };
         for (int I = 0; I < ColNames.length; I++) {
@@ -388,109 +344,85 @@ public class GUI extends Application {
             Col.setStyle("-fx-alignment: CENTER_LEFT; -fx-text-fill: " + TextColor + ";");
             SessionTable.getColumns().add(Col);
         }
-        SessionTable
-                .getSelectionModel()
-                .selectedItemProperty()
-                .addListener((Obs, Old, New) -> {
-                    if (New != null) {
-                        SelectedSessionId = Integer.parseInt(New.getId());
-                        if (SelectedAgentLabel != null)
-                            SelectedAgentLabel
-                                    .setText(
-                                            "● " + New.getName() + " #" + SelectedSessionId);
-                    }
-                });
+        SessionTable.getSelectionModel()
+            .selectedItemProperty()
+            .addListener((Obs, Old, New) -> {
+                if (New != null) {
+                    SelectedSessionId = Integer.parseInt(New.getId());
+                    if (SelectedAgentLabel != null) SelectedAgentLabel.setText("● " + New.getName() + " #" + SelectedSessionId);
+                }
+            });
         VBox.setVgrow(SessionTable, Priority.ALWAYS);
         Content.getChildren().add(SessionTable);
         return Content;
     }
 
     private void RunServerCommand(String Cmd, TextField Input) {
-        if (Cmd == null || Cmd.isBlank())
-            return;
+        if (Cmd == null || Cmd.isBlank()) return;
         if (Server == null || !Server.IsRunning()) {
             AddLog("[!] Server not running");
             return;
         }
         String[] Parts = Cmd.trim().split("\\s+", 2);
         switch (Parts[0].toLowerCase()) {
-        case "sessions", "agents" -> {
-            int N = Server.GetSessions().Count();
-            AddLog("[*] Sessions (" + N + "):");
-            Server
-                    .GetSessions()
+            case "sessions", "agents" -> {
+                int N = Server.GetSessions().Count();
+                AddLog("[*] Sessions (" + N + "):");
+                Server.GetSessions()
                     .GetAll()
-                    .forEach(
-                            S -> AddLog(
-                                    "    #" +
-                                            S.GetId() +
-                                            " [" +
-                                            S.GetDisplayName() +
-                                            "] " +
-                                            S.GetUser() +
-                                            "@" +
-                                            S.GetHostname() +
-                                            " key=" +
-                                            S.GetSessionKey()));
-            Platform.runLater(() -> RefreshSessions());
-        }
-        case "kill" -> {
-            if (Parts.length < 2) {
-                AddLog("[!] Usage: kill <id>");
-                return;
-            }
-            try {
-                int Id = Integer.parseInt(Parts[1].trim());
-                Server.RemoveSession(Id);
-                AddLog("[+] Session-" + Id + " terminated");
+                    .forEach(S -> AddLog("    #" + S.GetId() + " [" + S.GetDisplayName() + "] " + S.GetUser() + "@" + S.GetHostname() + " key=" + S.GetSessionKey()));
                 Platform.runLater(() -> RefreshSessions());
-            } catch (NumberFormatException E) {
-                AddLog("[!] Invalid session ID");
             }
-        }
-        case "status" -> {
-            AddLog("[*] Status: " + (Server.IsRunning() ? "ONLINE" : "OFFLINE"));
-            AddLog(
-                    "[*] Mode: " + Server.GetMode().name() + " | Host: " + Server.GetHost() + ":"
-                            + Server.GetPort());
-            AddLog("[*] Sessions: " + Server.GetSessions().Count());
-            AddLog("[*] Key: " + Server.GetKeyBase64());
-        }
-        case "stats" -> {
-            Map<String, Integer> Stats = Server.GetSessions().GetStats();
-            AddLog("[*] Total: " + Stats.get("Total"));
-            AddLog("[*] RAVEN: " + Stats.get("RAVEN"));
-            AddLog("[*] Meterpreter: " + Stats.get("METERPRETER"));
-            AddLog("[*] Reverse Shell: " + Stats.get("REVERSE_SHELL"));
-        }
-        case "tasks" -> AddLog("[*] Active sessions: " + Server.GetSessions().Count() + " — use exec/broadcast to run tasks");
-        case "broadcast" -> {
-            if (Parts.length < 2) {
-                AddLog("[!] Usage: broadcast <cmd>");
-                return;
+            case "kill" -> {
+                if (Parts.length < 2) {
+                    AddLog("[!] Usage: kill <id>");
+                    return;
+                }
+                try {
+                    int Id = Integer.parseInt(Parts[1].trim());
+                    Server.RemoveSession(Id);
+                    AddLog("[+] Session-" + Id + " terminated");
+                    Platform.runLater(() -> RefreshSessions());
+                } catch (NumberFormatException E) {
+                    AddLog("[!] Invalid session ID");
+                }
             }
-            String BCmd = Parts[1];
-            AddLog("[>] Broadcast → " + BCmd);
-            Map<Integer, String[]> R = Server.BroadcastAll(BCmd);
-            R
-                    .forEach(
-                            (
-                                    Id,
-                                    Res) -> AddLog("    [" + Id + "] " + (Boolean.parseBoolean(Res[0]) ? "✔ " : "✘ ") + Res[1]));
+            case "status" -> {
+                AddLog("[*] Status: " + (Server.IsRunning() ? "ONLINE" : "OFFLINE"));
+                AddLog("[*] Mode: " + Server.GetMode().name() + " | Host: " + Server.GetHost() + ":" + Server.GetPort());
+                AddLog("[*] Sessions: " + Server.GetSessions().Count());
+                AddLog("[*] Key: " + Server.GetKeyBase64());
+            }
+            case "stats" -> {
+                Map<String, Integer> Stats = Server.GetSessions().GetStats();
+                AddLog("[*] Total: " + Stats.get("Total"));
+                AddLog("[*] RAVEN: " + Stats.get("RAVEN"));
+                AddLog("[*] Meterpreter: " + Stats.get("METERPRETER"));
+                AddLog("[*] Reverse Shell: " + Stats.get("REVERSE_SHELL"));
+            }
+            case "tasks" -> AddLog("[*] Active sessions: " + Server.GetSessions().Count() + " — use exec/broadcast to run tasks");
+            case "broadcast" -> {
+                if (Parts.length < 2) {
+                    AddLog("[!] Usage: broadcast <cmd>");
+                    return;
+                }
+                String BCmd = Parts[1];
+                AddLog("[>] Broadcast → " + BCmd);
+                Map<Integer, String[]> R = Server.BroadcastAll(BCmd);
+                R.forEach((Id, Res) -> AddLog("    [" + Id + "] " + (Boolean.parseBoolean(Res[0]) ? "✔ " : "✘ ") + Res[1]));
+            }
+            case "exec" -> RunExecCommand(Parts.length > 1 ? Parts[1] : "");
+            case "whoami", "screenshot" -> RunShortcutCommand(Parts, Parts[0].toLowerCase());
+            case "sleep" -> RunSleepCommand(Parts);
+            case "download" -> RunDownloadCommand(Parts);
+            case "upload" -> RunUploadCommand(Parts);
+            case "sysinfo", "info" -> ShowSessionInfoLog(Parts.length > 1 ? Parts[1] : "");
+            case "note" -> SaveNoteCommand(Parts.length > 1 ? Parts[1] : "");
+            case "getnote" -> GetNoteCommand(Parts.length > 1 ? Parts[1] : "");
+            case "history" -> ShowHistoryCommand(Parts.length > 1 ? Parts[1] : "");
+            default -> AddLog("[!] Unknown command: " + Parts[0]);
         }
-        case "exec" -> RunExecCommand(Parts.length > 1 ? Parts[1] : "");
-        case "whoami", "screenshot" -> RunShortcutCommand(Parts, Parts[0].toLowerCase());
-        case "sleep" -> RunSleepCommand(Parts);
-        case "download" -> RunDownloadCommand(Parts);
-        case "upload" -> RunUploadCommand(Parts);
-        case "sysinfo", "info" -> ShowSessionInfoLog(Parts.length > 1 ? Parts[1] : "");
-        case "note" -> SaveNoteCommand(Parts.length > 1 ? Parts[1] : "");
-        case "getnote" -> GetNoteCommand(Parts.length > 1 ? Parts[1] : "");
-        case "history" -> ShowHistoryCommand(Parts.length > 1 ? Parts[1] : "");
-        default -> AddLog("[!] Unknown command: " + Parts[0]);
-        }
-        if (Input != null)
-            Platform.runLater(() -> Input.clear());
+        if (Input != null) Platform.runLater(() -> Input.clear());
     }
 
     private VBox BuildTerminalTab() {
@@ -507,8 +439,7 @@ public class GUI extends Application {
         SelectedAgentLabel = StyledLabel("○ No agent selected", 9, MutedColor, false);
         Button ClearBtn = StyledButton("Clear", CardColor, false);
         ClearBtn.setOnAction(E -> {
-            if (TerminalOutput != null)
-                TerminalOutput.clear();
+            if (TerminalOutput != null) TerminalOutput.clear();
         });
         HBox.setHgrow(SelectedAgentLabel, Priority.ALWAYS);
         Header.getChildren().addAll(SessionLbl, TermInputField, SelectedAgentLabel, ClearBtn);
@@ -542,12 +473,7 @@ public class GUI extends Application {
         Content.setStyle("-fx-background-color: " + BgColor + ";");
 
         VBox Help = BuildCard("CLI-ALIGNED COMMANDS");
-        TextArea HelpText = new TextArea(
-                "Server: sessions | status | stats | tasks\n" +
-                        "Session: exec <id> <command> | kill <id> | sysinfo <id>\n" +
-                        "Ops: broadcast <command> | whoami <id> | sleep <id> <seconds>\n" +
-                        "Files: screenshot <id> | download <id> <remote-path> | upload <id> <local-path> <remote-path>\n" +
-                        "Notes/History: note <id> <text> | getnote <id> | history [id] [limit]");
+        TextArea HelpText = new TextArea("Server: sessions | status | stats | tasks\n" + "Session: exec <id> <command> | kill <id> | sysinfo <id>\n" + "Ops: broadcast <command> | whoami <id> | sleep <id> <seconds>\n" + "Files: screenshot <id> | download <id> <remote-path> | upload <id> <local-path> <remote-path>\n" + "Notes/History: note <id> <text> | getnote <id> | history [id] [limit]");
         HelpText.setEditable(false);
         HelpText.setPrefHeight(120);
         ApplyTermStyle(HelpText);
@@ -565,8 +491,7 @@ public class GUI extends Application {
         CommandInput.setOnAction(E -> RunServerCommand(CommandInput.getText().trim(), CommandInput));
         Clear.setOnAction(E -> {
             LogEntries.clear();
-            if (LogOutput != null)
-                LogOutput.clear();
+            if (LogOutput != null) LogOutput.clear();
         });
         InputRow.getChildren().addAll(StyledLabel("❯", 16, RedColor, true), CommandInput, Run, Clear);
 
@@ -591,8 +516,7 @@ public class GUI extends Application {
         Button ClearBtn = StyledButton("Clear", RedColor, false);
         ClearBtn.setOnAction(E -> {
             LogEntries.clear();
-            if (LogOutput != null)
-                LogOutput.clear();
+            if (LogOutput != null) LogOutput.clear();
         });
         Toolbar.getChildren().addAll(ExportBtn, ClearBtn);
         Content.getChildren().add(Toolbar);
@@ -694,8 +618,7 @@ public class GUI extends Application {
 
         for (int I = 0; I < 3; I++) {
             Optional<Boolean> Result = Dlg.showAndWait();
-            if (Result.isEmpty() || Boolean.FALSE.equals(Result.get()))
-                return false;
+            if (Result.isEmpty() || Boolean.FALSE.equals(Result.get())) return false;
             if (Boolean.TRUE.equals(Result.get())) {
                 Logger.Info("GUI operator login: " + OperatorName + " [" + OperatorRole + "]");
                 return true;
@@ -738,8 +661,7 @@ public class GUI extends Application {
     }
 
     private void StopServer() {
-        if (Server == null)
-            return;
+        if (Server == null) return;
         Server.StopServer();
         ServerStartTime = null;
         Platform.runLater(() -> {
@@ -757,23 +679,19 @@ public class GUI extends Application {
     }
 
     private void RefreshSessions() {
-        if (Server == null)
-            return;
+        if (Server == null) return;
         Platform.runLater(() -> {
             SessionRows.clear();
-            for (Session S : Server.GetSessions().GetAll())
-                SessionRows.add(new SessionRow(S));
+            for (Session S : Server.GetSessions().GetAll()) SessionRows.add(new SessionRow(S));
             SessionCountLabel.setText("⊟ " + SessionRows.size() + " Session" + (SessionRows.size() != 1 ? "s" : ""));
         });
     }
 
     private void SendTerminalCommand() {
-        if (CmdInputField == null)
-            return;
+        if (CmdInputField == null) return;
         String SidStr = TermInputField.getText().trim();
         String Cmd = CmdInputField.getText().trim();
-        if (SidStr.isEmpty() || Cmd.isEmpty())
-            return;
+        if (SidStr.isEmpty() || Cmd.isEmpty()) return;
         int Sid;
         try {
             Sid = Integer.parseInt(SidStr);
@@ -789,16 +707,14 @@ public class GUI extends Application {
         CmdInputField.clear();
         AddLog("[>] #" + Sid + ": " + Cmd);
         final int FinalSid = Sid;
-        Executors
-                .newSingleThreadExecutor()
-                .submit(() -> {
-                    String[] Result = Server.ExecuteCommand(FinalSid, Cmd);
-                    boolean Ok = Boolean.parseBoolean(Result[0]);
-                    Platform.runLater(() -> {
-                        WriteTerminal(Result[1] + "\n\n", false);
-                        AddLog((Ok ? "[+]" : "[!]") + " #" + FinalSid + ": " + (Ok ? "OK" : Result[1]));
-                    });
-                });
+        Executors.newSingleThreadExecutor().submit(() -> {
+            String[] Result = Server.ExecuteCommand(FinalSid, Cmd);
+            boolean Ok = Boolean.parseBoolean(Result[0]);
+            Platform.runLater(() -> {
+                WriteTerminal(Result[1] + "\n\n", false);
+                AddLog((Ok ? "[+]" : "[!]") + " #" + FinalSid + ": " + (Ok ? "OK" : Result[1]));
+            });
+        });
     }
 
     private void RunExecCommand(String Body) {
@@ -884,14 +800,12 @@ public class GUI extends Application {
             return;
         }
         AddLog("[>] SESSION-" + Sid + " → " + Cmd);
-        Executors
-                .newSingleThreadExecutor()
-                .submit(() -> {
-                    String[] Result = Server.ExecuteCommand(Sid, Cmd);
-                    boolean Ok = Boolean.parseBoolean(Result[0]);
-                    Db.SaveCommandLog(Sid, OperatorName != null ? OperatorName : "gui", Cmd, Result[1], Ok);
-                    Platform.runLater(() -> AddLog((Ok ? "[+]" : "[!]") + " SESSION-" + Sid + ": " + Result[1]));
-                });
+        Executors.newSingleThreadExecutor().submit(() -> {
+            String[] Result = Server.ExecuteCommand(Sid, Cmd);
+            boolean Ok = Boolean.parseBoolean(Result[0]);
+            Db.SaveCommandLog(Sid, OperatorName != null ? OperatorName : "gui", Cmd, Result[1], Ok);
+            Platform.runLater(() -> AddLog((Ok ? "[+]" : "[!]") + " SESSION-" + Sid + ": " + Result[1]));
+        });
     }
 
     private void ShowSessionInfoLog(String SidText) {
@@ -943,8 +857,7 @@ public class GUI extends Application {
         int Limit = Args.length > 1 ? ParseInt(Args[1], 25) : 25;
         List<Map<String, Object>> Hist = Db.GetCommandHistory(Sid, Limit);
         AddLog("[*] History entries: " + Hist.size());
-        for (Map<String, Object> R : Hist)
-            AddLog("    #" + R.getOrDefault("AgentId", "?") + " " + R.getOrDefault("Operator", "?") + " " + R.getOrDefault("Command", "") + " [" + R.getOrDefault("Timestamp", "") + "]");
+        for (Map<String, Object> R : Hist) AddLog("    #" + R.getOrDefault("AgentId", "?") + " " + R.getOrDefault("Operator", "?") + " " + R.getOrDefault("Command", "") + " [" + R.getOrDefault("Timestamp", "") + "]");
     }
 
     private int ParseInt(String Value, int Def) {
@@ -980,16 +893,13 @@ public class GUI extends Application {
         final int Sid = SelectedSessionId;
         Runnable Exec = () -> {
             String Cmd = Entry.getText().trim();
-            if (Cmd.isEmpty())
-                return;
+            if (Cmd.isEmpty()) return;
             Out.appendText("❯ " + Cmd + "\n");
             Entry.clear();
-            Executors
-                    .newSingleThreadExecutor()
-                    .submit(() -> {
-                        String[] Result = Server.ExecuteCommand(Sid, Cmd);
-                        Platform.runLater(() -> Out.appendText(Result[1] + "\n\n"));
-                    });
+            Executors.newSingleThreadExecutor().submit(() -> {
+                String[] Result = Server.ExecuteCommand(Sid, Cmd);
+                Platform.runLater(() -> Out.appendText(Result[1] + "\n\n"));
+            });
         };
         Run.setOnAction(E -> Exec.run());
         Entry.setOnAction(E -> Exec.run());
@@ -1038,36 +948,32 @@ public class GUI extends Application {
         Runnable DoBroadcast = () -> {
             String Target = TargetField.getText().trim();
             String Cmd = CmdField.getText().trim();
-            if (Target.isEmpty() || Cmd.isEmpty())
-                return;
+            if (Target.isEmpty() || Cmd.isEmpty()) return;
             Out.appendText("⟳ Broadcasting [" + Target + "]: " + Cmd + "\n");
             CmdField.clear();
-            Executors
-                    .newSingleThreadExecutor()
-                    .submit(() -> {
-                        Map<Integer, String[]> Results;
-                        if (Target.equalsIgnoreCase("all")) {
-                            Results = Server.BroadcastAll(Cmd);
-                        } else {
-                            java.util.List<Integer> Ids = new java.util.ArrayList<>();
-                            for (String S : Target.split(",")) {
-                                try {
-                                    Ids.add(Integer.parseInt(S.trim()));
-                                } catch (NumberFormatException Ignored) {
-                                }
-                            }
-                            Results = Server.BroadcastCommand(Ids, Cmd);
-                        }
-                        final Map<Integer, String[]> FinalResults = Results;
-                        Platform.runLater(() -> {
-                            for (Map.Entry<Integer, String[]> En : FinalResults.entrySet()) {
-                                boolean Ok = Boolean.parseBoolean(En.getValue()[0]);
-                                Out.appendText("SESSION-" + En.getKey() + (Ok ? " ✔" : " ✘") + ":\n");
-                                Out.appendText(En.getValue()[1] + "\n\n");
-                                Db.SaveCommandLog(En.getKey(), "operator", Cmd, En.getValue()[1], Ok);
-                            }
-                        });
-                    });
+            Executors.newSingleThreadExecutor().submit(() -> {
+                Map<Integer, String[]> Results;
+                if (Target.equalsIgnoreCase("all")) {
+                    Results = Server.BroadcastAll(Cmd);
+                } else {
+                    java.util.List<Integer> Ids = new java.util.ArrayList<>();
+                    for (String S : Target.split(",")) {
+                        try {
+                            Ids.add(Integer.parseInt(S.trim()));
+                        } catch (NumberFormatException Ignored) {}
+                    }
+                    Results = Server.BroadcastCommand(Ids, Cmd);
+                }
+                final Map<Integer, String[]> FinalResults = Results;
+                Platform.runLater(() -> {
+                    for (Map.Entry<Integer, String[]> En : FinalResults.entrySet()) {
+                        boolean Ok = Boolean.parseBoolean(En.getValue()[0]);
+                        Out.appendText("SESSION-" + En.getKey() + (Ok ? " ✔" : " ✘") + ":\n");
+                        Out.appendText(En.getValue()[1] + "\n\n");
+                        Db.SaveCommandLog(En.getKey(), "operator", Cmd, En.getValue()[1], Ok);
+                    }
+                });
+            });
         };
         RunBtn.setOnAction(E -> DoBroadcast.run());
         CmdField.setOnAction(E -> DoBroadcast.run());
@@ -1084,39 +990,27 @@ public class GUI extends Application {
             return;
         }
         Alert Confirm = new Alert(Alert.AlertType.CONFIRMATION, "Terminate SESSION-" + SelectedSessionId + "?");
-        Confirm
-                .showAndWait()
-                .ifPresent(R -> {
-                    if (R == ButtonType.OK) {
-                        Server.RemoveSession(SelectedSessionId);
-                        SelectedSessionId = -1;
-                        RefreshSessions();
-                        if (SelectedAgentLabel != null)
-                            SelectedAgentLabel.setText("○ No agent selected");
-                    }
-                });
+        Confirm.showAndWait().ifPresent(R -> {
+            if (R == ButtonType.OK) {
+                Server.RemoveSession(SelectedSessionId);
+                SelectedSessionId = -1;
+                RefreshSessions();
+                if (SelectedAgentLabel != null) SelectedAgentLabel.setText("○ No agent selected");
+            }
+        });
     }
 
     private void EventHandler(EventType Type, Map<String, Object> Data) {
         switch (Type) {
-        case AgentConnected -> {
-            AddLog(
-                    "[+] [" +
-                            Data.get("Type") +
-                            "] SESSION-" +
-                            Data.get("ID") +
-                            ": " +
-                            Data.get("AgentName") +
-                            " (" +
-                            Data.get("OS") +
-                            ")");
-            Platform.runLater(this::RefreshSessions);
-        }
-        case AgentDisconnected -> {
-            AddLog("[-] SESSION-" + Data.get("ID") + " disconnected: " + Data.get("Reason"));
-            Platform.runLater(this::RefreshSessions);
-        }
-        case Error -> AddLog("[!] " + Data.get("Message"));
+            case AgentConnected -> {
+                AddLog("[+] [" + Data.get("Type") + "] SESSION-" + Data.get("ID") + ": " + Data.get("AgentName") + " (" + Data.get("OS") + ")");
+                Platform.runLater(this::RefreshSessions);
+            }
+            case AgentDisconnected -> {
+                AddLog("[-] SESSION-" + Data.get("ID") + " disconnected: " + Data.get("Reason"));
+                Platform.runLater(this::RefreshSessions);
+            }
+            case Error -> AddLog("[!] " + Data.get("Message"));
         }
     }
 
@@ -1124,8 +1018,7 @@ public class GUI extends Application {
         String Ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         String Entry = "[" + Ts + "] " + Msg;
         LogEntries.add(Entry);
-        if (LogEntries.size() > Config.GetMaxLogEntries())
-            LogEntries.remove(0);
+        if (LogEntries.size() > Config.GetMaxLogEntries()) LogEntries.remove(0);
         Platform.runLater(() -> {
             if (LogOutput != null) {
                 LogOutput.appendText(Entry + "\n");
@@ -1134,8 +1027,7 @@ public class GUI extends Application {
     }
 
     private void WriteTerminal(String Text, boolean IsError) {
-        if (TerminalOutput != null)
-            TerminalOutput.appendText(Text);
+        if (TerminalOutput != null) TerminalOutput.appendText(Text);
     }
 
     private void StartUptimeTimer() {
@@ -1143,14 +1035,12 @@ public class GUI extends Application {
             while (true) {
                 try {
                     Thread.sleep(1000);
-                } catch (InterruptedException Ignored) {
-                }
+                } catch (InterruptedException Ignored) {}
                 if (ServerStartTime != null) {
                     long S = Duration.between(ServerStartTime, Instant.now()).getSeconds();
                     String Up = SystemHelper.FormatUptime(S);
                     Platform.runLater(() -> {
-                        if (UptimeLabel != null)
-                            UptimeLabel.setText("TIME: " + Up);
+                        if (UptimeLabel != null) UptimeLabel.setText("TIME: " + Up);
                     });
                 }
             }
@@ -1162,25 +1052,18 @@ public class GUI extends Application {
     private VBox BuildStatCard(String Icon, String Title, String Value, String Hex) {
         VBox Card = new VBox(4);
         Card.setPadding(new Insets(18));
-        Card
-                .setStyle(
-                        "-fx-background-color: linear-gradient(to bottom right, #111114, #070707); -fx-background-radius: 18; -fx-border-color: " + Hex
-                                + "; -fx-border-radius: 18; -fx-effect: dropshadow(gaussian, rgba(255,31,61,0.16), 22, 0.22, 0, 10);");
+        Card.setStyle("-fx-background-color: linear-gradient(to bottom right, #111114, #070707); -fx-background-radius: 18; -fx-border-color: " + Hex + "; -fx-border-radius: 18; -fx-effect: dropshadow(gaussian, rgba(255,31,61,0.16), 22, 0.22, 0, 10);");
         Card.setMinHeight(104);
         HBox Row = new HBox(8);
         Row.setAlignment(Pos.CENTER_LEFT);
-        Row
-                .getChildren()
-                .addAll(
-                        StyledLabel(Icon, 28, Hex, false),
-                        new VBox(2) {
-                            {
-                                getChildren()
-                                        .addAll(
-                                                StyledLabel(Title, 10, MutedColor, false),
-                                                StyledLabel(Value, 24, Hex, true));
-                            }
-                        });
+        Row.getChildren().addAll(
+            StyledLabel(Icon, 28, Hex, false),
+            new VBox(2) {
+                {
+                    getChildren().addAll(StyledLabel(Title, 10, MutedColor, false), StyledLabel(Value, 24, Hex, true));
+                }
+            }
+        );
         Card.getChildren().add(Row);
         return Card;
     }
@@ -1188,10 +1071,7 @@ public class GUI extends Application {
     private VBox BuildCard(String Title) {
         VBox Card = new VBox(8);
         Card.setPadding(new Insets(18));
-        Card
-                .setStyle(
-                        "-fx-background-color: linear-gradient(to bottom right, #111114, #090909); -fx-background-radius: 18; -fx-border-color: " + BorderColor
-                                + "; -fx-border-radius: 18; -fx-effect: dropshadow(gaussian, rgba(255,31,61,0.12), 18, 0.16, 0, 8);");
+        Card.setStyle("-fx-background-color: linear-gradient(to bottom right, #111114, #090909); -fx-background-radius: 18; -fx-border-color: " + BorderColor + "; -fx-border-radius: 18; -fx-effect: dropshadow(gaussian, rgba(255,31,61,0.12), 18, 0.16, 0, 8);");
         Label TitleLabel = StyledLabel(Title, 12, TextColor, true);
         Separator Sep = new Separator();
         Sep.setStyle("-fx-background-color: " + BorderColor + ";");
@@ -1208,61 +1088,16 @@ public class GUI extends Application {
 
     private Button StyledButton(String Text, String Hex, boolean Outline) {
         Button B = new Button(Text);
-        B
-                .setStyle(
-                        "-fx-background-color: " +
-                                (Outline ? "transparent" : Hex) +
-                                ";" +
-                                "-fx-text-fill: " +
-                                (Outline ? Hex : "#ffffff") +
-                                ";" +
-                                "-fx-border-color: " + Hex + ";" +
-                                "-fx-border-width: 1.2;" +
-                                "-fx-border-radius: 10;" +
-                                "-fx-font-family: 'Segoe UI';" +
-                                "-fx-font-size: 10px;" +
-                                "-fx-font-weight: bold;" +
-                                "-fx-padding: 8 16 8 16;" +
-                                "-fx-background-radius: 10;" +
-                                "-fx-cursor: hand;");
+        B.setStyle("-fx-background-color: " + (Outline ? "transparent" : Hex) + ";" + "-fx-text-fill: " + (Outline ? Hex : "#ffffff") + ";" + "-fx-border-color: " + Hex + ";" + "-fx-border-width: 1.2;" + "-fx-border-radius: 10;" + "-fx-font-family: 'Segoe UI';" + "-fx-font-size: 10px;" + "-fx-font-weight: bold;" + "-fx-padding: 8 16 8 16;" + "-fx-background-radius: 10;" + "-fx-cursor: hand;");
         return B;
     }
 
     private void ApplyInputStyle(TextField F) {
-        F
-                .setStyle(
-                        "-fx-background-color: " +
-                                Card2Color +
-                                ";" +
-                                "-fx-text-fill: " +
-                                TextColor +
-                                ";" +
-                                "-fx-prompt-text-fill: " +
-                                MutedColor +
-                                ";" +
-                                "-fx-font-family: 'Consolas';" +
-                                "-fx-font-size: 11px;" +
-                                "-fx-padding: 9 12 9 12;" +
-                                "-fx-background-radius: 9;" +
-                                "-fx-border-color: " + BorderColor + ";" +
-                                "-fx-border-radius: 9;");
+        F.setStyle("-fx-background-color: " + Card2Color + ";" + "-fx-text-fill: " + TextColor + ";" + "-fx-prompt-text-fill: " + MutedColor + ";" + "-fx-font-family: 'Consolas';" + "-fx-font-size: 11px;" + "-fx-padding: 9 12 9 12;" + "-fx-background-radius: 9;" + "-fx-border-color: " + BorderColor + ";" + "-fx-border-radius: 9;");
     }
 
     private void ApplyTermStyle(TextArea A) {
-        A
-                .setStyle(
-                        "-fx-background-color: #050812;" +
-                                "-fx-control-inner-background: #050812;" +
-                                "-fx-text-fill: " +
-                                TextColor +
-                                ";" +
-                                "-fx-highlight-fill: " + RedColor + ";" +
-                                "-fx-font-family: 'Consolas';" +
-                                "-fx-font-size: 11px;" +
-                                "-fx-padding: 12 14 12 14;" +
-                                "-fx-background-radius: 12;" +
-                                "-fx-border-color: " + BorderColor + ";" +
-                                "-fx-border-radius: 12;");
+        A.setStyle("-fx-background-color: #050812;" + "-fx-control-inner-background: #050812;" + "-fx-text-fill: " + TextColor + ";" + "-fx-highlight-fill: " + RedColor + ";" + "-fx-font-family: 'Consolas';" + "-fx-font-size: 11px;" + "-fx-padding: 12 14 12 14;" + "-fx-background-radius: 12;" + "-fx-border-color: " + BorderColor + ";" + "-fx-border-radius: 12;");
         A.setWrapText(true);
     }
 

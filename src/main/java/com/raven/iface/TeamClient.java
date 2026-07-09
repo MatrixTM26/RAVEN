@@ -136,7 +136,7 @@ public final class TeamClient {
         BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
         while (Running) {
             try {
-                System.out.print(AnsiColor.Red + "┌──(RAVEN-CLIENT)" + AnsiColor.Reset + "\n" + AnsiColor.Red + "└─≫ " + AnsiColor.Reset);
+                System.out.print(AnsiColor.Red + "┌──(RAVEN-CLIENT)" + AnsiColor.Reset + "\n" + AnsiColor.Red + "└─>> " + AnsiColor.Reset);
                 String Line = Reader.readLine();
                 if (Line == null) break;
                 Line = Line.trim();
@@ -191,7 +191,7 @@ public final class TeamClient {
             System.out.println(Box("ACTIVE SESSIONS"));
             System.out.println();
             if (Agents.isEmpty()) {
-                System.out.println(I + "⚠ No active sessions\n");
+                System.out.println(I + "  No active sessions\n");
                 return;
             }
             System.out.printf(I + "%s%-5s %-14s %-14s %-16s %-10s %-10s %s%s%n", AnsiColor.Red, "ID", "NAME/CERT", "TYPE", "IP", "OS", "USER", "SESSION-KEY", AnsiColor.Reset);

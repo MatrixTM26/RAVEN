@@ -4,8 +4,15 @@ venv/
 certs/
 *.pem
 *.p12
+*.cert
+*.crt
+*.key
+*.pub
 target/*.jar
 logs/
 *.log
 rmRefLog.sh
+clean.sh
 .vscode/
+.prettierrc
+.clang-format

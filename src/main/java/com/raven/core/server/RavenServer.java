@@ -41,11 +41,11 @@ public final class RavenServer extends BaseServer {
         try {
             OpenSockets();
             Running = true;
-            Logger.Info("Server started — " + Host + ":" + Port + " [" + Mode.name() + "]");
+            Logger.Info("server started on " + Host + ":" + Port + ". mode: " + Mode.name());
             Events.Trigger(EventType.ServerStarted, EventManager.BuildData("Host", Host, "Port", Port, "Mode", Mode.name()));
             return new boolean[] { true };
         } catch (Exception E) {
-            Logger.Error("Server start failed [" + Mode + "]: " + E.getMessage());
+            Logger.Error("server start failed. mode:" + Mode + " - " + E.getMessage());
             return new boolean[] { false };
         }
     }
@@ -56,7 +56,7 @@ public final class RavenServer extends BaseServer {
             case MULTI, RAW -> {
                 TcpSocket = new ServerSocket(Port, 50, InetAddress.getByName(Host));
                 TcpSocket.setReuseAddress(true);
-                Logger.Verbose("Plain TCP socket bound on " + Port);
+                Logger.Verbose("plain TCP socket bound on " + Port);
                 if (BeaconPort > 0 && Mode == ListenerMode.MULTI) {
                     BeaconSocket = new ServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
                     BeaconSocket.setReuseAddress(true);
@@ -127,7 +127,7 @@ public final class RavenServer extends BaseServer {
 
         ServerSocket Active = TlsSocket != null ? TlsSocket : TcpSocket;
         if (Active == null) {
-            Logger.Warn("No TCP socket open for mode " + Mode + " — beacon-only mode");
+            Logger.Warn("no TCP socket open for mode " + Mode + " — beacon-only mode");
             while (Running) {
                 try {
                     Thread.sleep(1000);
@@ -142,7 +142,7 @@ public final class RavenServer extends BaseServer {
         while (Running) {
             try {
                 Socket Client = Active.accept();
-                Logger.Verbose("Accepted TCP from " + Client.getRemoteSocketAddress());
+                Logger.Verbose("accepted TCP from " + Client.getRemoteSocketAddress());
                 Pool.submit(() -> HandleTcp(Client));
             } catch (SocketTimeoutException Ignored) {
             } catch (IOException E) {
@@ -159,7 +159,7 @@ public final class RavenServer extends BaseServer {
                 Pool.submit(() -> HandleBeacon(Client, IsTls));
             } catch (SocketTimeoutException Ignored) {
             } catch (IOException E) {
-                if (Running) Logger.Error("Beacon accept error: " + E.getMessage());
+                if (Running) Logger.Error("beacon accept error: " + E.getMessage());
                 break;
             }
         }
@@ -177,12 +177,12 @@ public final class RavenServer extends BaseServer {
             }
 
             DetectionResult Det = Detect(Client);
-            Logger.Info("Connection [" + Det.Type + "] from " + RemoteAddr);
+            Logger.Info("connection [" + Det.Type + "] from " + RemoteAddr);
 
             switch (Det.Type) {
                 case RAVEN -> {
                     if (!Mode.AcceptsRavenAgent()) {
-                        Logger.Warn("Mode " + Mode + " rejects RAVEN agents — dropping");
+                        Logger.Warn("mode " + Mode + " rejects RAVEN agents — dropping");
                         CloseQuietly(Client);
                         return;
                     }
@@ -190,7 +190,7 @@ public final class RavenServer extends BaseServer {
                 }
                 case RAW -> {
                     if (!Mode.AcceptsRawShell()) {
-                        Logger.Warn("Mode " + Mode + " rejects raw shells — dropping");
+                        Logger.Warn("mode " + Mode + " rejects raw shells — dropping");
                         CloseQuietly(Client);
                         return;
                     }
@@ -198,14 +198,14 @@ public final class RavenServer extends BaseServer {
                 }
                 case HTTP -> {
                     if (!Mode.AcceptsHttp()) {
-                        Logger.Warn("Mode " + Mode + " rejects HTTP — dropping");
+                        Logger.Warn("mode " + Mode + " rejects HTTP — dropping");
                         CloseQuietly(Client);
                         return;
                     }
                     HandleBeacon(Client, false);
                 }
                 default -> {
-                    Logger.Warn("Unknown protocol from " + RemoteAddr + " — dropping");
+                    Logger.Warn("unknown protocol from " + RemoteAddr + " — dropping");
                     CloseQuietly(Client);
                 }
             }
@@ -258,7 +258,7 @@ public final class RavenServer extends BaseServer {
         SocketLocks.put(Id, new Object());
         FireConnected(S, Id);
         MonitorSession(Id, Client, true);
-        Logger.Debug("Raw session-" + Id + " registered — " + RemoteAddr);
+        Logger.Debug("raw session-" + Id + " registered — " + RemoteAddr);
         return Id;
     }
 
@@ -378,10 +378,10 @@ public final class RavenServer extends BaseServer {
     @Override
     public String[] ExecuteCommand(int SessionId, String Command) {
         Optional<Session> Opt = Sessions.Get(SessionId);
-        if (Opt.isEmpty()) return Fail("Session not found");
+        if (Opt.isEmpty()) return Fail("session not found");
         if (Opt.get().GetShellMode().startsWith("HTTP")) {
             Object Lck = CommandLocks.get(SessionId);
-            if (Lck == null) return Fail("Lock missing");
+            if (Lck == null) return Fail("lock missing");
             synchronized (Lck) {
                 PendingCommands.put(SessionId, Command);
                 PendingOutputs.remove(SessionId);
@@ -433,9 +433,9 @@ public final class RavenServer extends BaseServer {
     }
 
     private void FireConnected(Session S, int Id) {
-        Logger.Info(String.format("[+] Session-%d [%s] %s@%s %s key=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.GetSessionKey()));
+        Logger.Info(String.format("session-%d [%s] %s@%s %s key=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.GetSessionKey()));
         Events.Trigger(EventType.AgentConnected, EventManager.BuildData("ID", Id, "Hostname", S.GetHostname(), "OS", S.GetOs(), "User", S.GetUser(), "Arch", S.GetArch(), "AgentIP", S.GetAgentIp(), "AgentName", S.GetAgentName(), "AgentId", S.GetAgentId(), "SessionKey", S.GetSessionKey(), "Address", S.GetRemoteAddress(), "Type", S.GetSessionType().name(), "ShellMode", S.GetShellMode(), "Encrypted", S.IsEncrypted(), "MtlsEnabled", S.IsMtlsEnabled(), "CertCN", S.GetCertCn()));
-        Logger.Info(String.format("[+] Session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.IsEncrypted(), S.IsMtlsEnabled()));
+        Logger.Info(String.format("session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.IsEncrypted(), S.IsMtlsEnabled()));
     }
 
     private String ValidateMtlsCert(Socket Sock) {
@@ -450,9 +450,9 @@ public final class RavenServer extends BaseServer {
                 if (Part.startsWith("CN=")) return Part.substring(3);
             }
         } catch (javax.net.ssl.SSLPeerUnverifiedException E) {
-            Logger.Verbose("No peer cert: " + E.getMessage());
+            Logger.Verbose("no peer cert: " + E.getMessage());
         } catch (Exception E) {
-            Logger.Verbose("Cert CN extraction failed: " + E.getMessage());
+            Logger.Verbose("cert CN extraction failed: " + E.getMessage());
         }
         return null;
     }
@@ -510,7 +510,7 @@ public final class RavenServer extends BaseServer {
     }
 
     private static String Str(Map<String, Object> M, String K) {
-        return Str(M, K, "Unknown");
+        return Str(M, K, "unknown");
     }
 
     private static String Str(Map<String, Object> M, String K, String Def) {

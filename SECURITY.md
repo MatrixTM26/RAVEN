@@ -76,7 +76,7 @@ RAVEN Framework follows responsible disclosure practices:
 
 ## Authorized Use Policy
 
-### ✅ **AUTHORIZED USES**
+### **AUTHORIZED USES**
 
 This project is designed and intended for:
 
@@ -103,7 +103,7 @@ This project is designed and intended for:
 
 ---
 
-### ❌ **UNAUTHORIZED USES - STRICTLY PROHIBITED**
+### **UNAUTHORIZED USES - STRICTLY PROHIBITED**
 
 This project is **NOT** intended for and **MUST NOT** be used for:
 

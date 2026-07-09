@@ -28,54 +28,54 @@ public final class Start {
     }
 
     private static void ProcessArgs(List<String> Args) {
-        if (Args.contains("-h") || Args.contains("--help")) {
+        if (Args.contains("-h") || Args.contains("-help")) {
             Helper.PrintHelp();
             return;
         }
 
-        if (Args.contains("-i") || Args.contains("--init-certs")) {
+        if (Args.contains("-i") || Args.contains("-init-certs")) {
             ShowBanner();
-            InitCertificates(Helper.Arg(Args, "-s", "--server", Config.GetServerHost()));
+            InitCertificates(Helper.Arg(Args, "-s", "-server", Config.GetServerHost()));
             return;
         }
 
-        String GenAgent = Helper.Arg(Args, "-a", "--agent", null);
+        String GenAgent = Helper.Arg(Args, "-a", "-agent", null);
         if (GenAgent != null) {
             ShowBanner();
             GenerateAgent(GenAgent, Args);
             return;
         }
 
-        if (Args.contains("-m") || Args.contains("--multi")) {
+        if (Args.contains("-m") || Args.contains("-gen-multi")) {
             ShowBanner();
             GenerateMultiAgent(Args);
             return;
         }
 
-        if (Args.contains("-l") || Args.contains("--list")) {
+        if (Args.contains("-l") || Args.contains("-list")) {
             ShowBanner();
             ListAgents();
             return;
         }
 
-        String Revoke = Helper.Arg(Args, "-r", "--revoke", null);
+        String Revoke = Helper.Arg(Args, "-r", "-revoke", null);
         if (Revoke != null) {
             ShowBanner();
             RevokeAgent(Revoke);
             return;
         }
 
-        if (Args.contains("-AO") || Args.contains("--add-operator")) {
+        if (Args.contains("-AO") || Args.contains("-add-operator")) {
             ShowBanner();
             HandleAddOperator(Args);
             return;
         }
-        if (Args.contains("-RO") || Args.contains("--remove-operator")) {
+        if (Args.contains("-RO") || Args.contains("-remove-operator")) {
             ShowBanner();
             HandleRemoveOperator(Args);
             return;
         }
-        if (Args.contains("-OP") || Args.contains("--operator-permission")) {
+        if (Args.contains("-OP") || Args.contains("-operator-permission")) {
             ShowBanner();
             HandleOperatorPermission(Args);
             return;
@@ -83,18 +83,18 @@ public final class Start {
 
         ShowBanner();
 
-        String Host = Helper.Arg(Args, "-s", "--host", Config.GetServerHost());
-        int Port = Helper.ParseInt(Helper.Arg(Args, "-p", "--port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
+        String Host = Helper.Arg(Args, "-s", "-host", Config.GetServerHost());
+        int Port = Helper.ParseInt(Helper.Arg(Args, "-p", "-port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
         ListenerMode Mode = ResolveMode(Args);
 
         if (Mode.RequiresTls() && !Files.exists(Paths.get(Config.GetKeystorePath()))) {
             Logger.Error("Keystore not found: " + Config.GetKeystorePath());
-            Logger.Warn("Run: java -jar raven.jar -i");
+            Logger.Warn("Run: java -jar target/raven-3.0.0.jar -i");
             System.exit(1);
         }
 
         String Interface = ResolveInterface(Args);
-        Logger.Info("Mode: " + Mode.name() + " | Interface: " + Interface.toUpperCase());
+        Logger.Info("Mode: " + Mode.name() + " Interface: " + Interface.toUpperCase());
         StartInterface(Host, Port, Mode, Interface, Args);
     }
 
@@ -104,24 +104,24 @@ public final class Start {
     }
 
     private static ListenerMode ResolveMode(List<String> Args) {
-        if (Args.contains("--fmtls") || Args.contains("-F")) return ListenerMode.FMTLS;
-        if (Args.contains("--mtls") || Args.contains("-T")) return ListenerMode.MTLS;
-        if (Args.contains("--tls")) return ListenerMode.TLS;
-        if (Args.contains("--https")) return ListenerMode.HTTPS;
-        if (Args.contains("--http")) return ListenerMode.HTTP;
-        if (Args.contains("--raw") || Args.contains("-R")) return ListenerMode.RAW;
-        if (Args.contains("--multi") || Args.contains("-M")) return ListenerMode.MULTI;
+        if (Args.contains("-fmtls") || Args.contains("-F")) return ListenerMode.FMTLS;
+        if (Args.contains("-mtls") || Args.contains("-T")) return ListenerMode.MTLS;
+        if (Args.contains("-tls")) return ListenerMode.TLS;
+        if (Args.contains("-https")) return ListenerMode.HTTPS;
+        if (Args.contains("-http")) return ListenerMode.HTTP;
+        if (Args.contains("-raw") || Args.contains("-R")) return ListenerMode.RAW;
+        if (Args.contains("-multi") || Args.contains("-M")) return ListenerMode.MULTI;
         return ListenerMode.FromString(Config.GetServerMode());
     }
 
     private static String ResolveInterface(List<String> Args) {
-        if (Args.contains("--teamclient") || Args.contains("-TC")) return "teamclient";
-        if (Args.contains("--teamserver-cli") || Args.contains("-TSC")) return "teamserver-cli";
-        if (Args.contains("--teamserver-web") || Args.contains("-TSW")) return "teamserver-web";
-        if (Args.contains("--teamserver-gui") || Args.contains("-TSG")) return "teamserver-gui";
-        if (Args.contains("--cli-mode") || Args.contains("-C")) return "cli";
-        if (Args.contains("--gui-mode") || Args.contains("-G")) return "gui";
-        if (Args.contains("--web-mode") || Args.contains("-W")) return "web";
+        if (Args.contains("-teamclient") || Args.contains("-TC")) return "teamclient";
+        if (Args.contains("-teamserver-cli") || Args.contains("-TSC")) return "teamserver-cli";
+        if (Args.contains("-teamserver-web") || Args.contains("-TSW")) return "teamserver-web";
+        if (Args.contains("-teamserver-gui") || Args.contains("-TSG")) return "teamserver-gui";
+        if (Args.contains("-cli-mode") || Args.contains("-C")) return "cli";
+        if (Args.contains("-gui-mode") || Args.contains("-G")) return "gui";
+        if (Args.contains("-web-mode") || Args.contains("-W")) return "web";
         return Config.GetInterfaceMode();
     }
 
@@ -130,15 +130,15 @@ public final class Start {
             switch (Interface) {
                 case "cli" -> new CLI(Config).Run(Host, Port, Mode);
                 case "teamclient" -> {
-                    String TsHost = Helper.Arg(Args, "-ts", "--ts-host", "127.0.0.1");
-                    int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "--ts-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    String TsHost = Helper.Arg(Args, "-ts", "-teamserver-host", "127.0.0.1");
+                    int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "-teamserver-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new com.raven.iface.TeamClient(Config, TsHost, TsPort).Run();
                 }
                 case "teamserver-cli" -> new CLI(Config).RunTeamServer(Host, Port, Mode);
                 case "gui" -> GUI.Launch(Config);
                 case "teamserver-gui" -> GUI.LaunchTeamServer(Config);
                 case "teamserver-web" -> {
-                    int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "--teamserver-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "-teamserver-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new TeamServer(Config, Mode).Run(Config.GetWebHost(), TsPort);
                     Thread.currentThread().join();
                 }
@@ -160,7 +160,7 @@ public final class Start {
             CertificateManager Mgr = new CertificateManager(Config);
             Mgr.Initialize(Host);
             Logger.Success("Certificates stored in: " + Paths.get(Config.GetKeystorePath()).getParent());
-            Logger.Info("Next: java -jar raven.jar -a <agent-id>");
+            Logger.Info("Next: java -jar target/raven-3.0.0.jar -a <agent-id>");
         } catch (Exception E) {
             Logger.Error("Certificate init failed: " + E.getMessage());
         }
@@ -169,12 +169,12 @@ public final class Start {
     private static void GenerateAgent(String AgentId, List<String> Args) {
         try {
             AssertCaExists();
-            String Host = Helper.Arg(Args, "-ah", "--agent-host", Config.GetServerHost());
-            int Port = Helper.ParseInt(Helper.Arg(Args, "-ap", "--agent-port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
-            boolean Mtls = Args.contains("-am") || Args.contains("--agent-mtls");
-            boolean Pers = Args.contains("-ps") || Args.contains("--persistent");
-            boolean Hide = Args.contains("-hc") || Args.contains("--hide-console");
-            String Lang = Helper.Arg(Args, "-al", "--agent-lang", "java");
+            String Host = Helper.Arg(Args, "-ah", "-agent-host", Config.GetServerHost());
+            int Port = Helper.ParseInt(Helper.Arg(Args, "-ap", "-agent-port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
+            boolean Mtls = Args.contains("-am") || Args.contains("-agent-mtls");
+            boolean Pers = Args.contains("-ps") || Args.contains("-persistent");
+            boolean Hide = Args.contains("-hc") || Args.contains("-hide-console");
+            String Lang = Helper.Arg(Args, "-al", "-agent-lang", "java");
             CertificateManager Mgr = new CertificateManager(Config);
             Mgr.Initialize(Host);
             DeployAgent(AgentId, Mgr.CreateAgentCertificate(AgentId), Host, Port, Mtls, Pers, Hide, Lang);
@@ -184,8 +184,8 @@ public final class Start {
     }
 
     private static void GenerateMultiAgent(List<String> Args) {
-        int Count = Helper.ParseInt(Helper.Arg(Args, "-c", "--count", "10"), 10);
-        String Prefix = Helper.Arg(Args, "-u", "--prefix", "agent");
+        int Count = Helper.ParseInt(Helper.Arg(Args, "-c", "-count", "10"), 10);
+        String Prefix = Helper.Arg(Args, "-u", "-prefix", "agent");
         Logger.Info("Generating " + Count + " agents — prefix: " + Prefix);
         int Ok = 0;
         for (int I = 1; I <= Count; I++) {
@@ -247,7 +247,7 @@ public final class Start {
             W.println("Lang    : " + LangNorm.toUpperCase());
             W.println("Files   : agent.p12  ca.p12  " + com.raven.utils.AgentSourceGen.Filename(LangNorm));
             W.println();
-            W.println("--- HOW TO RUN ---");
+            W.println("-- HOW TO RUN --");
             switch (LangNorm) {
                 case "java" -> {
                     W.println("  javac " + com.raven.utils.AgentSourceGen.Filename(LangNorm));
@@ -269,11 +269,11 @@ public final class Start {
     }
 
     private static void HandleAddOperator(List<String> Args) {
-        String User = Helper.Arg(Args, "-u", "--username", null);
-        String Pass = Helper.Arg(Args, "-pw", "--password", null);
-        String Role = Helper.Arg(Args, "-r", "--role", "OPERATOR");
+        String User = Helper.Arg(Args, "-u", "-username", null);
+        String Pass = Helper.Arg(Args, "-pw", "-password", null);
+        String Role = Helper.Arg(Args, "-r", "-role", "OPERATOR");
         if (User == null || Pass == null) {
-            Logger.Error("Usage: -AO | --add-operator -u | --username <user> -pw | --password <pass> [-r | --role ROLE]");
+            Logger.Error("Usage: -AO | -add-operator -u | -username <user> -pw | -password <pass> [-r | -role ROLE]");
             return;
         }
         if (Pass.length() < 8) {
@@ -288,9 +288,9 @@ public final class Start {
     }
 
     private static void HandleRemoveOperator(List<String> Args) {
-        String User = Helper.Arg(Args, "-u", "--username", null);
+        String User = Helper.Arg(Args, "-u", "-username", null);
         if (User == null) {
-            Logger.Error("Usage: -RO | --remove-operator -u | --username <user>");
+            Logger.Error("Usage: -RO | -remove-operator -u | -username <user>");
             return;
         }
         if (User.equals("admin")) {
@@ -304,15 +304,15 @@ public final class Start {
     }
 
     private static void HandleOperatorPermission(List<String> Args) {
-        String User = Helper.Arg(Args, "-u", "--username", null);
-        String Role = Helper.Arg(Args, "-r", "--role", null);
+        String User = Helper.Arg(Args, "-u", "-username", null);
+        String Role = Helper.Arg(Args, "-r", "-role", null);
         if (User == null && Role == null) {
             Logger.Info("Available roles:");
             for (OperatorRole R : OperatorRole.values()) Logger.Info("  " + R.name() + " — " + R.PermissionString());
             return;
         }
         if (User == null || Role == null) {
-            Logger.Error("Usage: -OP | --operator-permission -u | --username <user> -r | --role <ROLE>");
+            Logger.Error("Usage: -OP | -operator-permission -u | -username <user> -r | -role <ROLE>");
             return;
         }
         if (User.equals("admin")) {
@@ -329,7 +329,7 @@ public final class Start {
     private static void AssertCaExists() {
         if (!Files.exists(Paths.get(Config.GetCaPath()))) {
             Logger.Error("CA not found: " + Config.GetCaPath());
-            Logger.Warn("Run: java -jar raven.jar -i");
+            Logger.Warn("Run: java -jar target/raven-3.0.0.jar -i");
             System.exit(1);
         }
     }

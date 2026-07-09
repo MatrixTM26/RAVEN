@@ -183,11 +183,11 @@ public final class WebApp {
         Server.AddEventListener(this::OnEvent);
         boolean[] R = Server.StartServer();
         if (!R[0]) {
-            AddLog("[!] Failed to start server");
+            AddLog("Failed to start server");
             return GsonInst.toJson(Map.of("Error", "Failed to start server"));
         }
         ServerStartTime = Instant.now();
-        AddLog("[+] Server started on " + Host + ":" + Port);
+        AddLog("Server started on " + Host + ":" + Port);
         new Thread(Server::AcceptConnections, "AcceptConnections").start();
         return GsonInst.toJson(Map.of("Success", true, "Host", Host, "Port", Port, "Mode", ActiveMode.name(), "StartedAt", ServerStartTime.getEpochSecond()));
     }
@@ -197,7 +197,7 @@ public final class WebApp {
         Server.StopServer();
         Server = null;
         ServerStartTime = null;
-        AddLog("[!] Server stopped");
+        AddLog("Server stopped");
         return GsonInst.toJson(Map.of("Success", true));
     }
 
@@ -244,7 +244,7 @@ public final class WebApp {
         String[] R = Server.ExecuteCommand(AgentId, Command);
         boolean Ok = Boolean.parseBoolean(R[0]);
         Db.SaveCommandLog(AgentId, Operator, Command, R[1], Ok);
-        AddLog(Ok ? "[+] " + R[1] : "[!] " + R[1]);
+        AddLog(Ok ? "" + R[1] : "" + R[1]);
         return GsonInst.toJson(Map.of("Success", Ok, "Output", R[1], "Command", Command));
     }
 
@@ -686,19 +686,19 @@ public final class WebApp {
     private void OnEvent(EventType Type, Map<String, Object> Data) {
         switch (Type) {
             case AgentConnected -> {
-                AddLog("[+] Session-" + Data.get("ID") + " [" + Data.get("Type") + "] " + Data.get("User") + "@" + Data.get("Hostname") + " " + Data.get("OS"));
+                AddLog("SESSIONS-" + Data.get("ID") + " [" + Data.get("Type") + "] " + Data.get("User") + "@" + Data.get("Hostname") + " " + Data.get("OS"));
                 Db.SaveSessionEvent(Data, "connected");
             }
             case AgentDisconnected -> {
-                AddLog("[!] Session-" + Data.get("ID") + " disconnected: " + Data.get("Reason"));
+                AddLog("SESSIONS-" + Data.get("ID") + " disconnected: " + Data.get("Reason"));
                 Db.SaveSessionEvent(Data, "disconnected");
             }
-            case Error -> AddLog("[!] " + Data.get("Message"));
+            case Error -> AddLog("" + Data.get("Message"));
         }
     }
 
     private void AddLog(String Msg) {
-        String Entry = "[" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "] " + Msg;
+        String Entry = "  [" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + "] " + Msg;
         Logs.add(Entry);
         if (Logs.size() > MaxLogs) Logs.remove(0);
         Db.SaveLog(Entry);

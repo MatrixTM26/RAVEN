@@ -65,7 +65,7 @@ public abstract class BaseServer {
         RAVEN,
         RAW,
         HTTP,
-        UNKNOWN,
+        UNKNOWN
     }
 
     public static final class DetectionResult {
@@ -110,7 +110,7 @@ public abstract class BaseServer {
         if (Str.startsWith("{")) Type = ConnectionType.RAVEN;
         else if (Str.startsWith("GET ") || Str.startsWith("POST ") || Str.startsWith("PUT ") || Str.startsWith("HEAD ")) Type = ConnectionType.HTTP;
         else Type = ConnectionType.RAW;
-        Logger.Verbose("Detect [" + Sock.getRemoteSocketAddress() + "] → " + Type + " peek=" + Str.substring(0, Math.min(Str.length(), 12)));
+        Logger.Verbose("Detect [" + Sock.getRemoteSocketAddress() + "] > " + Type + " peek=" + Str.substring(0, Math.min(Str.length(), 12)));
         return new DetectionResult(Type, PbIn, P);
     }
 
@@ -144,7 +144,7 @@ public abstract class BaseServer {
         }
 
         String Json = Buf.toString("UTF-8").trim();
-        if (!Json.startsWith("{")) throw new IOException("Expected JSON sysinfo, got: " + (Json.length() > 64 ? Json.substring(0, 64) + "…" : Json));
+        if (!Json.startsWith("{")) throw new IOException("expected JSON sysinfo, got: " + (Json.length() > 64 ? Json.substring(0, 64) + "…" : Json));
 
         @SuppressWarnings("unchecked")
         Map<String, Object> Info = Gson.fromJson(Json, Map.class);
@@ -152,7 +152,7 @@ public abstract class BaseServer {
 
         Out.write((Crypto.GetKeyAsBase64Url() + "\n").getBytes("UTF-8"));
         Out.flush();
-        Logger.Verbose("RAVEN handshake OK — " + Info.get("hostname") + " key=" + Crypto.GetKeyAsBase64Url().substring(0, 8) + "…");
+        Logger.Verbose("RAVEN handshake OK - " + Info.get("hostname") + " key=" + Crypto.GetKeyAsBase64Url().substring(0, 8) + "…");
         return Info;
     }
 
@@ -165,8 +165,8 @@ public abstract class BaseServer {
         Info.put("agentip", RemoteAddr.replaceAll("/|:.*", ""));
         Info.put("shellmode", "Raw");
 
-        String Probe = "echo TCID:$(uname -s 2>/dev/null || echo WIN):" + "$(hostname 2>/dev/null):$(whoami 2>/dev/null):$(uname -m 2>/dev/null)\n";
         try {
+            String Probe = "echo TCID:$(uname -s 2>/dev/null || echo WIN):" + "$(hostname 2>/dev/null):$(whoami 2>/dev/null):$(uname -m 2>/dev/null)\n";
             Out.write(Probe.getBytes("UTF-8"));
             Out.flush();
             StringBuilder Resp = new StringBuilder();
@@ -194,9 +194,9 @@ public abstract class BaseServer {
                 }
             }
         } catch (Exception E) {
-            Logger.Warn("Raw probe failed (session still registered): " + E.getMessage());
+            Logger.Warn("raw probe failed (session still registered): " + E.getMessage());
         }
-        Logger.Verbose("Raw handshake — host=" + Info.get("hostname") + " os=" + Info.get("os"));
+        Logger.Verbose("Raw handshake - host=" + Info.get("hostname") + " os=" + Info.get("os"));
         return Info;
     }
 
@@ -232,7 +232,7 @@ public abstract class BaseServer {
                     Thread.currentThread().interrupt();
                     break;
                 } catch (Exception E) {
-                    Logger.Verbose("Session-" + SessionId + " disconnected: " + E.getMessage());
+                    Logger.Verbose("session-" + SessionId + " disconnected: " + E.getMessage());
                     Events.Trigger(EventType.AgentDisconnected, EventManager.BuildData("ID", SessionId, "Reason", E.getMessage()));
                     RemoveSession(SessionId);
                     break;

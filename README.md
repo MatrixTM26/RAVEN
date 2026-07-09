@@ -112,7 +112,7 @@
 ### 1. Clone the Repository
 
 - MAIN
-  > For normal usage, clone branch main
+    > For normal usage, clone branch main
 
 ```bash
 git clone --branch main https://github.com/MatrixTM26/RAVEN.git
@@ -123,7 +123,7 @@ cd RAVEN
     <summary>Other</summary>
 
 - DEV
-  > For contribution commit, pull request and development, push to branch dev
+    > For contribution commit, pull request and development, push to branch dev
 
 ```bash
 git clone --branch dev https://github.com/MatrixTM26/RAVEN.git
@@ -131,7 +131,7 @@ cd RAVEN
 ```
 
 - MASTER
-  > Only for owner/admin commit, pull request and upcoming version of development
+    > Only for owner/admin commit, pull request and upcoming version of development
 
 </details>
 
@@ -147,13 +147,13 @@ mvn clean package -q -X
 
 ```bash
 # Web Panel Mode (Default)
-java -jar target/raven.jar
+java -jar target/raven-3.0.0.jar
 
 # CLI Mode
-java -jar target/raven.jar -C
+java -jar target/raven-3.0.0.jar -C
 
 # GUI Mode
-java -jar target/raven.jar -G
+java -jar target/raven-3.0.0.jar -G
 ```
 
 ---
@@ -163,17 +163,17 @@ java -jar target/raven.jar -G
 ### Initialize CA and Server Certificate
 
 ```bash
-java -jar target/raven.jar --init-certs
+java -jar target/raven-3.0.0.jar --init-certs
 ```
 
 ### Generate Agent Certificates
 
 ```bash
 # Single Agent
-java -jar target/raven.jar -a myagent -ah 192.168.1.10 -ap 4444 -am
+java -jar target/raven-3.0.0.jar -a myagent -ah 192.168.1.10 -ap 4444 -am
 
 # Multiple Agents
-java -jar target/raven.jar -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
+java -jar target/raven-3.0.0.jar -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
 ```
 
 ---
@@ -182,66 +182,66 @@ java -jar target/raven.jar -m -c 10 -u team -ah 192.168.1.10 -ap 4444 -am
 
 - GENERAL
 
-| Option      | Long Option     | Description                                           |
-| ----------- | --------------- | ----------------------------------------------------- |
-| `-h`        | `--help`        | Show help and exit                                    |
-| `-s <addr>` | `--host <addr>` | C2 server bind address (default: `server.properties`) |
-| `-p <port>` | `--port <port>` | C2 listener port (default: `server.properties`)       |
+| Option      | Long Option    | Description                                           |
+| ----------- | -------------- | ----------------------------------------------------- |
+| `-h`        | `-help`        | Show help and exit                                    |
+| `-s <addr>` | `-host <addr>` | C2 server bind address (default: `server.properties`) |
+| `-p <port>` | `-port <port>` | C2 listener port (default: `server.properties`)       |
 
 ```bash
 # Show help
-java -jar target/raven.jar -h
+java -jar target/raven-3.0.0.jar -h
 
 # Start with custom host and port
-java -jar target/raven.jar -s 0.0.0.0 -p 4444
+java -jar target/raven-3.0.0.jar -s 0.0.0.0 -p 4444
 ```
 
 - LISTENER MODE
 
 | Option | Long Option | Listener Mode              |
 | ------ | ----------- | -------------------------- |
-| `-A`   | `--multi`   | Multi-protocol auto-detect |
-| `-R`   | `--raw`     | Raw TCP reverse shell only |
-| `-b`   | `--http`    | HTTP beacon only           |
-| `-B`   | `--https`   | HTTPS beacon only          |
-| `-T`   | `--tls`     | TCP TLS — TOMCAT agent     |
-| `-M`   | `--mtls`    | Mutual TLS — TOMCAT agent  |
-| `-F`   | `--fmtls`   | Full mTLS + HTTPS beacon   |
+| `-A`   | `-multi`    | Multi-protocol auto-detect |
+| `-R`   | `-raw`      | Raw TCP reverse shell only |
+| `-b`   | `-http`     | HTTP beacon only           |
+| `-B`   | `-https`    | HTTPS beacon only          |
+| `-T`   | `-tls`      | TCP TLS — TOMCAT agent     |
+| `-M`   | `-mtls`     | Mutual TLS — TOMCAT agent  |
+| `-F`   | `-fmtls`    | Full mTLS + HTTPS beacon   |
 
 ```bash
-java -jar target/raven.jar -A   # multi-protocol
-java -jar target/raven.jar -R   # raw TCP
-java -jar target/raven.jar -b   # HTTP beacon
-java -jar target/raven.jar -B   # HTTPS beacon
-java -jar target/raven.jar -T   # TLS
-java -jar target/raven.jar -M   # mTLS
-java -jar target/raven.jar -F   # full mTLS + HTTPS beacon
+java -jar target/raven-3.0.0.jar -A # multi-protocol
+java -jar target/raven-3.0.0.jar -R # raw TCP
+java -jar target/raven-3.0.0.jar -b # HTTP beacon
+java -jar target/raven-3.0.0.jar -B # HTTPS beacon
+java -jar target/raven-3.0.0.jar -T # TLS
+java -jar target/raven-3.0.0.jar -M # mTLS
+java -jar target/raven-3.0.0.jar -F # full mTLS + HTTPS beacon
 ```
 
 - INTERFACE MODE
 
-| Option       | Long Option                | Interface                                          |
-| ------------ | -------------------------- | -------------------------------------------------- |
-| `-C`         | `--cli-mode`               | Start in CLI mode                                  |
-| `-G`         | `--gui-mode`               | Start in JavaFX GUI mode                           |
-| `-W`         | `--web-mode`               | Start in Web Panel mode                            |
-| `-TSC`       | `--teamserver-cli`         | TeamServer with CLI interface                      |
-| `-TSW`       | `--teamserver-web`         | TeamServer with Web interface                      |
-| `-TSG`       | `--teamserver-gui`         | TeamServer with GUI interface                      |
-| `-tp <port>` | `--teamserver-port <port>` | TeamServer API port (default: `server.properties`) |
+| Option       | Long Option               | Interface                                          |
+| ------------ | ------------------------- | -------------------------------------------------- |
+| `-C`         | `-cli-mode`               | Start in CLI mode                                  |
+| `-G`         | `-gui-mode`               | Start in JavaFX GUI mode                           |
+| `-W`         | `-web-mode`               | Start in Web Panel mode                            |
+| `-TSC`       | `-teamserver-cli`         | TeamServer with CLI interface                      |
+| `-TSW`       | `-teamserver-web`         | TeamServer with Web interface                      |
+| `-TSG`       | `-teamserver-gui`         | TeamServer with GUI interface                      |
+| `-tp <port>` | `-teamserver-port <port>` | TeamServer API port (default: `server.properties`) |
 
 ```bash
-java -jar target/raven.jar -C              # CLI mode
-java -jar target/raven.jar -G              # JavaFX GUI mode
-java -jar target/raven.jar -W              # Web Panel mode
-java -jar target/raven.jar -TSC            # TeamServer CLI
-java -jar target/raven.jar -TSW -tp 5001   # TeamServer Web on port 5001
-java -jar target/raven.jar -TSG            # TeamServer GUI
+java -jar target/raven-3.0.0.jar -C            # CLI mode
+java -jar target/raven-3.0.0.jar -G            # JavaFX GUI mode
+java -jar target/raven-3.0.0.jar -W            # Web Panel mode
+java -jar target/raven-3.0.0.jar -TSC          # TeamServer CLI
+java -jar target/raven-3.0.0.jar -TSW -tp 5001 # TeamServer Web on port 5001
+java -jar target/raven-3.0.0.jar -TSG          # TeamServer GUI
 
 # Combine listener + interface
-java -jar target/raven.jar -M -C -s 0.0.0.0 -p 4444   # mTLS + CLI
-java -jar target/raven.jar -A -W -s 0.0.0.0 -p 4444   # multi + Web Panel
-java -jar target/raven.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
+java -jar target/raven-3.0.0.jar -M -C -s 0.0.0.0 -p 4444 # mTLS + CLI
+java -jar target/raven-3.0.0.jar -A -W -s 0.0.0.0 -p 4444 # multi + Web Panel
+java -jar target/raven-3.0.0.jar -F -TSW -tp 5001         # fmTLS + TeamServer Web
 ```
 
 - CLI COMMANDS
@@ -276,71 +276,71 @@ java -jar target/raven.jar -F -TSW -tp 5001            # fmTLS + TeamServer Web
 
 - CERTIFICATE MANAGEMENT
 
-| Option        | Long Option           | Description                                             |
-| ------------- | --------------------- | ------------------------------------------------------- |
-| `-i`          | `--init-certs`        | Initialize CA and server certificates                   |
-| `-s <host>`   | `--server <host>`     | Server host used during cert init                       |
-| `-a <id>`     | `--agent <id>`        | Generate a single agent certificate                     |
-| `-m`          | `--multi`             | Generate multiple agent certificates                    |
-| `-c <count>`  | `--count <count>`     | Number of agents to generate (with `-m`, default: `10`) |
-| `-u <prefix>` | `--prefix <prefix>`   | Username prefix for bulk agent certs (default: `agent`) |
-| `-ah <host>`  | `--agent-host <host>` | Agent callback host                                     |
-| `-ap <port>`  | `--agent-port <port>` | Agent callback port                                     |
-| `-am`         | `--agent-mtls`        | Enable mTLS in generated agent                          |
-| `-ps`         | `--persistent`        | Enable persistence in generated agent                   |
-| `-hc`         | `--hide-console`      | Hide console window in generated agent                  |
-| `-l`          | `--list`              | List all generated agent certificates                   |
-| `-r <id>`     | `--revoke <id>`       | Revoke an agent certificate by ID                       |
+| Option        | Long Option          | Description                                             |
+| ------------- | -------------------- | ------------------------------------------------------- |
+| `-i`          | `-init-certs`        | Initialize CA and server certificates                   |
+| `-s <host>`   | `-server <host>`     | Server host used during cert init                       |
+| `-a <id>`     | `-agent <id>`        | Generate a single agent certificate                     |
+| `-m`          | `-multi`             | Generate multiple agent certificates                    |
+| `-c <count>`  | `-count <count>`     | Number of agents to generate (with `-m`, default: `10`) |
+| `-u <prefix>` | `-prefix <prefix>`   | Username prefix for bulk agent certs (default: `agent`) |
+| `-ah <host>`  | `-agent-host <host>` | Agent callback host                                     |
+| `-ap <port>`  | `-agent-port <port>` | Agent callback port                                     |
+| `-am`         | `-agent-mtls`        | Enable mTLS in generated agent                          |
+| `-ps`         | `-persistent`        | Enable persistence in generated agent                   |
+| `-hc`         | `-hide-console`      | Hide console window in generated agent                  |
+| `-l`          | `-list`              | List all generated agent certificates                   |
+| `-r <id>`     | `-revoke <id>`       | Revoke an agent certificate by ID                       |
 
 ```bash
 # Initialize CA + server certificate
-java -jar target/raven.jar -i
+java -jar target/raven-3.0.0.jar -i
 
 # Initialize with specific server host
-java -jar target/raven.jar -i -s 192.168.1.10
+java -jar target/raven-3.0.0.jar -i -s 192.168.1.10
 
 # Generate single agent cert
-java -jar target/raven.jar -a myagent -ah 192.168.1.10 -ap 4444
+java -jar target/raven-3.0.0.jar -a myagent -ah 192.168.1.10 -ap 4444
 
 # Generate single agent cert with mTLS + persistence + hidden console
-java -jar target/raven.jar -a myagent -ah 192.168.1.10 -ap 4444 -am -ps -hc
+java -jar target/raven-3.0.0.jar -a myagent -ah 192.168.1.10 -ap 4444 -am -ps -hc
 
 # Generate 10 agent certs with prefix "agent"
-java -jar target/raven.jar -m -c 10 -u agent -ah 192.168.1.10 -ap 4444 -am
+java -jar target/raven-3.0.0.jar -m -c 10 -u agent -ah 192.168.1.10 -ap 4444 -am
 
 # List all generated agents
-java -jar target/raven.jar -l
+java -jar target/raven-3.0.0.jar -l
 
 # Revoke agent certificate
-java -jar target/raven.jar -r myagent
+java -jar target/raven-3.0.0.jar -r myagent
 ```
 
 - OPERATOR MANAGEMENT
 
-| Option       | Long Option             | Description                                   |
-| ------------ | ----------------------- | --------------------------------------------- |
-| `-AO`        | `--add-operator`        | Add a new operator                            |
-| `-RO`        | `--remove-operator`     | Remove an existing operator                   |
-| `-OP`        | `--operator-permission` | View or update operator role                  |
-| `-u <user>`  | `--username <user>`     | Operator username                             |
-| `-pw <pass>` | `--password <pass>`     | Operator password (min 8 characters)          |
-| `-r <role>`  | `--role <role>`         | Operator role — `ADMIN`, `OPERATOR`, `VIEWER` |
+| Option       | Long Option            | Description                                   |
+| ------------ | ---------------------- | --------------------------------------------- |
+| `-AO`        | `-add-operator`        | Add a new operator                            |
+| `-RO`        | `-remove-operator`     | Remove an existing operator                   |
+| `-OP`        | `-operator-permission` | View or update operator role                  |
+| `-u <user>`  | `-username <user>`     | Operator username                             |
+| `-pw <pass>` | `-password <pass>`     | Operator password (min 8 characters)          |
+| `-r <role>`  | `-role <role>`         | Operator role — `ADMIN`, `OPERATOR`, `VIEWER` |
 
 ```bash
 # Add operator with default role (OPERATOR)
-java -jar target/raven.jar -AO -u op1 -pw securepass
+java -jar target/raven-3.0.0.jar -AO -u op1 -pw securepass
 
 # Add operator with specific role
-java -jar target/raven.jar -AO -u op1 -pw securepass -r ADMIN
+java -jar target/raven-3.0.0.jar -AO -u op1 -pw securepass -r ADMIN
 
 # Remove operator
-java -jar target/raven.jar -RO -u op1
+java -jar target/raven-3.0.0.jar -RO -u op1
 
 # Update operator role
-java -jar target/raven.jar -OP -u op1 -r VIEWER
+java -jar target/raven-3.0.0.jar -OP -u op1 -r VIEWER
 
 # List all available roles
-java -jar target/raven.jar -OP
+java -jar target/raven-3.0.0.jar -OP
 ```
 
 > OPERATOR ROLES

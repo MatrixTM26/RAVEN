@@ -12,52 +12,52 @@ TotalSteps=3
 CurrentStep=0
 
 PrintInfo() {
-	local Message="$1"
-	CurrentStep=$((CurrentStep + 1))
-	echo -e "${Blue}[INFO]${Reset} ${White}[step ${CurrentStep}/${TotalSteps}] ${Message}${Reset}"
+    local Message="$1"
+    CurrentStep=$((CurrentStep + 1))
+    echo -e "${Blue}[INFO]${Reset} ${White}[step ${CurrentStep}/${TotalSteps}] ${Message}${Reset}"
 }
 
 PrintWarn() {
-	local Message="$1"
-	echo -e "${Yellow}[WARN]${Reset} ${White}[step ${CurrentStep}/${TotalSteps}] ${Message}${Reset}"
+    local Message="$1"
+    echo -e "${Yellow}[WARN]${Reset} ${White}[step ${CurrentStep}/${TotalSteps}] ${Message}${Reset}"
 }
 
 PrintError() {
-	local Message="$1"
-	echo -e "${Red}[ERROR]${Reset} ${White}[step ${CurrentStep}/${TotalSteps}] ${Message}${Reset}"
+    local Message="$1"
+    echo -e "${Red}[ERROR]${Reset} ${White}[step ${CurrentStep}/${TotalSteps}] ${Message}${Reset}"
 }
 
 CheckJava() {
-	PrintInfo "Checking OpenJDK Java installation"
-	if ! command -v java &>/dev/null; then
-		PrintError "Java not found. Please install OpenJDK before running this script."
-		exit 1
-	fi
-	local JavaVersion
-	JavaVersion=$(java -version 2>&1 | head -n1)
-	PrintWarn "Java found: ${JavaVersion}"
+    PrintInfo "Checking OpenJDK Java installation"
+    if ! command -v java &> /dev/null; then
+        PrintError "Java not found. Please install OpenJDK before running this script."
+        exit 1
+    fi
+    local JavaVersion
+    JavaVersion=$(java -version 2>&1 | head -n1)
+    PrintWarn "Java found: ${JavaVersion}"
 }
 
 CopyArtifact() {
-	PrintInfo "Copying artifact from output directory"
-	local SourcePath="output/raven.jar"
-	if [ ! -f "$SourcePath" ]; then
-		PrintError "Artifact not found: ${SourcePath}"
-		exit 1
-	fi
-	cp -r "$SourcePath" .
-	PrintWarn "Artifact copied to current directory"
+    PrintInfo "Copying artifact from output directory"
+    local SourcePath="output/raven-3.0.0.jar"
+    if [ ! -f "$SourcePath" ]; then
+        PrintError "Artifact not found: ${SourcePath}"
+        exit 1
+    fi
+    cp -r "$SourcePath" .
+    PrintWarn "Artifact copied to current directory"
 }
 
 RunApp() {
-	PrintInfo "Launching application"
-	java -jar raven.jar -h
+    PrintInfo "Launching application"
+    java -jar raven-3.0.0.jar -h
 }
 
 Main() {
-	CheckJava
-	CopyArtifact
-	RunApp
+    CheckJava
+    CopyArtifact
+    RunApp
 }
 
 Main

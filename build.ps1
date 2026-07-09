@@ -111,7 +111,7 @@ function RunBuild {
         exit 1
     }
 
-    $ArtifactPath = "target\raven.jar"
+    $ArtifactPath = "target\raven-3.0.0.jar"
     if (-not (Test-Path $ArtifactPath)) {
         PrintError "Build artifact not found: $ArtifactPath"
         exit 1
@@ -122,7 +122,7 @@ function RunBuild {
 
 function RunApp {
     PrintInfo "Launching application"
-    & java -jar raven.jar -h
+    & java -jar raven-3.0.0.jar -h
 }
 
 function Main {
