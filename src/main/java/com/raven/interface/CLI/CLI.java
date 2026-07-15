@@ -1,4 +1,4 @@
-package com.raven.iface;
+package com.raven.interfaces.CLI;
 
 import com.raven.core.db.TeamDatabase;
 import com.raven.core.db.TeamDatabase.OperatorRole;
@@ -7,7 +7,7 @@ import com.raven.core.output.Logger;
 import com.raven.core.server.ListenerMode;
 import com.raven.core.server.RavenServer;
 import com.raven.core.session.Session;
-import com.raven.iface.banner.CLIBanner;
+import com.raven.interfaces.banner.CLIBanner;
 import com.raven.utils.AnsiColor;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.SystemHelper;

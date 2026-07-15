@@ -5,11 +5,11 @@ import com.raven.core.db.TeamDatabase;
 import com.raven.core.db.TeamDatabase.OperatorRole;
 import com.raven.core.output.Logger;
 import com.raven.core.server.ListenerMode;
-import com.raven.iface.CLI;
-import com.raven.iface.GUI;
-import com.raven.iface.TeamServer;
-import com.raven.iface.WebApp;
-import com.raven.iface.banner.TBanner;
+import com.raven.interfaces.CLI.CLI;
+import com.raven.interfaces.GUI.GUI;
+import com.raven.interfaces.APP.WebApp;
+import com.raven.interfaces.TeamServer;
+import com.raven.interfaces.banner.TBanner;
 import com.raven.utils.Helper;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.SystemHelper;
@@ -132,7 +132,7 @@ public final class Start {
                 case "teamclient" -> {
                     String TsHost = Helper.Arg(Args, "-ts", "-teamserver-host", "127.0.0.1");
                     int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "-teamserver-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
-                    new com.raven.iface.TeamClient(Config, TsHost, TsPort).Run();
+                    new com.raven.interfaces.TeamClient(Config, TsHost, TsPort).Run();
                 }
                 case "teamserver-cli" -> new CLI(Config).RunTeamServer(Host, Port, Mode);
                 case "gui" -> GUI.Launch(Config);

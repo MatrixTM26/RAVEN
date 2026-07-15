@@ -1,4 +1,4 @@
-package com.raven.iface;
+package com.raven.interfaces;
 
 import com.google.gson.*;
 import com.raven.core.output.Logger;
