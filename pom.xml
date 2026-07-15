@@ -8,7 +8,7 @@
     <artifactId>raven</artifactId>
     <version>3.0.0</version>
     <packaging>jar</packaging>
-    <name>RAVEN Framework</name>
+    <name>RAVEN C2 Framework</name>
 
     <properties>
         <java.version>17</java.version>

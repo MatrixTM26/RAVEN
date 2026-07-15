@@ -11,7 +11,7 @@
 
 </div>
 
-# RAVEN Framework
+# RAVEN
 
 ![AGPL](https://img.shields.io/badge/AGPL-v3-000000?style=for-the-badge&logo=gnu&logoColor=ffffff&labelColor=000000&color=03001a)
 ![OpenJDK](https://img.shields.io/badge/OpenJDK-17+-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=03001a)
@@ -33,7 +33,8 @@
 <details>
 <summary>LEGAL DISCLAIMER</summary>
 
-> [!CAUTION]
+
+> [!CAUTION] 
 > **RAVEN Framework is a offensive security tool designed exclusively for:**
 >
 > - Authorized penetration testing and red team engagements
@@ -380,11 +381,14 @@ java -jar target/raven-3.0.0.jar -OP
 - **Author:** [MatrixTM26](https://github.com/MatrixTM26)
 - **License:** [AGPL-V3](./LICENSE)
 
+<!---
 ## <img src="https://cdn.simpleicons.org/githubsponsors/ff0000" width="18"> Support Me
 
 [![Ko-fi](https://img.shields.io/badge/KO--FI-000000?style=for-the-badge&logo=kofi&logoColor=fff707)](https://ko-fi.com/MatrixTM26)
 [![Trakteer](https://img.shields.io/badge/TRAKTEER-000000?style=for-the-badge&logo=buymeacoffee&logoColor=ff6a6a)](https://trakteer.id/MatrixTM26)
 [![PayPal](https://img.shields.io/badge/PAYPAL-000000?style=for-the-badge&logo=paypal&logoColor=0000ff)](https://paypal.me/TeukuMaulana)
+
+--->
 
 ---
 
