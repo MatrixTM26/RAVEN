@@ -1,4 +1,4 @@
-package com.raven.iface;
+package com.raven.interfaces;
 
 import com.google.gson.Gson;
 import com.raven.core.db.TeamDatabase;
@@ -28,8 +28,8 @@ public final class TeamServer {
         }
     }
 
-    @FunctionalInterface
-    interface RouteHandler {
+    @Functionalinterfaces
+    interfaces RouteHandler {
         String Handle(HttpExchange E, TokenInfo T) throws Exception;
     }
 
