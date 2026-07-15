@@ -1,4 +1,4 @@
-package com.raven.iface.banner;
+package com.raven.interface.banner;
 
 import com.raven.utils.AnsiColor;
 
