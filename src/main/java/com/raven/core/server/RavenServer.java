@@ -1,7 +1,7 @@
 package com.raven.core.server;
 
-import com.raven.core.crypto.CertificateManager;
-import com.raven.core.crypto.SymmetricCrypto;
+import com.raven.core.cryptography.CertificateManager;
+import com.raven.core.cryptography.SymmetricCrypto;
 import com.raven.core.event.EventManager;
 import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;

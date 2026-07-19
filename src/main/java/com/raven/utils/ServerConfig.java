@@ -1,11 +1,12 @@
 package com.raven.utils;
 
+import com.raven.core.output.Logger;
 import java.io.*;
 import java.util.Properties;
 
 public final class ServerConfig {
 
-    private static final String DefaultPath = "server.properties";
+    private static final String DefaultPath = "config/server/server.properties";
     private final Properties Props = new Properties();
     private final String FilePath;
 
@@ -24,22 +25,22 @@ public final class ServerConfig {
         set("server.port", "4444");
         set("server.mode", "multi");
         set("web.host", "0.0.0.0");
-        set("web.port", "9926");
-        set("web.template.dir", "config/app/templates");
-        set("web.static.dir", "config/app/static");
+        set("web.port", "5000");
+        set("web.template.dir", "config/interfaces/app/templates");
+        set("web.static.dir", "config/interfaces/app/static");
         set("web.beacon.port", "-1");
         set("cert.keystore.path", "certs/server.p12");
-        set("cert.keystore.type", "AUTO");
+        set("cert.keystore.type", "PKCS12");
         set("cert.keystore.password", "raven");
         set("cert.truststore.path", "certs/truststore.p12");
-        set("cert.truststore.type", "AUTO");
+        set("cert.truststore.type", "PKCS12");
         set("cert.truststore.password", "raven");
         set("cert.ca.path", "certs/ca.p12");
-        set("cert.ca.type", "AUTO");
+        set("cert.ca.type", "PKCS12");
         set("cert.ca.password", "raven");
         set("cert.agent.dir", "certs/agents");
         set("cert.dn.cn", "RAVEN Server");
-        set("cert.dn.o", "RAVEN Frameworks");
+        set("cert.dn.o", "RAVEN C2 Frameworks");
         set("cert.dn.ou", "ManInTheMatrix");
         set("cert.dn.l", "DarkNet");
         set("cert.dn.st", "Cybertron");
@@ -64,14 +65,14 @@ public final class ServerConfig {
         set("logging.file", "logs/raven.log");
         set("logging.file.enabled", "false");
         set("db.type", "none");
-        set("db.path", "Database");
+        set("db.path", "database");
         set("db.url", "");
         set("db.name", "raven");
         set("db.user", "raven");
         set("db.password", "raven");
         set("db.mongo.uri", "mongodb://localhost:27017");
         set("db.mongo.name", "raven");
-        set("mode.interface", "web");
+        set("mode.interface", "cli");
         set("teamserver.port", "5001");
     }
 
@@ -85,7 +86,7 @@ public final class ServerConfig {
         try (InputStream In = new FileInputStream(F)) {
             Props.load(In);
         } catch (IOException E) {
-            System.err.println("[ServerConfig] Failed to load " + Path + ": " + E.getMessage());
+            Logger.Error("server config failed to load " + Path + ": " + E.getMessage());
         }
     }
 

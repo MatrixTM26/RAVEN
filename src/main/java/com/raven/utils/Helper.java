@@ -12,7 +12,7 @@ public final class Helper {
             String.join(
                 NL,
                 "",
-                "    RAVEN Framework",
+                "    RAVEN C2 Framework",
                 "",
                 "    Usage: java -jar raven.jar [flags]",
                 "",

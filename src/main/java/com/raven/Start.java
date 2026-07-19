@@ -1,8 +1,8 @@
 package com.raven;
 
-import com.raven.core.crypto.CertificateManager;
-import com.raven.core.db.TeamDatabase;
-import com.raven.core.db.TeamDatabase.OperatorRole;
+import com.raven.core.cryptography.CertificateManager;
+import com.raven.core.database.TeamDatabase;
+import com.raven.core.database.TeamDatabase.OperatorRole;
 import com.raven.core.output.Logger;
 import com.raven.core.server.ListenerMode;
 import com.raven.interfaces.CLI.CLI;
