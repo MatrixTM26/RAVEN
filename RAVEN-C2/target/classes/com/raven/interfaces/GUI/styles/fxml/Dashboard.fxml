@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<ScrollPane xmlns:fx="http://javafx.com/fxml"
+            fitToWidth="true"
+            style="-fx-background-color:#1c1c1c;">
+
+    <VBox spacing="0" style="-fx-background-color:#1c1c1c;">
+
+        <GridPane fx:id="statCards" hgap="0" vgap="0"
+                  style="-fx-border-color:transparent transparent #3d3d3d transparent; -fx-border-width:0 0 1 0;">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="25"/>
+                <ColumnConstraints percentWidth="25"/>
+                <ColumnConstraints percentWidth="25"/>
+                <ColumnConstraints percentWidth="25"/>
+            </columnConstraints>
+        </GridPane>
+
+        <VBox spacing="0" style="-fx-padding:16;">
+            <VBox styleClass="panel-card">
+                <VBox styleClass="panel-header">
+                    <padding><Insets top="8" right="12" bottom="8" left="12"/></padding>
+                </VBox>
+                <TextArea fx:id="infoText"
+                          editable="false"
+                          prefHeight="220"
+                          styleClass="terminal-area"/>
+            </VBox>
+        </VBox>
+    </VBox>
+</ScrollPane>
