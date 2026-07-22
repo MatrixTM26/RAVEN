@@ -1,12 +1,10 @@
 package com.raven.interfaces.GUI.module.core.server;
 
-import com.raven.core.event.EventManager.EventType;
+import com.raven.core.event.EventManager;
 import com.raven.core.server.ListenerMode;
 import com.raven.core.server.RavenServer;
 import com.raven.utils.ServerConfig;
 import java.time.Instant;
-import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
@@ -25,11 +23,11 @@ public class ServerController {
     private final Button startBtn;
     private final Button stopBtn;
     private final Consumer<String> log;
-    private final BiConsumer<EventType, Map<String, Object>> eventHandler;
+    private final EventManager.EventListener eventHandler;
     private final Runnable onStart;
     private final Runnable onStop;
 
-    public ServerController(ServerConfig config, Label statusDot, Label serverStatusLabel, Label serverInfoLabel, Button startBtn, Button stopBtn, Consumer<String> log, BiConsumer<EventType, Map<String, Object>> eventHandler, Runnable onStart, Runnable onStop) {
+    public ServerController(ServerConfig config, Label statusDot, Label serverStatusLabel, Label serverInfoLabel, Button startBtn, Button stopBtn, Consumer<String> log, EventManager.EventListener eventHandler, Runnable onStart, Runnable onStop) {
         this.config = config;
         this.statusDot = statusDot;
         this.serverStatusLabel = serverStatusLabel;

@@ -7,6 +7,7 @@ import com.raven.core.output.Logger;
 import com.raven.core.server.ListenerMode;
 import com.raven.core.server.RavenServer;
 import com.raven.core.session.Session;
+import com.raven.interfaces.APP.WebApp;
 import com.raven.interfaces.banner.CLIBanner;
 import com.raven.utils.AnsiColor;
 import com.raven.utils.ServerConfig;

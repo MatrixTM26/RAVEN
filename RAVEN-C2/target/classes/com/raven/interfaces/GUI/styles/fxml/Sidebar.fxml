@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      styleClass="sidebar"
+      prefWidth="220">
+
+    <VBox spacing="2" style="-fx-padding:16 12 12 12; -fx-border-color:transparent transparent #3d3d3d transparent; -fx-border-width:0 0 1 0;">
+        <Label text="RAVEN"        styleClass="sidebar-logo-name"/>
+        <Label text="v3.0"         styleClass="sidebar-version"/>
+        <Label text="Command &amp; Control" styleClass="sidebar-logo-sub"/>
+    </VBox>
+
+    <Label text="GENERAL"          styleClass="sidebar-section"/>
+    <Label text="Overview"         styleClass="sidebar-item active" fx:id="navOverview"/>
+    <Label text="Sessions"         styleClass="sidebar-item"        fx:id="navSessions"/>
+    <Label text="Terminal"         styleClass="sidebar-item"        fx:id="navTerminal"/>
+    <Label text="Command Center"   styleClass="sidebar-item"        fx:id="navCommands"/>
+    <Label text="Logs"             styleClass="sidebar-item"        fx:id="navLogs"/>
+
+    <Label text="CONFIGURATION"    styleClass="sidebar-section"/>
+    <Label text="Settings"         styleClass="sidebar-item"        fx:id="navSettings"/>
+
+    <Region VBox.vgrow="ALWAYS"/>
+
+    <VBox spacing="4" style="-fx-padding:10 12 12 12; -fx-border-color:#3d3d3d transparent transparent transparent; -fx-border-width:1 0 0 0;">
+        <Label fx:id="statusLabel" text="Offline" styleClass="status-offline"/>
+        <Label text="MatrixTM26"   styleClass="text-dim" style="-fx-font-size:9px;"/>
+    </VBox>
+</VBox>
