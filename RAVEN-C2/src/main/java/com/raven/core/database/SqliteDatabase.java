@@ -18,7 +18,7 @@ public final class SqliteDatabase extends TeamDatabase {
 
     public SqliteDatabase(ServerConfig Config) throws Exception {
         this.Config = Config;
-        String DbDir = Config.GetDbPath();
+        String DbDir = Config.GetDatabasePath();
         String DbFile = DbDir + "/raven.db";
         Files.createDirectories(Paths.get(DbDir));
         Class.forName("org.sqlite.JDBC");

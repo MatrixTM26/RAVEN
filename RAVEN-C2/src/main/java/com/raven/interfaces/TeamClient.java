@@ -444,9 +444,9 @@ public final class TeamClient {
             System.out.println(I + "─".repeat(75));
             for (Map<String, Object> Op : Ops) {
                 String Role = Op.getOrDefault("Role", "MEMBER").toString();
-                String Perm = com.raven.core.db.TeamDatabase.OperatorRole.FromString(Role).PermissionString().replaceAll("^\\[.*?\\]\\s*", "");
+                String Perm = com.raven.core.database.TeamDatabase.OperatorRole.FromString(Role).PermissionString().replaceAll("^\\[.*?\\]\\s*", "");
                 String Mark = Op.getOrDefault("Username", "").toString().equals(OperatorName) ? " ◀ YOU" : "";
-                System.out.printf(I + "%s%-18s %-10s %-24s %-20s%s%s%n", AnsiColor.White, Op.getOrDefault("Username", "?"), Role, "[" + com.raven.core.db.TeamDatabase.OperatorRole.FromString(Role).ShortPerm() + "] " + Perm, Op.getOrDefault("LastSeen", "Never"), Mark, AnsiColor.Reset);
+                System.out.printf(I + "%s%-18s %-10s %-24s %-20s%s%s%n", AnsiColor.White, Op.getOrDefault("Username", "?"), Role, "[" + com.raven.core.database.TeamDatabase.OperatorRole.FromString(Role).ShortPerm() + "] " + Perm, Op.getOrDefault("LastSeen", "Never"), Mark, AnsiColor.Reset);
             }
             System.out.println();
         } catch (Exception E) {

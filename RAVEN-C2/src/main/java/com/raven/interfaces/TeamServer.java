@@ -28,8 +28,8 @@ public final class TeamServer {
         }
     }
 
-    @Functionalinterfaces
-    interfaces RouteHandler {
+    @FunctionalInterface
+    interface RouteHandler {
         String Handle(HttpExchange E, TokenInfo T) throws Exception;
     }
 
@@ -197,7 +197,7 @@ public final class TeamServer {
         R.put("Uptime", Uptime());
         R.put("Operator", T.Username());
         R.put("Role", T.Role().name());
-        R.put("DbType", Config.GetDbType());
+        R.put("DbType", Config.GetDatabaseType());
         R.put("DbOnline", Db.IsConnected());
         if (Up) R.put("Key", Server.GetKeyBase64());
         return Json.toJson(R);

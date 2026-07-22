@@ -5,9 +5,9 @@ import com.raven.core.database.TeamDatabase;
 import com.raven.core.database.TeamDatabase.OperatorRole;
 import com.raven.core.output.Logger;
 import com.raven.core.server.ListenerMode;
+import com.raven.interfaces.APP.WebApp;
 import com.raven.interfaces.CLI.CLI;
 import com.raven.interfaces.GUI.GUI;
-import com.raven.interfaces.APP.WebApp;
 import com.raven.interfaces.TeamServer;
 import com.raven.interfaces.banner.TBanner;
 import com.raven.utils.Helper;
@@ -136,7 +136,7 @@ public final class Start {
                 }
                 case "teamserver-cli" -> new CLI(Config).RunTeamServer(Host, Port, Mode);
                 case "gui" -> GUI.Launch(Config);
-                case "teamserver-gui" -> GUI.LaunchTeamServer(Config);
+                case "teamserver-gui" -> GUI.LaunchTeam(Config);
                 case "teamserver-web" -> {
                     int TsPort = Helper.ParseInt(Helper.Arg(Args, "-tp", "-teamserver-port", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new TeamServer(Config, Mode).Run(Config.GetWebHost(), TsPort);

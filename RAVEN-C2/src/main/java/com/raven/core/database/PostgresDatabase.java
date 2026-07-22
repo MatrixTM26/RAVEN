@@ -14,9 +14,9 @@ public final class PostgresDatabase extends TeamDatabase {
 
     public PostgresDatabase(ServerConfig Config) throws Exception {
         this.Config = Config;
-        String Url = Config.GetDbUrl();
-        String User = Config.GetDbUser();
-        String Pass = Config.GetDbPassword();
+        String Url = Config.GetDatabaseUrl();
+        String User = Config.GetDatabaseUser();
+        String Pass = Config.GetDatabasePassword();
         if (!Url.startsWith("jdbc:postgresql://") && !Url.startsWith("jdbc:postgres://")) {
             throw new Exception("Invalid PostgreSQL URL — must start with jdbc:postgresql://");
         }

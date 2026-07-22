@@ -15,6 +15,13 @@ import com.raven.interfaces.GUI.module.core.session.SessionManager;
 import com.raven.interfaces.GUI.module.core.session.SessionRow;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.SystemHelper;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Executors;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -29,14 +36,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-
 public class GUI extends Application {
 
     private static ServerConfig Config;
@@ -48,7 +47,7 @@ public class GUI extends Application {
     private CommandDispatcher Dispatcher;
 
     private final ObservableList<SessionRow> SessionRows = FXCollections.observableArrayList();
-    private final ObservableList<String> LogEntries      = FXCollections.observableArrayList();
+    private final ObservableList<String> LogEntries = FXCollections.observableArrayList();
 
     private int SelectedSid = -1;
 
@@ -69,13 +68,13 @@ public class GUI extends Application {
     private Button StopBtn;
 
     public static void Launch(ServerConfig cfg) {
-        Config   = cfg;
+        Config = cfg;
         TeamMode = false;
         Application.launch(GUI.class);
     }
 
     public static void LaunchTeam(ServerConfig cfg) {
-        Config   = cfg;
+        Config = cfg;
         TeamMode = true;
         Application.launch(GUI.class);
     }
@@ -83,7 +82,10 @@ public class GUI extends Application {
     @Override
     public void start(Stage stage) {
         Auth = new AuthService(Config);
-        if (TeamMode && !ShowLogin(stage)) { Platform.exit(); return; }
+        if (TeamMode && !ShowLogin(stage)) {
+            Platform.exit();
+            return;
+        }
 
         stage.setTitle("RAVEN");
         stage.setWidth(1360);
@@ -98,12 +100,13 @@ public class GUI extends Application {
         root.setBottom(BuildStatusBar());
 
         Scene scene = new Scene(root);
-        scene.getStylesheets().add(
-            getClass().getResource("/com/raven/interfaces/styles/css/raven.css").toExternalForm()
-        );
+        scene.getStylesheets().add(getClass().getResource("/com/raven/interfaces/styles/css/raven.css").toExternalForm());
 
         stage.setScene(scene);
-        stage.setOnCloseRequest(e -> { if (ServerCtrl != null) ServerCtrl.Stop(); Platform.exit(); });
+        stage.setOnCloseRequest(e -> {
+            if (ServerCtrl != null) ServerCtrl.Stop();
+            Platform.exit();
+        });
         stage.show();
         StartUptimeThread();
     }
@@ -111,29 +114,26 @@ public class GUI extends Application {
     private VBox BuildSidebar() {
         VBox sb = new VBox(0);
         sb.setPrefWidth(220);
-        sb.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" +
-                    "-fx-border-color:transparent " + Palette.BORDER + " transparent transparent;" +
-                    "-fx-border-width:0 1 0 0;");
+        sb.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" + "-fx-border-color:transparent " + Palette.BORDER + " transparent transparent;" + "-fx-border-width:0 1 0 0;");
 
         VBox brand = new VBox(3);
         brand.setPadding(new Insets(16, 12, 12, 12));
         brand.setStyle("-fx-border-color:transparent transparent " + Palette.BORDER + " transparent; -fx-border-width:0 0 1 0;");
         Label name = LabelFactory.Of("RAVEN", 13, Palette.TEXT_HEAD, true);
-        Label ver  = LabelFactory.Of("v3.0", 9, Palette.TEXT_DIM, false);
-        Label sub  = LabelFactory.Of("Command and Control", 9, Palette.TEXT_DIM, false);
-        ver.setStyle("-fx-background-color:" + Palette.SURFACE + "; -fx-padding:2 5 2 5; " +
-                     "-fx-border-color:" + Palette.BORDER + "; -fx-border-width:1;");
+        Label ver = LabelFactory.Of("v3.0", 9, Palette.TEXT_DIM, false);
+        Label sub = LabelFactory.Of("Command and Control", 9, Palette.TEXT_DIM, false);
+        ver.setStyle("-fx-background-color:" + Palette.SURFACE + "; -fx-padding:2 5 2 5; " + "-fx-border-color:" + Palette.BORDER + "; -fx-border-width:1;");
         brand.getChildren().addAll(name, ver, sub);
         sb.getChildren().add(brand);
 
         sb.getChildren().add(SidebarSection("GENERAL"));
-        sb.getChildren().add(SidebarItem("Overview",        true));
-        sb.getChildren().add(SidebarItem("Sessions",        false));
-        sb.getChildren().add(SidebarItem("Terminal",        false));
-        sb.getChildren().add(SidebarItem("Command Center",  false));
-        sb.getChildren().add(SidebarItem("Logs",            false));
+        sb.getChildren().add(SidebarItem("Overview", true));
+        sb.getChildren().add(SidebarItem("Sessions", false));
+        sb.getChildren().add(SidebarItem("Terminal", false));
+        sb.getChildren().add(SidebarItem("Command Center", false));
+        sb.getChildren().add(SidebarItem("Logs", false));
         sb.getChildren().add(SidebarSection("CONFIGURATION"));
-        sb.getChildren().add(SidebarItem("Settings",        false));
+        sb.getChildren().add(SidebarItem("Settings", false));
 
         Region spring = new Region();
         VBox.setVgrow(spring, Priority.ALWAYS);
@@ -150,8 +150,7 @@ public class GUI extends Application {
 
     private Label SidebarSection(String text) {
         Label l = new Label(text);
-        l.setStyle("-fx-text-fill:" + Palette.TEXT_DIM + "; -fx-font-size:9px; -fx-font-weight:bold;" +
-                   "-fx-padding:12 12 4 12;");
+        l.setStyle("-fx-text-fill:" + Palette.TEXT_DIM + "; -fx-font-size:9px; -fx-font-weight:bold;" + "-fx-padding:12 12 4 12;");
         return l;
     }
 
@@ -167,19 +166,15 @@ public class GUI extends Application {
     }
 
     private String defaultItem() {
-        return "-fx-background-color:transparent; -fx-text-fill:" + Palette.TEXT_MUTED + ";" +
-               "-fx-font-size:11px; -fx-padding:5 12 5 12; -fx-cursor:hand;" +
-               "-fx-background-radius:0;";
+        return "-fx-background-color:transparent; -fx-text-fill:" + Palette.TEXT_MUTED + ";" + "-fx-font-size:11px; -fx-padding:5 12 5 12; -fx-cursor:hand;" + "-fx-background-radius:0;";
     }
+
     private String hoverItem() {
-        return "-fx-background-color:" + Palette.BG_ALT + "; -fx-text-fill:" + Palette.TEXT + ";" +
-               "-fx-font-size:11px; -fx-padding:5 12 5 12; -fx-cursor:hand;" +
-               "-fx-background-radius:0;";
+        return "-fx-background-color:" + Palette.BG_ALT + "; -fx-text-fill:" + Palette.TEXT + ";" + "-fx-font-size:11px; -fx-padding:5 12 5 12; -fx-cursor:hand;" + "-fx-background-radius:0;";
     }
+
     private String activeItem() {
-        return "-fx-background-color:" + Palette.ACCENT + "; -fx-text-fill:#ffffff;" +
-               "-fx-font-size:11px; -fx-padding:5 12 5 12;" +
-               "-fx-background-radius:0;";
+        return "-fx-background-color:" + Palette.ACCENT + "; -fx-text-fill:#ffffff;" + "-fx-font-size:11px; -fx-padding:5 12 5 12;" + "-fx-background-radius:0;";
     }
 
     private VBox BuildCenter() {
@@ -194,14 +189,7 @@ public class GUI extends Application {
         tabs.getStyleClass().add("tab-pane");
         VBox.setVgrow(tabs, Priority.ALWAYS);
 
-        tabs.getTabs().addAll(
-            MakeTab("Overview",       BuildDashboard()),
-            MakeTab("Sessions",       BuildSessions()),
-            MakeTab("Terminal",       BuildTerminal()),
-            MakeTab("Command Center", BuildCommands()),
-            MakeTab("Logs",           BuildLogs()),
-            MakeTab("Settings",       BuildSettings())
-        );
+        tabs.getTabs().addAll(MakeTab("Overview", BuildDashboard()), MakeTab("Sessions", BuildSessions()), MakeTab("Terminal", BuildTerminal()), MakeTab("Command Center", BuildCommands()), MakeTab("Logs", BuildLogs()), MakeTab("Settings", BuildSettings()));
         center.getChildren().add(tabs);
         return center;
     }
@@ -211,33 +199,24 @@ public class GUI extends Application {
         bar.setPrefHeight(48);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(0, 16, 0, 16));
-        bar.setStyle("-fx-background-color:" + Palette.BG + ";" +
-                     "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                     "-fx-border-width:0 0 1 0;");
+        bar.setStyle("-fx-background-color:" + Palette.BG + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
 
         VBox heading = new VBox(2);
-        heading.getChildren().addAll(
-            LabelFactory.Of("RAVEN Operations Console", 13, Palette.TEXT_HEAD, true),
-            LabelFactory.Of("Listener control   Session ops   CLI-aligned command center", 10, Palette.TEXT_DIM, false)
-        );
+        heading.getChildren().addAll(LabelFactory.Of("RAVEN Operations Console", 13, Palette.TEXT_HEAD, true), LabelFactory.Of("Listener control   Session ops   CLI-aligned command center", 10, Palette.TEXT_DIM, false));
 
         Label badge = new Label("app is running in development mode");
-        badge.setStyle("-fx-background-color:" + Palette.WARNING + "; -fx-text-fill:#000000;" +
-                       "-fx-font-size:9px; -fx-font-weight:bold; -fx-padding:3 8 3 8;" +
-                       "-fx-background-radius:0;");
+        badge.setStyle("-fx-background-color:" + Palette.WARNING + "; -fx-text-fill:#000000;" + "-fx-font-size:9px; -fx-font-weight:bold; -fx-padding:3 8 3 8;" + "-fx-background-radius:0;");
 
         Region spring = new Region();
         HBox.setHgrow(spring, Priority.ALWAYS);
 
-        UptimeLabel       = LabelFactory.Of("00:00:00", 10, Palette.TEXT_DIM, false);
+        UptimeLabel = LabelFactory.Of("00:00:00", 10, Palette.TEXT_DIM, false);
         SessionCountLabel = LabelFactory.Of("0 sessions", 10, Palette.TEXT_MUTED, false);
 
         bar.getChildren().addAll(heading, badge, spring, UptimeLabel, StyleHelper.VDivider(), SessionCountLabel);
 
         if (Auth.GetOperatorName() != null) {
-            Label op = LabelFactory.Of("  " + Auth.GetOperatorName() + "  [" +
-                        (Auth.GetOperatorRole() != null ? Auth.GetOperatorRole().name() : "?") + "]",
-                        10, Palette.TEXT_MUTED, false);
+            Label op = LabelFactory.Of("  " + Auth.GetOperatorName() + "  [" + (Auth.GetOperatorRole() != null ? Auth.GetOperatorRole().name() : "?") + "]", 10, Palette.TEXT_MUTED, false);
             bar.getChildren().addAll(StyleHelper.VDivider(), op);
         }
         return bar;
@@ -263,10 +242,10 @@ public class GUI extends Application {
             cards.getColumnConstraints().add(cc);
         }
 
-        VBox c0 = CardBuilder.StatCard("SESSIONS",      "0",  Palette.ACCENT);
-        VBox c1 = CardBuilder.StatCard("RAVEN",         "0",  Palette.SUCCESS);
-        VBox c2 = CardBuilder.StatCard("METERPRETER",   "0",  Palette.TEXT_MUTED);
-        VBox c3 = CardBuilder.StatCard("REVERSE SHELL", "0",  Palette.WARNING);
+        VBox c0 = CardBuilder.StatCard("SESSIONS", "0", Palette.ACCENT);
+        VBox c1 = CardBuilder.StatCard("RAVEN", "0", Palette.SUCCESS);
+        VBox c2 = CardBuilder.StatCard("METERPRETER", "0", Palette.TEXT_MUTED);
+        VBox c3 = CardBuilder.StatCard("REVERSE SHELL", "0", Palette.WARNING);
 
         String cardStyle = "-fx-border-color:" + Palette.BORDER + "; -fx-border-width:0 1 0 0;";
         c0.setStyle(c0.getStyle() + cardStyle);
@@ -283,30 +262,14 @@ public class GUI extends Application {
         infoSection.setStyle("-fx-background-color:" + Palette.BG + ";");
 
         VBox infoCard = new VBox(0);
-        infoCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" +
-                          "-fx-border-color:" + Palette.BORDER + ";" +
-                          "-fx-border-width:1;");
+        infoCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" + "-fx-border-color:" + Palette.BORDER + ";" + "-fx-border-width:1;");
 
         VBox infoHeader = new VBox();
         infoHeader.setPadding(new Insets(8, 12, 8, 12));
-        infoHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" +
-                            "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                            "-fx-border-width:0 0 1 0;");
+        infoHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
         infoHeader.getChildren().add(LabelFactory.Of("TOOL INFORMATION", 11, Palette.TEXT_HEAD, true));
 
-        TextArea info = new TextArea(
-            " Author  : MatrixTM26\n" +
-            " Github  : MatrixTM26\n" +
-            " Version : 3.0\n\n" +
-            " Sessions tab — quick actions on connected agents (Execute, Broadcast, Kill, filter by search)\n" +
-            " Terminal tab — interactive agent shell; set session ID then type commands\n" +
-            " Command Center — CLI-aligned server/session utilities with full output log\n\n" +
-            " Available commands:\n" +
-            "   sessions | status | stats | tasks | kill <id> | sysinfo <id>\n" +
-            "   history [id] [limit] | note <id> <text> | getnote <id>\n" +
-            "   broadcast <cmd> | exec <id> <cmd> | whoami <id>\n" +
-            "   sleep <id> <sec> | screenshot <id> | download <id> <path> | upload <id> <l> <r>"
-        );
+        TextArea info = new TextArea(" Author  : MatrixTM26\n" + " Github  : MatrixTM26\n" + " Version : 3.0\n\n" + " Sessions tab — quick actions on connected agents (Execute, Broadcast, Kill, filter by search)\n" + " Terminal tab — interactive agent shell; set session ID then type commands\n" + " Command Center — CLI-aligned server/session utilities with full output log\n\n" + " Available commands:\n" + "   sessions | status | stats | tasks | kill <id> | sysinfo <id>\n" + "   history [id] [limit] | note <id> <text> | getnote <id>\n" + "   broadcast <cmd> | exec <id> <cmd> | whoami <id>\n" + "   sleep <id> <sec> | screenshot <id> | download <id> <path> | upload <id> <l> <r>");
         info.setEditable(false);
         info.setPrefHeight(210);
         StyleHelper.ApplyTerm(info);
@@ -329,9 +292,7 @@ public class GUI extends Application {
         HBox toolbar = new HBox(6);
         toolbar.setPadding(new Insets(7, 12, 7, 12));
         toolbar.setAlignment(Pos.CENTER_LEFT);
-        toolbar.setStyle("-fx-background-color:" + Palette.BG + ";" +
-                         "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                         "-fx-border-width:0 0 1 0;");
+        toolbar.setStyle("-fx-background-color:" + Palette.BG + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
 
         TextField search = new TextField();
         search.setPromptText("Filter sessions...");
@@ -341,12 +302,14 @@ public class GUI extends Application {
         Region spring = new Region();
         HBox.setHgrow(spring, Priority.ALWAYS);
 
-        Button refreshBtn   = ButtonFactory.Of("Refresh",   ButtonFactory.Variant.DEFAULT);
-        Button executeBtn   = ButtonFactory.Of("Execute",   ButtonFactory.Variant.ACCENT);
+        Button refreshBtn = ButtonFactory.Of("Refresh", ButtonFactory.Variant.DEFAULT);
+        Button executeBtn = ButtonFactory.Of("Execute", ButtonFactory.Variant.ACCENT);
         Button broadcastBtn = ButtonFactory.Of("Broadcast", ButtonFactory.Variant.DEFAULT);
-        Button killBtn      = ButtonFactory.Of("Kill",      ButtonFactory.Variant.DANGER);
+        Button killBtn = ButtonFactory.Of("Kill", ButtonFactory.Variant.DANGER);
 
-        refreshBtn.setOnAction(e -> { if (SessionMgr != null) SessionMgr.Refresh(); });
+        refreshBtn.setOnAction(e -> {
+            if (SessionMgr != null) SessionMgr.Refresh();
+        });
         executeBtn.setOnAction(e -> OpenExecuteWindow());
         broadcastBtn.setOnAction(e -> OpenBroadcastWindow());
         killBtn.setOnAction(e -> KillSelected());
@@ -357,9 +320,7 @@ public class GUI extends Application {
         HBox cmdBar = new HBox(6);
         cmdBar.setPadding(new Insets(6, 10, 6, 10));
         cmdBar.setAlignment(Pos.CENTER_LEFT);
-        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" +
-                        "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                        "-fx-border-width:0 0 1 0;");
+        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
 
         Label prompt = LabelFactory.Of(">", 13, Palette.ACCENT, true);
         prompt.setStyle(prompt.getStyle() + "-fx-font-family:Consolas;");
@@ -370,38 +331,38 @@ public class GUI extends Application {
         HBox.setHgrow(srvInput, Priority.ALWAYS);
 
         Button runBtn = ButtonFactory.Of("Run", ButtonFactory.Variant.ACCENT);
-        runBtn.setOnAction(e -> { if (Dispatcher != null) Dispatcher.Dispatch(srvInput.getText().trim(), srvInput); });
-        srvInput.setOnAction(e -> { if (Dispatcher != null) Dispatcher.Dispatch(srvInput.getText().trim(), srvInput); });
+        runBtn.setOnAction(e -> {
+            if (Dispatcher != null) Dispatcher.Dispatch(srvInput.getText().trim(), srvInput);
+        });
+        srvInput.setOnAction(e -> {
+            if (Dispatcher != null) Dispatcher.Dispatch(srvInput.getText().trim(), srvInput);
+        });
 
         cmdBar.getChildren().addAll(prompt, srvInput, runBtn);
         root.getChildren().add(cmdBar);
 
         SessionTable = new TableView<>();
         FilteredList<SessionRow> filtered = new FilteredList<>(SessionRows, p -> true);
-        search.textProperty().addListener((obs, o, n) ->
-            filtered.setPredicate(row -> n == null || n.isBlank()
-                || row.getName().toLowerCase().contains(n.toLowerCase())
-                || row.getIp().contains(n)
-                || row.getUser().toLowerCase().contains(n.toLowerCase())
-                || row.getHost().toLowerCase().contains(n.toLowerCase())));
+        search.textProperty().addListener((obs, o, n) -> filtered.setPredicate(row -> n == null || n.isBlank() || row.getName().toLowerCase().contains(n.toLowerCase()) || row.getIp().contains(n) || row.getUser().toLowerCase().contains(n.toLowerCase()) || row.getHost().toLowerCase().contains(n.toLowerCase())));
         SessionTable.setItems(filtered);
         SessionTable.getStyleClass().add("session-table");
         VBox.setVgrow(SessionTable, Priority.ALWAYS);
 
-        String[] colNames = {"ID", "Type", "Name / Cert", "IP", "OS", "User", "Host", "Session Key"};
-        String[] props    = {"id", "type", "name",        "ip", "os", "user", "host", "joined"};
+        String[] colNames = { "ID", "Type", "Name / Cert", "IP", "OS", "User", "Host", "Session Key" };
+        String[] props = { "id", "type", "name", "ip", "os", "user", "host", "joined" };
         for (int i = 0; i < colNames.length; i++) {
             TableColumn<SessionRow, String> col = new TableColumn<>(colNames[i]);
             col.setCellValueFactory(new PropertyValueFactory<>(props[i]));
             SessionTable.getColumns().add(col);
         }
-        SessionTable.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
-            if (n != null) {
-                SelectedSid = Integer.parseInt(n.getId());
-                if (SelectedLabel != null)
-                    SelectedLabel.setText(n.getName() + "  #" + SelectedSid);
-            }
-        });
+        SessionTable.getSelectionModel()
+            .selectedItemProperty()
+            .addListener((obs, o, n) -> {
+                if (n != null) {
+                    SelectedSid = Integer.parseInt(n.getId());
+                    if (SelectedLabel != null) SelectedLabel.setText(n.getName() + "  #" + SelectedSid);
+                }
+            });
 
         root.getChildren().add(SessionTable);
         return root;
@@ -414,9 +375,7 @@ public class GUI extends Application {
         HBox toolbar = new HBox(8);
         toolbar.setPadding(new Insets(7, 12, 7, 12));
         toolbar.setAlignment(Pos.CENTER_LEFT);
-        toolbar.setStyle("-fx-background-color:" + Palette.BG + ";" +
-                         "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                         "-fx-border-width:0 0 1 0;");
+        toolbar.setStyle("-fx-background-color:" + Palette.BG + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
 
         Label sidLabel = LabelFactory.Of("Session ID", 10, Palette.TEXT_MUTED, false);
         SessionIdField = new TextField();
@@ -430,7 +389,9 @@ public class GUI extends Application {
         HBox.setHgrow(SelectedLabel, Priority.ALWAYS);
 
         Button clearBtn = ButtonFactory.Of("Clear", ButtonFactory.Variant.FLAT);
-        clearBtn.setOnAction(e -> { if (TerminalOutput != null) TerminalOutput.clear(); });
+        clearBtn.setOnAction(e -> {
+            if (TerminalOutput != null) TerminalOutput.clear();
+        });
 
         toolbar.getChildren().addAll(sidLabel, SessionIdField, div, SelectedLabel, clearBtn);
         root.getChildren().add(toolbar);
@@ -444,9 +405,7 @@ public class GUI extends Application {
         HBox cmdBar = new HBox(6);
         cmdBar.setPadding(new Insets(6, 10, 6, 10));
         cmdBar.setAlignment(Pos.CENTER_LEFT);
-        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" +
-                        "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" +
-                        "-fx-border-width:1 0 0 0;");
+        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" + "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" + "-fx-border-width:1 0 0 0;");
 
         Label prompt = LabelFactory.Of(">", 13, Palette.ACCENT, true);
         prompt.setStyle(prompt.getStyle() + "-fx-font-family:Consolas;");
@@ -470,23 +429,13 @@ public class GUI extends Application {
         root.setStyle("-fx-background-color:" + Palette.BG + ";");
 
         VBox refCard = new VBox(0);
-        refCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" +
-                         "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                         "-fx-border-width:0 0 1 0;");
+        refCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
         VBox refHeader = new VBox();
         refHeader.setPadding(new Insets(8, 12, 8, 12));
-        refHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" +
-                           "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                           "-fx-border-width:0 0 1 0;");
+        refHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
         refHeader.getChildren().add(LabelFactory.Of("REFERENCE", 11, Palette.TEXT_HEAD, true));
 
-        TextArea help = new TextArea(
-            "sessions  |  status  |  stats  |  tasks\n" +
-            "kill <id>  |  exec <id> <cmd>  |  sysinfo <id>  |  whoami <id>\n" +
-            "broadcast <cmd>  |  sleep <id> <sec>  |  screenshot <id>\n" +
-            "download <id> <remote>  |  upload <id> <local> <remote>\n" +
-            "note <id> <text>  |  getnote <id>  |  history [id] [limit]"
-        );
+        TextArea help = new TextArea("sessions  |  status  |  stats  |  tasks\n" + "kill <id>  |  exec <id> <cmd>  |  sysinfo <id>  |  whoami <id>\n" + "broadcast <cmd>  |  sleep <id> <sec>  |  screenshot <id>\n" + "download <id> <remote>  |  upload <id> <local> <remote>\n" + "note <id> <text>  |  getnote <id>  |  history [id] [limit]");
         help.setEditable(false);
         help.setPrefHeight(96);
         StyleHelper.ApplyTerm(help);
@@ -497,9 +446,7 @@ public class GUI extends Application {
         HBox cmdBar = new HBox(6);
         cmdBar.setPadding(new Insets(6, 10, 6, 10));
         cmdBar.setAlignment(Pos.CENTER_LEFT);
-        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" +
-                        "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                        "-fx-border-width:0 0 1 0;");
+        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
 
         Label prompt = LabelFactory.Of(">", 13, Palette.ACCENT, true);
         prompt.setStyle(prompt.getStyle() + "-fx-font-family:Consolas;");
@@ -509,7 +456,7 @@ public class GUI extends Application {
         StyleHelper.ApplyInput(cmdInput);
         HBox.setHgrow(cmdInput, Priority.ALWAYS);
 
-        Button runBtn   = ButtonFactory.Of("Execute",    ButtonFactory.Variant.ACCENT);
+        Button runBtn = ButtonFactory.Of("Execute", ButtonFactory.Variant.ACCENT);
         Button clearBtn = ButtonFactory.Of("Clear logs", ButtonFactory.Variant.OUTLINED);
 
         TextArea mirror = new TextArea();
@@ -523,7 +470,11 @@ public class GUI extends Application {
         cmdInput.setOnAction(e -> {
             if (Dispatcher != null) Dispatcher.Dispatch(cmdInput.getText().trim(), cmdInput);
         });
-        clearBtn.setOnAction(e -> { LogEntries.clear(); if (LogOutput != null) LogOutput.clear(); mirror.clear(); });
+        clearBtn.setOnAction(e -> {
+            LogEntries.clear();
+            if (LogOutput != null) LogOutput.clear();
+            mirror.clear();
+        });
 
         cmdBar.getChildren().addAll(prompt, cmdInput, runBtn, clearBtn);
         root.getChildren().addAll(cmdBar, mirror);
@@ -537,13 +488,14 @@ public class GUI extends Application {
         HBox toolbar = new HBox(6);
         toolbar.setPadding(new Insets(7, 12, 7, 12));
         toolbar.setAlignment(Pos.CENTER_RIGHT);
-        toolbar.setStyle("-fx-background-color:" + Palette.BG + ";" +
-                         "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                         "-fx-border-width:0 0 1 0;");
+        toolbar.setStyle("-fx-background-color:" + Palette.BG + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
 
         Button exportBtn = ButtonFactory.Of("Export", ButtonFactory.Variant.OUTLINED);
-        Button clearBtn  = ButtonFactory.Of("Clear",  ButtonFactory.Variant.DANGER);
-        clearBtn.setOnAction(e -> { LogEntries.clear(); if (LogOutput != null) LogOutput.clear(); });
+        Button clearBtn = ButtonFactory.Of("Clear", ButtonFactory.Variant.DANGER);
+        clearBtn.setOnAction(e -> {
+            LogEntries.clear();
+            if (LogOutput != null) LogOutput.clear();
+        });
         toolbar.getChildren().addAll(exportBtn, clearBtn);
         root.getChildren().add(toolbar);
 
@@ -562,13 +514,10 @@ public class GUI extends Application {
         content.setStyle("-fx-background-color:" + Palette.BG + ";");
 
         VBox serverCard = new VBox(0);
-        serverCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" +
-                            "-fx-border-color:" + Palette.BORDER + "; -fx-border-width:1;");
+        serverCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" + "-fx-border-color:" + Palette.BORDER + "; -fx-border-width:1;");
         VBox serverHeader = new VBox();
         serverHeader.setPadding(new Insets(8, 12, 8, 12));
-        serverHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" +
-                              "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                              "-fx-border-width:0 0 1 0;");
+        serverHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
         serverHeader.getChildren().add(LabelFactory.Of("Server Configuration", 11, Palette.TEXT_HEAD, true));
 
         VBox serverBody = new VBox(10);
@@ -595,7 +544,7 @@ public class GUI extends Application {
         fields.add(PortField, 1, 1);
 
         StartBtn = ButtonFactory.Of("Start server", ButtonFactory.Variant.SUCCESS);
-        StopBtn  = ButtonFactory.Of("Stop server",  ButtonFactory.Variant.DANGER);
+        StopBtn = ButtonFactory.Of("Stop server", ButtonFactory.Variant.DANGER);
         StopBtn.setDisable(true);
         StartBtn.setOnAction(e -> InitServer());
         StopBtn.setOnAction(e -> ServerCtrl.Stop());
@@ -607,20 +556,17 @@ public class GUI extends Application {
         serverCard.getChildren().addAll(serverHeader, serverBody);
 
         VBox statusCard = new VBox(0);
-        statusCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" +
-                            "-fx-border-color:" + Palette.BORDER + "; -fx-border-width:1;");
+        statusCard.setStyle("-fx-background-color:" + Palette.BG_ALT + ";" + "-fx-border-color:" + Palette.BORDER + "; -fx-border-width:1;");
         VBox statusHeader = new VBox();
         statusHeader.setPadding(new Insets(8, 12, 8, 12));
-        statusHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" +
-                              "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                              "-fx-border-width:0 0 1 0;");
+        statusHeader.setStyle("-fx-background-color:" + Palette.SURFACE + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
         statusHeader.getChildren().add(LabelFactory.Of("Status", 11, Palette.TEXT_HEAD, true));
 
         VBox statusBody = new VBox(6);
         statusBody.setPadding(new Insets(12));
 
         ServerStatusLabel = LabelFactory.Of("Offline", 11, Palette.DANGER, false);
-        ServerInfoLabel   = LabelFactory.Of("Not running", 10, Palette.TEXT_DIM, false);
+        ServerInfoLabel = LabelFactory.Of("Not running", 10, Palette.TEXT_DIM, false);
 
         HBox row1 = new HBox(10);
         row1.setAlignment(Pos.CENTER_LEFT);
@@ -642,34 +588,39 @@ public class GUI extends Application {
         HBox bar = new HBox(12);
         bar.setPadding(new Insets(4, 12, 4, 12));
         bar.setAlignment(Pos.CENTER_LEFT);
-        bar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" +
-                     "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" +
-                     "-fx-border-width:1 0 0 0;");
-        bar.getChildren().addAll(
-            LabelFactory.Of("RAVEN v3.0", 9, Palette.TEXT_DIM, false),
-            StyleHelper.VDivider(),
-            LabelFactory.Of("MatrixTM26", 9, Palette.TEXT_DIM, false)
-        );
+        bar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" + "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" + "-fx-border-width:1 0 0 0;");
+        bar.getChildren().addAll(LabelFactory.Of("RAVEN v3.0", 9, Palette.TEXT_DIM, false), StyleHelper.VDivider(), LabelFactory.Of("MatrixTM26", 9, Palette.TEXT_DIM, false));
         return bar;
     }
 
     private void InitServer() {
         String host = HostField.getText().trim();
         int port;
-        try { port = Integer.parseInt(PortField.getText().trim()); }
-        catch (NumberFormatException e) { Alert(Alert.AlertType.WARNING, "Invalid port number"); return; }
+        try {
+            port = Integer.parseInt(PortField.getText().trim());
+        } catch (NumberFormatException e) {
+            Alert(Alert.AlertType.WARNING, "Invalid port number");
+            return;
+        }
 
         ServerCtrl = new ServerController(
-            Config, StatusLabel, ServerStatusLabel, ServerInfoLabel, StartBtn, StopBtn,
-            this::AddLog, this::OnEvent,
+            Config,
+            StatusLabel,
+            ServerStatusLabel,
+            ServerInfoLabel,
+            StartBtn,
+            StopBtn,
+            this::AddLog,
+            this::OnEvent,
             () -> {
                 SessionMgr = new SessionManager(ServerCtrl.GetServer(), Auth.GetDb(), SessionRows, SessionCountLabel);
                 Dispatcher = new CommandDispatcher(ServerCtrl.GetServer(), Auth.GetDb(), SessionMgr, this::AddLog, Auth.GetOperatorName());
             },
-            () -> Platform.runLater(() -> {
-                SessionRows.clear();
-                SessionCountLabel.setText("0 sessions");
-            })
+            () ->
+                Platform.runLater(() -> {
+                    SessionRows.clear();
+                    SessionCountLabel.setText("0 sessions");
+                })
         );
         ServerCtrl.Start(host, port);
     }
@@ -723,12 +674,19 @@ public class GUI extends Application {
     private void SendTerminalCmd() {
         if (TermCmdField == null || SessionIdField == null) return;
         String sidStr = SessionIdField.getText().trim();
-        String cmd    = TermCmdField.getText().trim();
+        String cmd = TermCmdField.getText().trim();
         if (sidStr.isEmpty() || cmd.isEmpty()) return;
         int sid;
-        try { sid = Integer.parseInt(sidStr); }
-        catch (NumberFormatException e) { WriteTerminal("[!] Invalid session ID\n"); return; }
-        if (ServerCtrl == null || !ServerCtrl.IsRunning()) { WriteTerminal("[!] Server not running\n"); return; }
+        try {
+            sid = Integer.parseInt(sidStr);
+        } catch (NumberFormatException e) {
+            WriteTerminal("[!] Invalid session ID\n");
+            return;
+        }
+        if (ServerCtrl == null || !ServerCtrl.IsRunning()) {
+            WriteTerminal("[!] Server not running\n");
+            return;
+        }
         WriteTerminal("> " + cmd + "\n");
         TermCmdField.clear();
         AddLog("> #" + sid + ": " + cmd);
@@ -744,7 +702,10 @@ public class GUI extends Application {
     }
 
     private void OpenExecuteWindow() {
-        if (SelectedSid < 0) { Alert(Alert.AlertType.WARNING, "Select a session first"); return; }
+        if (SelectedSid < 0) {
+            Alert(Alert.AlertType.WARNING, "Select a session first");
+            return;
+        }
         Stage win = new Stage();
         win.setTitle("Execute — SESSION-" + SelectedSid);
         win.setWidth(640);
@@ -762,9 +723,7 @@ public class GUI extends Application {
         HBox cmdBar = new HBox(6);
         cmdBar.setPadding(new Insets(6, 10, 6, 10));
         cmdBar.setAlignment(Pos.CENTER_LEFT);
-        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" +
-                        "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" +
-                        "-fx-border-width:1 0 0 0;");
+        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" + "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" + "-fx-border-width:1 0 0 0;");
 
         Label prompt = LabelFactory.Of(">", 13, Palette.ACCENT, true);
         prompt.setStyle(prompt.getStyle() + "-fx-font-family:Consolas;");
@@ -795,7 +754,10 @@ public class GUI extends Application {
     }
 
     private void OpenBroadcastWindow() {
-        if (ServerCtrl == null || !ServerCtrl.IsRunning()) { Alert(Alert.AlertType.WARNING, "Server not running"); return; }
+        if (ServerCtrl == null || !ServerCtrl.IsRunning()) {
+            Alert(Alert.AlertType.WARNING, "Server not running");
+            return;
+        }
         Stage win = new Stage();
         win.setTitle("Broadcast Command");
         win.setWidth(600);
@@ -807,9 +769,7 @@ public class GUI extends Application {
         HBox targetBar = new HBox(8);
         targetBar.setPadding(new Insets(7, 10, 7, 10));
         targetBar.setAlignment(Pos.CENTER_LEFT);
-        targetBar.setStyle("-fx-background-color:" + Palette.BG + ";" +
-                           "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" +
-                           "-fx-border-width:0 0 1 0;");
+        targetBar.setStyle("-fx-background-color:" + Palette.BG + ";" + "-fx-border-color:transparent transparent " + Palette.BORDER + " transparent;" + "-fx-border-width:0 0 1 0;");
         TextField targetField = new TextField();
         targetField.setPromptText("Target: 1,2,3  or  all");
         StyleHelper.ApplyInput(targetField);
@@ -827,9 +787,7 @@ public class GUI extends Application {
         HBox cmdBar = new HBox(6);
         cmdBar.setPadding(new Insets(6, 10, 6, 10));
         cmdBar.setAlignment(Pos.CENTER_LEFT);
-        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" +
-                        "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" +
-                        "-fx-border-width:1 0 0 0;");
+        cmdBar.setStyle("-fx-background-color:" + Palette.BG_DEEP + ";" + "-fx-border-color:" + Palette.BORDER + " transparent transparent transparent;" + "-fx-border-width:1 0 0 0;");
         Label prompt = LabelFactory.Of(">", 13, Palette.ACCENT, true);
         prompt.setStyle(prompt.getStyle() + "-fx-font-family:Consolas;");
         TextField cmdField = new TextField();
@@ -840,7 +798,7 @@ public class GUI extends Application {
 
         Runnable doBcast = () -> {
             String target = targetField.getText().trim();
-            String cmd    = cmdField.getText().trim();
+            String cmd = cmdField.getText().trim();
             if (target.isEmpty() || cmd.isEmpty()) return;
             out.appendText("Broadcast [" + target + "]  " + cmd + "\n");
             cmdField.clear();
@@ -850,15 +808,21 @@ public class GUI extends Application {
                     results = ServerCtrl.GetServer().BroadcastAll(cmd);
                 } else {
                     java.util.List<Integer> ids = new java.util.ArrayList<>();
-                    for (String s : target.split(",")) { try { ids.add(Integer.parseInt(s.trim())); } catch (Exception ignored) {} }
+                    for (String s : target.split(",")) {
+                        try {
+                            ids.add(Integer.parseInt(s.trim()));
+                        } catch (Exception ignored) {}
+                    }
                     results = ServerCtrl.GetServer().BroadcastCommand(ids, cmd);
                 }
                 final Map<Integer, String[]> fr = results;
-                Platform.runLater(() -> fr.forEach((id, res) -> {
-                    boolean ok = Boolean.parseBoolean(res[0]);
-                    out.appendText("  SESSION-" + id + "  " + (ok ? "OK" : "ERR") + "\n" + res[1] + "\n\n");
-                    Auth.GetDb().SaveCommandLog(id, "operator", cmd, res[1], ok);
-                }));
+                Platform.runLater(() ->
+                    fr.forEach((id, res) -> {
+                        boolean ok = Boolean.parseBoolean(res[0]);
+                        out.appendText("  SESSION-" + id + "  " + (ok ? "OK" : "ERR") + "\n" + res[1] + "\n\n");
+                        Auth.GetDb().SaveCommandLog(id, "operator", cmd, res[1], ok);
+                    })
+                );
             });
         };
         runBtn.setOnAction(e -> doBcast.run());
@@ -871,9 +835,11 @@ public class GUI extends Application {
     }
 
     private void KillSelected() {
-        if (SelectedSid < 0) { Alert(Alert.AlertType.WARNING, "Select a session first"); return; }
-        javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(
-            Alert.AlertType.CONFIRMATION, "Terminate SESSION-" + SelectedSid + "?");
+        if (SelectedSid < 0) {
+            Alert(Alert.AlertType.WARNING, "Select a session first");
+            return;
+        }
+        javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(Alert.AlertType.CONFIRMATION, "Terminate SESSION-" + SelectedSid + "?");
         confirm.setHeaderText(null);
         confirm.showAndWait().ifPresent(r -> {
             if (r == ButtonType.OK) {
@@ -886,24 +852,30 @@ public class GUI extends Application {
 
     private void OnEvent(EventType type, Map<String, Object> data) {
         switch (type) {
-            case AgentConnected    -> {
+            case AgentConnected -> {
                 AddLog("[+] [" + data.get("Type") + "] SESSION-" + data.get("ID") + ": " + data.get("AgentName") + " (" + data.get("OS") + ")");
-                Platform.runLater(() -> { if (SessionMgr != null) SessionMgr.Refresh(); });
+                Platform.runLater(() -> {
+                    if (SessionMgr != null) SessionMgr.Refresh();
+                });
             }
             case AgentDisconnected -> {
                 AddLog("[-] SESSION-" + data.get("ID") + " disconnected: " + data.get("Reason"));
-                Platform.runLater(() -> { if (SessionMgr != null) SessionMgr.Refresh(); });
+                Platform.runLater(() -> {
+                    if (SessionMgr != null) SessionMgr.Refresh();
+                });
             }
             case Error -> AddLog("[!] " + data.get("Message"));
         }
     }
 
     private void AddLog(String msg) {
-        String ts    = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         String entry = "[" + ts + "]  " + msg;
         LogEntries.add(entry);
         if (LogEntries.size() > Config.GetMaxLogEntries()) LogEntries.remove(0);
-        Platform.runLater(() -> { if (LogOutput != null) LogOutput.appendText(entry + "\n"); });
+        Platform.runLater(() -> {
+            if (LogOutput != null) LogOutput.appendText(entry + "\n");
+        });
     }
 
     private void WriteTerminal(String text) {
@@ -913,11 +885,15 @@ public class GUI extends Application {
     private void StartUptimeThread() {
         Thread t = new Thread(() -> {
             while (true) {
-                try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ignored) {}
                 if (ServerCtrl != null && ServerCtrl.GetStartTime() != null) {
                     long secs = Duration.between(ServerCtrl.GetStartTime(), Instant.now()).getSeconds();
                     String up = SystemHelper.FormatUptime(secs);
-                    Platform.runLater(() -> { if (UptimeLabel != null) UptimeLabel.setText(up); });
+                    Platform.runLater(() -> {
+                        if (UptimeLabel != null) UptimeLabel.setText(up);
+                    });
                 }
             }
         });

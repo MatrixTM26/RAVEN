@@ -4,15 +4,14 @@ import com.raven.core.event.EventManager.EventType;
 import com.raven.core.server.ListenerMode;
 import com.raven.core.server.RavenServer;
 import com.raven.utils.ServerConfig;
-import javafx.application.Platform;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
-
 import java.time.Instant;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import javafx.application.Platform;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.paint.Color;
 
 public class ServerController {
 
@@ -30,33 +29,27 @@ public class ServerController {
     private final Runnable onStart;
     private final Runnable onStop;
 
-    public ServerController(ServerConfig config,
-                             Label statusDot,
-                             Label serverStatusLabel,
-                             Label serverInfoLabel,
-                             Button startBtn,
-                             Button stopBtn,
-                             Consumer<String> log,
-                             BiConsumer<EventType, Map<String, Object>> eventHandler,
-                             Runnable onStart,
-                             Runnable onStop) {
-        this.config            = config;
-        this.statusDot         = statusDot;
+    public ServerController(ServerConfig config, Label statusDot, Label serverStatusLabel, Label serverInfoLabel, Button startBtn, Button stopBtn, Consumer<String> log, BiConsumer<EventType, Map<String, Object>> eventHandler, Runnable onStart, Runnable onStop) {
+        this.config = config;
+        this.statusDot = statusDot;
         this.serverStatusLabel = serverStatusLabel;
-        this.serverInfoLabel   = serverInfoLabel;
-        this.startBtn          = startBtn;
-        this.stopBtn           = stopBtn;
-        this.log               = log;
-        this.eventHandler      = eventHandler;
-        this.onStart           = onStart;
-        this.onStop            = onStop;
+        this.serverInfoLabel = serverInfoLabel;
+        this.startBtn = startBtn;
+        this.stopBtn = stopBtn;
+        this.log = log;
+        this.eventHandler = eventHandler;
+        this.onStart = onStart;
+        this.onStop = onStop;
     }
 
     public void Start(String host, int port) {
         server = new RavenServer(host, port, ListenerMode.FromString(config.GetServerMode()), config);
         server.AddEventListener(eventHandler);
         boolean[] result = server.StartServer();
-        if (!result[0]) { log.accept("[!] Failed to start server"); return; }
+        if (!result[0]) {
+            log.accept("[!] Failed to start server");
+            return;
+        }
         startTime = Instant.now();
         Thread t = new Thread(server::AcceptConnections, "AcceptConnections");
         t.setDaemon(true);
@@ -92,7 +85,15 @@ public class ServerController {
         if (onStop != null) onStop.run();
     }
 
-    public RavenServer GetServer()    { return server; }
-    public Instant     GetStartTime() { return startTime; }
-    public boolean     IsRunning()    { return server != null && server.IsRunning(); }
+    public RavenServer GetServer() {
+        return server;
+    }
+
+    public Instant GetStartTime() {
+        return startTime;
+    }
+
+    public boolean IsRunning() {
+        return server != null && server.IsRunning();
+    }
 }

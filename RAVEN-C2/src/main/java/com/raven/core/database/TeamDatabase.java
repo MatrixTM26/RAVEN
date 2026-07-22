@@ -82,7 +82,7 @@ public abstract class TeamDatabase {
     }
 
     public static TeamDatabase Connect(ServerConfig Config) {
-        String Type = Config.GetDbType().toLowerCase();
+        String Type = Config.GetDatabaseType().toLowerCase();
         try {
             return switch (Type) {
                 case "postgresql", "postgres" -> new PostgresDatabase(Config);

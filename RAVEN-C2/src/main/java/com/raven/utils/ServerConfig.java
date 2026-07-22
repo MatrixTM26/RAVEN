@@ -303,27 +303,27 @@ public final class ServerConfig {
         return Boolean.parseBoolean(Props.getProperty(K, "false").trim());
     }
 
-    public String GetDbType() {
+    public String GetDatabaseType() {
         return str("db.type").toLowerCase();
     }
 
-    public String GetDbUrl() {
+    public String GetDatabaseUrl() {
         return str("db.url");
     }
 
-    public String GetDbName() {
+    public String GetDatabaseName() {
         return str("db.name");
     }
 
-    public String GetDbUser() {
+    public String GetDatabaseUser() {
         return str("db.user");
     }
 
-    public String GetDbPath() {
+    public String GetDatabasePath() {
         return str("db.path");
     }
 
-    public String GetDbPassword() {
+    public String GetDatabasePassword() {
         return str("db.password");
     }
 

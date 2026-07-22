@@ -2,7 +2,6 @@ package com.raven.interfaces.APP;
 
 import com.google.gson.Gson;
 import com.raven.core.database.TeamDatabase;
-import com.raven.core.event.EventManager;
 import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
 import com.raven.core.server.ListenerMode;
@@ -169,7 +168,7 @@ public final class WebApp {
         R.put("Uptime", Uptime());
         R.put("Agents", Up ? Server.GetSessions().Count() : 0);
         R.put("DbOnline", Db.IsConnected());
-        R.put("DbType", Config.GetDbType());
+        R.put("DbType", Config.GetDatabaseType());
         if (Up) R.put("Key", Server.GetKeyBase64());
         return GsonInst.toJson(R);
     }
@@ -483,7 +482,7 @@ public final class WebApp {
         boolean Hide = Boolean.parseBoolean(Str(B, "Hide", "false"));
         String Lang = Str(B, "Lang", "java").toLowerCase();
         try {
-            com.raven.core.crypto.CertificateManager Mgr = new com.raven.core.crypto.CertificateManager(Config);
+            com.raven.core.cryptography.CertificateManager Mgr = new com.raven.core.cryptography.CertificateManager(Config);
             Mgr.Initialize(Host);
             String CertPath = Mgr.CreateAgentCertificate(AgentId);
             String OutDir = "IMPLANT/" + AgentId.toUpperCase();
