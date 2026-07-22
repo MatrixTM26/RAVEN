@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      style="-fx-background-color:#1c1c1c;"
+      spacing="0">
+
+    <VBox styleClass="panel-card" style="-fx-margin:0;">
+        <VBox styleClass="panel-header">
+            <Label text="REFERENCE" styleClass="text-head"/>
+        </VBox>
+        <TextArea fx:id="helpText"
+                  editable="false"
+                  prefHeight="100"
+                  styleClass="terminal-area"
+                  style="-fx-border-color:transparent; -fx-border-width:0;"/>
+    </VBox>
+
+    <Region styleClass="h-divider"/>
+
+    <HBox styleClass="cmd-bar" alignment="CENTER_LEFT">
+        <Label text=">" styleClass="cmd-prompt"/>
+        <TextField fx:id="commandInput"
+                   promptText="Type command..."
+                   styleClass="input-field"
+                   HBox.hgrow="ALWAYS"/>
+        <Button fx:id="runBtn"   text="Execute"    styleClass="btn-accent"/>
+        <Button fx:id="clearBtn" text="Clear logs" styleClass="btn-outlined"/>
+    </HBox>
+
+    <TextArea fx:id="mirrorOutput"
+              editable="false"
+              styleClass="terminal-area"
+              VBox.vgrow="ALWAYS"/>
+</VBox>
