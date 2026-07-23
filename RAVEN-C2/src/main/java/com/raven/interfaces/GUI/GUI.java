@@ -100,7 +100,9 @@ public class GUI extends Application {
         root.setBottom(BuildStatusBar());
 
         Scene scene = new Scene(root);
-        scene.getStylesheets().add(getClass().getResource("/com/raven/interfaces/styles/css/raven.css").toExternalForm());
+        java.net.URL cssUrl = getClass().getResource("styles/css/raven.css");
+        if (cssUrl == null) cssUrl = getClass().getResource("/com/raven/interfaces/GUI/styles/css/raven.css");
+        if (cssUrl != null) scene.getStylesheets().add(cssUrl.toExternalForm());
 
         stage.setScene(scene);
         stage.setOnCloseRequest(e -> {
