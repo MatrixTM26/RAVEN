@@ -1,8 +1,11 @@
 package com.raven.core.output;
 
 import com.raven.utils.AnsiColor;
-import java.io.*;
-import java.nio.file.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -74,37 +77,57 @@ public final class Logger {
         return LocalDateTime.now().format(TimeFmt);
     }
 
-    private static void Emit(Level MessageLevel, String PlainTag, String ColorCode, String Message) {
+    private static String Format(String Message, Object[] Args) {
+        if (Args == null || Args.length == 0) return Message;
+        try {
+            return String.format(Message, Args);
+        } catch (java.util.IllegalFormatException E) {
+            return Message + " [FORMAT_ERROR: " + E.getMessage() + "]";
+        }
+    }
+
+    private static void Emit(Level MessageLevel, String PlainTag, String ColorCode, String Message, Object[] Args) {
         if (MessageLevel.ordinal() < CurrentLevel.ordinal()) return;
+        String Formatted = Format(Message, Args);
         String Times = Timestamp();
-        String PlainLine = "  [" + Times + "] [" + PlainTag + "] " + Message;
-        String ColorLine = AnsiColor.White + "  [" + ColorCode + PlainTag + AnsiColor.White + "] " + AnsiColor.Dim + Message + AnsiColor.Reset;
+        String PlainLine = "  [" + Times + "] [" + PlainTag + "] " + Formatted;
+        String ColorLine = AnsiColor.White + "  [" + ColorCode + PlainTag + AnsiColor.White + "] " + AnsiColor.Dim + Formatted + AnsiColor.Reset;
         System.out.println(ColorLine);
         if (FileEnabled) FileQueue.offer(PlainLine);
     }
 
-    public static void Info(String Message) {
-        Emit(Level.INFO, "INFO", AnsiColor.Cyan, Message);
+    public static void Info(String Message, Object... Args) {
+        Emit(Level.INFO, "INFO", AnsiColor.Cyan, Message, Args);
     }
 
-    public static void Warn(String Message) {
-        Emit(Level.WARN, "WARN", AnsiColor.Orange, Message);
+    public static void Warn(String Message, Object... Args) {
+        Emit(Level.WARN, "WARN", AnsiColor.Orange, Message, Args);
     }
 
-    public static void Error(String Message) {
-        Emit(Level.ERROR, "ERROR", AnsiColor.BrightRed, Message);
+    public static void Error(String Message, Object... Args) {
+        Emit(Level.ERROR, "ERROR", AnsiColor.BrightRed, Message, Args);
     }
 
-    public static void Debug(String Message) {
-        Emit(Level.DEBUG, "DEBUG", AnsiColor.Magenta, Message);
+    public static void Debug(String Message, Object... Args) {
+        Emit(Level.DEBUG, "DEBUG", AnsiColor.Magenta, Message, Args);
     }
 
-    public static void Success(String Message) {
-        Emit(Level.INFO, "OK", AnsiColor.Green, Message);
+    public static void Success(String Message, Object... Args) {
+        Emit(Level.INFO, "OK", AnsiColor.Green, Message, Args);
+    }
+
+    public static void Verbose(String Message, Object... Args) {
+        if (!Verbose) return;
+        Emit(Level.VERBOSE, "TRACE", AnsiColor.Dim, Message, Args);
     }
 
     public static void Custom(String Text) {
         System.out.println(Text);
+    }
+
+    public static void Custom(String Text, Object... Args) {
+        System.out.print(Format(Text, Args));
+        System.out.flush();
     }
 
     public static void Custom(String Text, long DelayMs) {
@@ -120,25 +143,20 @@ public final class Logger {
         Custom(Text, (long) DelayMs);
     }
 
-    public static void Verbose(String Message) {
-        if (!Verbose) return;
-        Emit(Level.VERBOSE, "TRACE", AnsiColor.Dim, Message);
+    public static void Messages(String Message, Object... Args) {
+        Info(Message, Args);
     }
 
-    public static void Messages(String Message) {
-        Info(Message);
+    public static void Warnings(String Message, Object... Args) {
+        Warn(Message, Args);
     }
 
-    public static void Warnings(String Message) {
-        Warn(Message);
+    public static void ErrorMessage(String Message, Object... Args) {
+        Error(Message, Args);
     }
 
-    public static void ErrorMessage(String Message) {
-        Error(Message);
-    }
-
-    public static void Warning(String Message) {
-        Warn(Message);
+    public static void Warning(String Message, Object... Args) {
+        Warn(Message, Args);
     }
 
     public static void Shutdown() {

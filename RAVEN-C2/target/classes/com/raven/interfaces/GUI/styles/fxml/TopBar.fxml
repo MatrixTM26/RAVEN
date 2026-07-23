@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns:fx="http://javafx.com/fxml"
+      styleClass="topbar"
+      alignment="CENTER_LEFT">
+
+    <VBox spacing="2" HBox.hgrow="NEVER">
+        <Label text="RAVEN Operations Console" styleClass="topbar-title"/>
+        <Label text="Listener control   Session ops   CLI-aligned command center" styleClass="topbar-sub"/>
+    </VBox>
+
+    <Label text="app is running in development mode" styleClass="topbar-badge"
+           style="-fx-padding:3 8 3 8; -fx-margin:0 0 0 12;"/>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <HBox spacing="16" alignment="CENTER_RIGHT">
+        <Label fx:id="uptimeLabel"       text="00:00:00"   styleClass="text-dim"/>
+        <Region styleClass="v-divider" prefHeight="16"/>
+        <Label fx:id="sessionCountLabel" text="0 sessions" styleClass="text-muted"/>
+        <Label fx:id="operatorLabel"     text=""           styleClass="text-muted" managed="false" visible="false"/>
+    </HBox>
+</HBox>
