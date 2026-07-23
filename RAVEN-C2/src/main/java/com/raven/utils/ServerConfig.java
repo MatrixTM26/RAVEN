@@ -1,17 +1,20 @@
 package com.raven.utils;
 
 import com.raven.core.output.Logger;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 public final class ServerConfig {
 
-    private static final String DefaultPath = "config/server/server.properties";
-    private final Properties Props = new Properties();
+    private static final String DefaultConfigPath = "config/server/server.properties";
+    private final Properties Properties = new Properties();
     private final String FilePath;
 
     public ServerConfig() {
-        this(DefaultPath);
+        this(DefaultConfigPath);
     }
 
     public ServerConfig(String Path) {
@@ -21,70 +24,70 @@ public final class ServerConfig {
     }
 
     private void LoadDefaults() {
-        set("server.host", "0.0.0.0");
-        set("server.port", "4444");
-        set("server.mode", "multi");
-        set("web.host", "0.0.0.0");
-        set("web.port", "5000");
-        set("web.template.dir", "config/interfaces/app/templates");
-        set("web.static.dir", "config/interfaces/app/static");
-        set("web.beacon.port", "-1");
-        set("cert.keystore.path", "certs/server.p12");
-        set("cert.keystore.type", "PKCS12");
-        set("cert.keystore.password", "raven");
-        set("cert.truststore.path", "certs/truststore.p12");
-        set("cert.truststore.type", "PKCS12");
-        set("cert.truststore.password", "raven");
-        set("cert.ca.path", "certs/ca.p12");
-        set("cert.ca.type", "PKCS12");
-        set("cert.ca.password", "raven");
-        set("cert.agent.dir", "certs/agents");
-        set("cert.dn.cn", "RAVEN Server");
-        set("cert.dn.o", "RAVEN C2 Frameworks");
-        set("cert.dn.ou", "ManInTheMatrix");
-        set("cert.dn.l", "DarkNet");
-        set("cert.dn.st", "Cybertron");
-        set("cert.dn.c", "US");
-        set("cert.ca.dn.cn", "RAVEN Root CA");
-        set("cert.ca.dn.o", "RAVEN Frameworks V3");
-        set("cert.ca.dn.ou", "ManInTheMatrix");
-        set("cert.ca.dn.l", "DarkNet");
-        set("cert.ca.dn.st", "Cybertron");
-        set("cert.ca.dn.c", "US");
-        set("cert.server.validity.days", "365");
-        set("cert.agent.validity.days", "90");
-        set("cert.ca.validity.days", "3650");
-        set("cert.tls.protocol", "TLSv1.3");
-        set("agent.connection.timeout", "10000");
-        set("agent.command.timeout", "120000");
-        set("agent.max.connections", "100");
-        set("agent.buffer.size", "8192");
-        set("logging.level", "INFO");
-        set("logging.verbose", "false");
-        set("logging.max.entries", "1000");
-        set("logging.file", "logs/raven.log");
-        set("logging.file.enabled", "false");
-        set("db.type", "none");
-        set("db.path", "database");
-        set("db.url", "");
-        set("db.name", "raven");
-        set("db.user", "raven");
-        set("db.password", "raven");
-        set("db.mongo.uri", "mongodb://localhost:27017");
-        set("db.mongo.name", "raven");
-        set("mode.interface", "cli");
-        set("teamserver.port", "5001");
+        SetPropertyValue("server.host", "0.0.0.0");
+        SetPropertyValue("server.port", "4444");
+        SetPropertyValue("server.mode", "multi");
+        SetPropertyValue("web.host", "0.0.0.0");
+        SetPropertyValue("web.port", "5000");
+        SetPropertyValue("web.template.dir", "config/interfaces/app/templates");
+        SetPropertyValue("web.static.dir", "config/interfaces/app/static");
+        SetPropertyValue("web.beacon.port", "-1");
+        SetPropertyValue("cert.keystore.path", "certs/server.p12");
+        SetPropertyValue("cert.keystore.type", "PKCS12");
+        SetPropertyValue("cert.keystore.password", "raven");
+        SetPropertyValue("cert.truststore.path", "certs/truststore.p12");
+        SetPropertyValue("cert.truststore.type", "PKCS12");
+        SetPropertyValue("cert.truststore.password", "raven");
+        SetPropertyValue("cert.ca.path", "certs/ca.p12");
+        SetPropertyValue("cert.ca.type", "PKCS12");
+        SetPropertyValue("cert.ca.password", "raven");
+        SetPropertyValue("cert.agent.dir", "certs/agents");
+        SetPropertyValue("cert.dn.cn", "RAVEN Server");
+        SetPropertyValue("cert.dn.o", "RAVEN C2 Frameworks");
+        SetPropertyValue("cert.dn.ou", "ManInTheMatrix");
+        SetPropertyValue("cert.dn.l", "DarkNet");
+        SetPropertyValue("cert.dn.st", "Cybertron");
+        SetPropertyValue("cert.dn.c", "US");
+        SetPropertyValue("cert.ca.dn.cn", "RAVEN Root CA");
+        SetPropertyValue("cert.ca.dn.o", "RAVEN Frameworks V3");
+        SetPropertyValue("cert.ca.dn.ou", "ManInTheMatrix");
+        SetPropertyValue("cert.ca.dn.l", "DarkNet");
+        SetPropertyValue("cert.ca.dn.st", "Cybertron");
+        SetPropertyValue("cert.ca.dn.c", "US");
+        SetPropertyValue("cert.server.validity.days", "365");
+        SetPropertyValue("cert.agent.validity.days", "90");
+        SetPropertyValue("cert.ca.validity.days", "3650");
+        SetPropertyValue("cert.tls.protocol", "TLSv1.3");
+        SetPropertyValue("agent.connection.timeout", "10000");
+        SetPropertyValue("agent.command.timeout", "120000");
+        SetPropertyValue("agent.max.connections", "100");
+        SetPropertyValue("agent.buffer.size", "8192");
+        SetPropertyValue("logging.level", "INFO");
+        SetPropertyValue("logging.verbose", "false");
+        SetPropertyValue("logging.max.entries", "1000");
+        SetPropertyValue("logging.file", "logs/raven.log");
+        SetPropertyValue("logging.file.enabled", "false");
+        SetPropertyValue("db.type", "none");
+        SetPropertyValue("db.path", "database");
+        SetPropertyValue("db.url", "");
+        SetPropertyValue("db.name", "raven");
+        SetPropertyValue("db.user", "raven");
+        SetPropertyValue("db.password", "raven");
+        SetPropertyValue("db.mongo.uri", "mongodb://localhost:27017");
+        SetPropertyValue("db.mongo.name", "raven");
+        SetPropertyValue("mode.interface", "cli");
+        SetPropertyValue("teamserver.port", "5001");
     }
 
-    private void set(String Key, String Value) {
-        Props.setProperty(Key, Value);
+    private void SetPropertyValue(String Key, String Value) {
+        Properties.setProperty(Key, Value);
     }
 
     private void LoadFromFile(String Path) {
-        File F = new File(Path);
-        if (!F.exists()) return;
-        try (InputStream In = new FileInputStream(F)) {
-            Props.load(In);
+        File FileName = new File(Path);
+        if (!FileName.exists()) return;
+        try (InputStream In = new FileInputStream(FileName)) {
+            Properties.load(In);
         } catch (IOException E) {
             Logger.Error("server config failed to load " + Path + ": " + E.getMessage());
         }
@@ -95,159 +98,159 @@ public final class ServerConfig {
     }
 
     public String GetServerHost() {
-        return str("server.host");
+        return StrObject("server.host");
     }
 
     public int GetServerPort() {
-        return num("server.port");
+        return Number("server.port");
     }
 
     public String GetServerMode() {
-        return str("server.mode").toLowerCase();
+        return StrObject("server.mode").toLowerCase();
     }
 
     public String GetWebHost() {
-        return str("web.host");
+        return StrObject("web.host");
     }
 
     public int GetWebPort() {
-        return num("web.port");
+        return Number("web.port");
     }
 
     public String GetTemplateDir() {
-        return str("web.template.dir");
+        return StrObject("web.template.dir");
     }
 
     public String GetStaticDir() {
-        return str("web.static.dir");
+        return StrObject("web.static.dir");
     }
 
     public int GetBeaconPort() {
-        return num("web.beacon.port");
+        return Number("web.beacon.port");
     }
 
     public String GetKeystorePath() {
-        return str("cert.keystore.path");
+        return StrObject("cert.keystore.path");
     }
 
     public String GetKeystoreType() {
-        return str("cert.keystore.type");
+        return StrObject("cert.keystore.type");
     }
 
     public String GetKeystorePassword() {
-        return str("cert.keystore.password");
+        return StrObject("cert.keystore.password");
     }
 
     public String GetTruststorePath() {
-        return str("cert.truststore.path");
+        return StrObject("cert.truststore.path");
     }
 
     public String GetTruststoreType() {
-        return str("cert.truststore.type");
+        return StrObject("cert.truststore.type");
     }
 
     public String GetTruststorePassword() {
-        return str("cert.truststore.password");
+        return StrObject("cert.truststore.password");
     }
 
     public String GetCaPath() {
-        return str("cert.ca.path");
+        return StrObject("cert.ca.path");
     }
 
     public String GetCaType() {
-        return str("cert.ca.type");
+        return StrObject("cert.ca.type");
     }
 
     public String GetCaPassword() {
-        return str("cert.ca.password");
+        return StrObject("cert.ca.password");
     }
 
     public String GetAgentCertDir() {
-        return str("cert.agent.dir");
+        return StrObject("cert.agent.dir");
     }
 
     public String GetDnCn() {
-        return str("cert.dn.cn");
+        return StrObject("cert.dn.cn");
     }
 
     public String GetDnO() {
-        return str("cert.dn.o");
+        return StrObject("cert.dn.o");
     }
 
     public String GetDnOu() {
-        return str("cert.dn.ou");
+        return StrObject("cert.dn.ou");
     }
 
     public String GetDnL() {
-        return str("cert.dn.l");
+        return StrObject("cert.dn.l");
     }
 
     public String GetDnSt() {
-        return str("cert.dn.st");
+        return StrObject("cert.dn.st");
     }
 
     public String GetDnC() {
-        return str("cert.dn.c");
+        return StrObject("cert.dn.c");
     }
 
     public String GetCaDnCn() {
-        return str("cert.ca.dn.cn");
+        return StrObject("cert.ca.dn.cn");
     }
 
     public String GetCaDnO() {
-        return str("cert.ca.dn.o");
+        return StrObject("cert.ca.dn.o");
     }
 
     public String GetCaDnOu() {
-        return str("cert.ca.dn.ou");
+        return StrObject("cert.ca.dn.ou");
     }
 
     public String GetCaDnL() {
-        return str("cert.ca.dn.l");
+        return StrObject("cert.ca.dn.l");
     }
 
     public String GetCaDnSt() {
-        return str("cert.ca.dn.st");
+        return StrObject("cert.ca.dn.st");
     }
 
     public String GetCaDnC() {
-        return str("cert.ca.dn.c");
+        return StrObject("cert.ca.dn.c");
     }
 
     public int GetServerValidityDays() {
-        return num("cert.server.validity.days");
+        return Number("cert.server.validity.days");
     }
 
     public int GetAgentValidityDays() {
-        return num("cert.agent.validity.days");
+        return Number("cert.agent.validity.days");
     }
 
     public int GetCaValidityDays() {
-        return num("cert.ca.validity.days");
+        return Number("cert.ca.validity.days");
     }
 
     public String GetTlsProtocol() {
-        return str("cert.tls.protocol");
+        return StrObject("cert.tls.protocol");
     }
 
     public int GetConnectionTimeout() {
-        return num("agent.connection.timeout");
+        return Number("agent.connection.timeout");
     }
 
     public int GetCommandTimeout() {
-        return num("agent.command.timeout");
+        return Number("agent.command.timeout");
     }
 
     public int GetMaxConnections() {
-        return num("agent.max.connections");
+        return Number("agent.max.connections");
     }
 
     public int GetBufferSize() {
-        return num("agent.buffer.size");
+        return Number("agent.buffer.size");
     }
 
     public String GetLoggingLevel() {
-        return str("logging.level").toUpperCase();
+        return StrObject("logging.level").toUpperCase();
     }
 
     public boolean IsVerbose() {
@@ -255,11 +258,11 @@ public final class ServerConfig {
     }
 
     public int GetMaxLogEntries() {
-        return num("logging.max.entries");
+        return Number("logging.max.entries");
     }
 
     public String GetLogFile() {
-        return str("logging.file");
+        return StrObject("logging.file");
     }
 
     public boolean IsFileLoggingEnabled() {
@@ -267,7 +270,7 @@ public final class ServerConfig {
     }
 
     public String GetInterfaceMode() {
-        return str("mode.interface").toLowerCase();
+        return StrObject("mode.interface").toLowerCase();
     }
 
     public boolean IsMtlsEnabled() {
@@ -280,77 +283,77 @@ public final class ServerConfig {
     }
 
     public String Get(String Key) {
-        return Props.getProperty(Key);
+        return Properties.getProperty(Key);
     }
 
     public String Get(String Key, String Default) {
-        return Props.getProperty(Key, Default);
+        return Properties.getProperty(Key, Default);
     }
 
-    private String str(String K) {
-        return Props.getProperty(K, "");
+    private String StrObject(String Key) {
+        return Properties.getProperty(Key, "");
     }
 
-    private int num(String K) {
+    private int Number(String Key) {
         try {
-            return Integer.parseInt(Props.getProperty(K, "0").trim());
+            return Integer.parseInt(Properties.getProperty(Key, "0").trim());
         } catch (NumberFormatException E) {
             return 0;
         }
     }
 
-    private boolean bool(String K) {
-        return Boolean.parseBoolean(Props.getProperty(K, "false").trim());
+    private boolean bool(String Key) {
+        return Boolean.parseBoolean(Properties.getProperty(Key, "false").trim());
     }
 
     public String GetDatabaseType() {
-        return str("db.type").toLowerCase();
+        return StrObject("db.type").toLowerCase();
     }
 
     public String GetDatabaseUrl() {
-        return str("db.url");
+        return StrObject("db.url");
     }
 
     public String GetDatabaseName() {
-        return str("db.name");
+        return StrObject("db.name");
     }
 
     public String GetDatabaseUser() {
-        return str("db.user");
+        return StrObject("db.user");
     }
 
     public String GetDatabasePath() {
-        return str("db.path");
+        return StrObject("db.path");
     }
 
     public String GetDatabasePassword() {
-        return str("db.password");
+        return StrObject("db.password");
     }
 
     public String GetMongoUri() {
-        return str("db.mongo.uri");
+        return StrObject("db.mongo.uri");
     }
 
     public String GetMongoDbName() {
-        return str("db.mongo.name");
+        return StrObject("db.mongo.name");
     }
 
     public int GetTeamServerPort() {
-        return num("teamserver.port");
+        return Number("teamserver.port");
     }
 
     public String GetAdminUsername() {
-        String V = str("admin.username");
+        String V = StrObject("admin.username");
         return V.isEmpty() ? "admin" : V;
     }
 
     public String GetAdminPassword() {
-        String V = str("admin.password");
+        String V = StrObject("admin.password");
         return V.isEmpty() ? "admin" : V;
     }
 
     public String GetAdminRole() {
-        String V = str("admin.role").toUpperCase();
+        String V = StrObject("admin.role").toUpperCase();
         return V.isEmpty() ? "SUPER" : V;
     }
 }

@@ -275,8 +275,8 @@ public class CLI {
         CLIBanner.Print();
         if (IsTeamServerMode && OperatorName != null) {
             System.out.println();
-            System.out.printf("  %s[TEAMSERVER MODE]%s  OPERATOR: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, OperatorRoles != null ? OperatorRoles.name() : "?", AnsiColor.Reset);
-            if (OperatorRoles != null) System.out.printf("  %sPermissions:%s %s%n", AnsiColor.Red, AnsiColor.White, OperatorRoles.PermissionString());
+            Logger.Custom("  %s[TEAMSERVER MODE]%s  OPERATOR: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, OperatorRoles != null ? OperatorRoles.name() : "?", AnsiColor.Reset);
+            if (OperatorRoles != null) Logger.Custom("  %sPermissions:%s %s%n", AnsiColor.Red, AnsiColor.White, OperatorRoles.PermissionString());
         }
         System.out.println();
     }
@@ -284,14 +284,14 @@ public class CLI {
     private boolean TeamLogin(BufferedReader Reader) throws IOException {
         System.out.println(Box("TEAMSERVER LOGIN"));
         System.out.println();
-        System.out.printf("  %sDefault credentials: admin / admin (change after first login)%s%n%n", AnsiColor.White, AnsiColor.Reset);
+        Logger.Custom("  %sDefault credentials: admin / admin (change after first login)%s%n%n", AnsiColor.White, AnsiColor.Reset);
         for (int Attempt = 1; Attempt <= 3; Attempt++) {
-            System.out.printf("  %sUsername:%s ", AnsiColor.Red, AnsiColor.Reset);
+            Logger.Custom("  %sUsername:%s ", AnsiColor.Red, AnsiColor.Reset);
             System.out.flush();
             String Username = Reader.readLine();
             if (Username == null) return false;
             Username = Username.trim();
-            System.out.printf("  %sPassword:%s ", AnsiColor.Red, AnsiColor.Reset);
+            Logger.Custom("  %sPassword:%s ", AnsiColor.Red, AnsiColor.Reset);
             System.out.flush();
             String Pass;
             Console Cons = System.console();
@@ -303,15 +303,15 @@ public class CLI {
             }
             if (Pass == null) return false;
             if (!Database.ValidateOperator(Username, TeamDatabase.HashPassword(Pass))) {
-                System.out.printf("  %sInvalid credentials - Attempt %d/3%s%n%n", AnsiColor.Red, Attempt, AnsiColor.Reset);
+                Logger.Custom("  %sInvalid credentials - Attempt %d/3%s%n%n", AnsiColor.Red, Attempt, AnsiColor.Reset);
                 continue;
             }
             OperatorName = Username;
             OperatorRoles = Database.GetOperatorRole(Username);
             Database.UpdateLastSeen(Username);
             Logger.Info("Operator login: " + Username + " [" + OperatorRoles + "]");
-            System.out.printf("  %n%sWelcome, %s [%s]%s%n", AnsiColor.Green, Username, OperatorRoles, AnsiColor.Reset);
-            System.out.printf("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, OperatorRoles.PermissionString());
+            Logger.Custom("  %n%sWelcome, %s [%s]%s%n", AnsiColor.Green, Username, OperatorRoles, AnsiColor.Reset);
+            Logger.Custom("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, OperatorRoles.PermissionString());
             return true;
         }
         Logger.Error("authentication failed - exit.");
@@ -333,9 +333,9 @@ public class CLI {
             Logger.Info("no active sessions");
             return;
         }
-        System.out.printf("  %s%-5s %-14s %-14s %-16s %-10s %-10s %s%s%n", AnsiColor.Blue, "ID", "NAME/CERT", "TYPE", "IP", "OS", "USER", "session-KEY", AnsiColor.Reset);
+        Logger.Custom("  %s%-5s %-14s %-14s %-16s %-10s %-10s %s%s%n", AnsiColor.Blue, "ID", "NAME/CERT", "TYPE", "IP", "OS", "USER", "SESSION-KEY", AnsiColor.Reset);
         System.out.println(Divider());
-        for (Session S : Sessions) System.out.printf("  %s#%-4d %-14s %-14s %-16s %-10s %-10s %s%s%n", AnsiColor.White, S.GetId(), S.GetDisplayName().length() > 14 ? S.GetDisplayName().substring(0, 13) + "-" : S.GetDisplayName(), S.GetSessionType().name(), S.GetAgentIp(), S.GetOs().length() > 10 ? S.GetOs().substring(0, 9) + "-" : S.GetOs(), S.GetUser(), S.GetSessionKey(), AnsiColor.Reset);
+        for (Session S : Sessions) Logger.Custom("  %s#%-4d %-14s %-14s %-16s %-10s %-10s %s%s%n", AnsiColor.White, S.GetId(), S.GetDisplayName().length() > 14 ? S.GetDisplayName().substring(0, 13) + "-" : S.GetDisplayName(), S.GetSessionType().name(), S.GetAgentIp(), S.GetOs().length() > 10 ? S.GetOs().substring(0, 9) + "-" : S.GetOs(), S.GetUser(), S.GetSessionKey(), AnsiColor.Reset);
         System.out.println();
     }
 
@@ -345,23 +345,23 @@ public class CLI {
         System.out.println();
         if (Server == null || !Server.IsRunning()) {
             if (IsTeamServerMode && ServerStartTime != null) {
-                System.out.printf("  %sStatus      %sONLINE (cross-process)%n", AnsiColor.Red, AnsiColor.Green);
-                System.out.printf("  %sMode        %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveMode.name());
-                System.out.printf("  %sAddress     %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Config.GetServerHost(), Config.GetServerPort());
-                System.out.printf("  %sUptime      %s%s (local session)%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(Up));
-                System.out.printf("  %sSessions    %s(N/A - cross-process)%n", AnsiColor.Red, AnsiColor.White);
+                Logger.Custom("  %sStatus      %sONLINE (cross-process)%n", AnsiColor.Red, AnsiColor.Green);
+                Logger.Custom("  %sMode        %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveMode.name());
+                Logger.Custom("  %sAddress     %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Config.GetServerHost(), Config.GetServerPort());
+                Logger.Custom("  %sUptime      %s%s (local session)%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(Up));
+                Logger.Custom("  %sSessions    %s(N/A - cross-process)%n", AnsiColor.Red, AnsiColor.White);
             } else {
-                System.out.printf("  %sStatus    %sOFFLINE%n", AnsiColor.Red, AnsiColor.Red);
+                Logger.Custom("  %sStatus    %sOFFLINE%n", AnsiColor.Red, AnsiColor.Red);
             }
         } else {
-            System.out.printf("  %sStatus      %sONLINE%n", AnsiColor.Red, AnsiColor.Green);
-            System.out.printf("  %sMode        %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveMode.name());
-            System.out.printf("  %sAddress     %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
-            System.out.printf("  %sUptime      %s%s%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(Up));
-            System.out.printf("  %sSessions    %s%d%n", AnsiColor.Red, AnsiColor.White, Server.GetSessions().Count());
+            Logger.Custom("  %sStatus      %sONLINE%n", AnsiColor.Red, AnsiColor.Green);
+            Logger.Custom("  %sMode        %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveMode.name());
+            Logger.Custom("  %sAddress     %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
+            Logger.Custom("  %sUptime      %s%s%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(Up));
+            Logger.Custom("  %sSessions    %s%d%n", AnsiColor.Red, AnsiColor.White, Server.GetSessions().Count());
         }
-        System.out.printf("  %sDB          %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, Database.IsConnected() ? "connected" : "memory", Config.GetDatabaseType());
-        if (IsTeamServerMode && OperatorName != null) System.out.printf("  %sOperator    %s%s [%s]%n", AnsiColor.Red, AnsiColor.White, OperatorName, OperatorRoles);
+        Logger.Custom("  %sDB          %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, Database.IsConnected() ? "connected" : "memory", Config.GetDatabaseType());
+        if (IsTeamServerMode && OperatorName != null) Logger.Custom("  %sOperator    %s%s [%s]%n", AnsiColor.Red, AnsiColor.White, OperatorName, OperatorRoles);
         System.out.println();
     }
 
@@ -369,16 +369,16 @@ public class CLI {
         System.out.println(Box("SESSION STATISTICS"));
         System.out.println();
         if (Server == null) {
-            System.out.printf("  %sServer %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Config.GetServerHost(), Config.GetServerPort());
-            System.out.printf("  %sTotal  %s(N/A - cross-process mode)%n", AnsiColor.Red, AnsiColor.White);
+            Logger.Custom("  %sServer %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Config.GetServerHost(), Config.GetServerPort());
+            Logger.Custom("  %sTotal  %s(N/A - cross-process mode)%n", AnsiColor.Red, AnsiColor.White);
             System.out.println();
             return;
         }
         Map<String, Integer> Stats = Server.GetSessions().GetStats();
-        System.out.printf("  %sServer    %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
-        System.out.printf("  %sTOTAL     %s%d%n", AnsiColor.Red, AnsiColor.White, Stats.get("Total"));
-        System.out.printf("  %sRAVEN     %s%d%n", AnsiColor.Red, AnsiColor.White, Stats.get("RAVEN"));
-        System.out.printf("  %sRAW       %s%d%n", AnsiColor.Red, AnsiColor.White, Stats.get("REVERSE_SHELL"));
+        Logger.Custom("  %sServer    %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
+        Logger.Custom("  %sTOTAL     %s%d%n", AnsiColor.Red, AnsiColor.White, Stats.get("Total"));
+        Logger.Custom("  %sRAVEN     %s%d%n", AnsiColor.Red, AnsiColor.White, Stats.get("RAVEN"));
+        Logger.Custom("  %sRAW       %s%d%n", AnsiColor.Red, AnsiColor.White, Stats.get("REVERSE_SHELL"));
         System.out.println();
     }
 
@@ -398,17 +398,17 @@ public class CLI {
         List<Map<String, Object>> Ops = Database.GetOperators();
         System.out.println(Box("OPERATORS (" + Ops.size() + ")"));
         System.out.println();
-        System.out.printf("  %s%-18s %-14s %-24s %-20s%s%n", AnsiColor.Green, "USERNAME", "ROLE", "PERMISSIONS", "LAST SEEN", AnsiColor.Reset);
+        Logger.Custom("  %s%-18s %-14s %-24s %-20s%s%n", AnsiColor.Green, "USERNAME", "ROLE", "PERMISSIONS", "LAST SEEN", AnsiColor.Reset);
         System.out.println(Divider());
         for (Map<String, Object> Op : Ops) {
             OperatorRole R = OperatorRole.FromString(Op.get("Role").toString());
             boolean IsSelf = Op.get("Username").toString().equals(OperatorName);
             String Mark = IsSelf ? AnsiColor.Green + " < YOU" + AnsiColor.White : "";
-            System.out.printf("  %s%-18s %-14s %-24s %-20s%s%s%n", AnsiColor.White, Op.get("Username"), R.name(), "[" + R.ShortPerm() + "] " + R.PermissionString().replaceAll("^\\[.*?\\]\\s*", ""), Op.getOrDefault("LastSeen", "Never"), Mark, AnsiColor.Reset);
+            Logger.Custom("  %s%-18s %-14s %-24s %-20s%s%s%n", AnsiColor.White, Op.get("Username"), R.name(), "[" + R.ShortPerm() + "] " + R.PermissionString().replaceAll("^\\[.*?\\]\\s*", ""), Op.getOrDefault("LastSeen", "Never"), Mark, AnsiColor.Reset);
         }
         System.out.println();
         Logger.Info(AnsiColor.Red + "Roles:" + AnsiColor.Reset);
-        for (OperatorRole R : OperatorRole.values()) System.out.printf("    %s%-14s%s %s%n", AnsiColor.White, R.name(), AnsiColor.Reset, R.PermissionString());
+        for (OperatorRole R : OperatorRole.values()) Logger.Custom("    %s%-14s%s %s%n", AnsiColor.White, R.name(), AnsiColor.Reset, R.PermissionString());
         System.out.println();
     }
 
@@ -427,7 +427,7 @@ public class CLI {
             String Time = M.getOrDefault("Time", "").toString();
             boolean IsMine = From.equals(MyName);
             String ToLabel = To.equals("all") ? "all" : "> " + To;
-            System.out.printf("  %s[%s] %s%s%s [%s]: %s%s%n", IsMine ? AnsiColor.Green : AnsiColor.White, Time, IsMine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, ToLabel, Msg, AnsiColor.Reset);
+            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", IsMine ? AnsiColor.Green : AnsiColor.White, Time, IsMine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, ToLabel, Msg, AnsiColor.Reset);
         }
         System.out.println();
     }
@@ -445,7 +445,7 @@ public class CLI {
         ChatMessages.add(Entry);
         if (ChatMessages.size() > MaxChat) ChatMessages.remove(0);
         Database.SaveChatLog(OperatorName, To, Message);
-        System.out.printf("Message sent to [%s]%s%n", AnsiColor.Green, To, AnsiColor.Reset);
+        Logger.Custom("Message sent to [%s]%s%n", AnsiColor.Green, To, AnsiColor.Reset);
     }
 
     private void ShowChatHistory() {
@@ -467,7 +467,7 @@ public class CLI {
             if (Time.length() > 8) Time = Time.substring(11, Math.min(19, Time.length()));
             boolean IsMine = From.equals(MyName);
             String ToLabel = "all".equals(To) ? "all" : "> " + To;
-            System.out.printf("  %s[%s] %s%s%s [%s]: %s%s%n", IsMine ? AnsiColor.Green : AnsiColor.White, Time, IsMine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, ToLabel, Msg, AnsiColor.Reset);
+            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", IsMine ? AnsiColor.Green : AnsiColor.White, Time, IsMine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, ToLabel, Msg, AnsiColor.Reset);
         }
         System.out.println();
     }
@@ -497,13 +497,13 @@ public class CLI {
             return;
         }
         String Op = OperatorName != null ? OperatorName : "operator";
-        System.out.printf("Broadcasting to %d session(s): %s%n", Ids.size(), Command);
+        Logger.Custom("Broadcasting to %d session(s): %s%n", Ids.size(), Command);
         Map<Integer, String[]> Results = Server.BroadcastCommand(Ids, Command);
         System.out.println(Box("BROADCAST RESULTS - " + Results.size() + " sessions"));
         System.out.println();
         for (Map.Entry<Integer, String[]> En : Results.entrySet()) {
             boolean Ok = Boolean.parseBoolean(En.getValue()[0]);
-            System.out.printf("  %ssession-%-3d %s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, En.getKey(), Ok ? "" : "", AnsiColor.Reset);
+            Logger.Custom("  %ssession-%-3d %s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, En.getKey(), Ok ? "" : "", AnsiColor.Reset);
             System.out.println(OutputBox(En.getValue()[1]));
             Database.SaveCommandLog(En.getKey(), Op, Command, En.getValue()[1], Ok);
         }
@@ -520,13 +520,13 @@ public class CLI {
             return;
         }
         String Op = OperatorName != null ? OperatorName : "operator";
-        System.out.printf("  broadcasting to all %d session(s): %s%n", Total, Command);
+        Logger.Custom("  broadcasting to all %d session(s): %s%n", Total, Command);
         Map<Integer, String[]> Results = Server.BroadcastAll(Command);
         System.out.println(Box("BROADCAST-ALL RESULTS"));
         System.out.println();
         for (Map.Entry<Integer, String[]> En : Results.entrySet()) {
             boolean Ok = Boolean.parseBoolean(En.getValue()[0]);
-            System.out.printf("  %ssession-%-3d %s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, En.getKey(), Ok ? "" : "", AnsiColor.Reset);
+            Logger.Custom("  %ssession-%-3d %s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, En.getKey(), Ok ? "" : "", AnsiColor.Reset);
             System.out.println(OutputBox(En.getValue()[1]));
             Database.SaveCommandLog(En.getKey(), Op, Command, En.getValue()[1], Ok);
         }
@@ -541,7 +541,7 @@ public class CLI {
         Session S = Opt.get();
         System.out.println(Box("INTERACTIVE SESSION"));
         String AgentInfo = "%n  %s[%s%s%s] %sID: %s%d %sUSER: %s%s@%s %sOS: %s%s %sARCH: %s%s %sIP: %s%s" + " %sTYPE: %s%s %sKEY: %s%s%s%n";
-        System.out.printf(AgentInfo, AnsiColor.Blue, AnsiColor.White, S.GetDisplayName(), AnsiColor.Blue, AnsiColor.Blue, AnsiColor.White, SessionId, AnsiColor.Blue, AnsiColor.White, S.GetUser(), S.GetHostname(), AnsiColor.Blue, AnsiColor.White, S.GetOs(), AnsiColor.Blue, AnsiColor.White, S.GetArch(), AnsiColor.Blue, AnsiColor.White, S.GetAgentIp(), AnsiColor.Blue, AnsiColor.White, S.GetSessionType(), AnsiColor.Blue, AnsiColor.White, S.GetSessionKey(), AnsiColor.Reset);
+        Logger.Custom(AgentInfo, AnsiColor.Blue, AnsiColor.White, S.GetDisplayName(), AnsiColor.Blue, AnsiColor.Blue, AnsiColor.White, SessionId, AnsiColor.Blue, AnsiColor.White, S.GetUser(), S.GetHostname(), AnsiColor.Blue, AnsiColor.White, S.GetOs(), AnsiColor.Blue, AnsiColor.White, S.GetArch(), AnsiColor.Blue, AnsiColor.White, S.GetAgentIp(), AnsiColor.Blue, AnsiColor.White, S.GetSessionType(), AnsiColor.Blue, AnsiColor.White, S.GetSessionKey(), AnsiColor.Reset);
         Logger.Info("type 'back' to return");
         AddLog(AnsiColor.Blue + "entered [" + S.GetDisplayName() + "] session-" + SessionId + AnsiColor.Reset, false);
         BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
@@ -549,7 +549,7 @@ public class CLI {
         while (CurrentSession == SessionId) {
             try {
                 String Prompt = "%n  %s[%s%s#%d%s%s]%s ~$ %s";
-                System.out.printf(Prompt, AnsiColor.Blue, AnsiColor.White, S.GetDisplayName(), SessionId, AnsiColor.Blue, AnsiColor.White, AnsiColor.Blue, AnsiColor.Reset);
+                Logger.Custom(Prompt, AnsiColor.Blue, AnsiColor.White, S.GetDisplayName(), SessionId, AnsiColor.Blue, AnsiColor.White, AnsiColor.Blue, AnsiColor.Reset);
                 String Cmd = Reader.readLine();
                 if (Cmd == null || Cmd.trim().isEmpty()) continue;
                 Cmd = Cmd.trim();
@@ -578,7 +578,7 @@ public class CLI {
         }
         String Name = Opt.get().GetDisplayName();
         Server.RemoveSession(SessionId);
-        System.out.printf("  session-%d [%s] terminated%n", SessionId, Name);
+        Logger.Custom("  session-%d [%s] terminated%n", SessionId, Name);
         AddLog(AnsiColor.Green + "session-" + SessionId + " [" + Name + "] killed" + AnsiColor.Reset, false);
     }
 
@@ -679,7 +679,7 @@ public class CLI {
                     Logger.Info(Cur - LastCnt + " " + "new event(s) - type 'logs' to view");
                     LastCnt = Cur;
                 }
-                System.out.printf(Prompt, AnsiColor.Red, AnsiColor.White, AnsiColor.Red, AnsiColor.Red, AnsiColor.White, AnsiColor.Reset);
+                Logger.Custom(Prompt, AnsiColor.Red, AnsiColor.White, AnsiColor.Red, AnsiColor.Red, AnsiColor.White, AnsiColor.Reset);
                 String Input = Reader.readLine();
                 if (Input == null || Input.trim().isEmpty()) continue;
                 String[] Parts = Input.trim().split("\\s+", 3);
@@ -799,7 +799,7 @@ public class CLI {
                             Logger.Warn("only SUPER can create SUPER accounts");
                             continue;
                         }
-                        if (Database.CreateOperator(Parts[1], TeamDatabase.HashPassword(OpPass), R)) System.out.printf("  Operator created: %s [%s]  %s%n", Parts[1], R, R.PermissionString());
+                        if (Database.CreateOperator(Parts[1], TeamDatabase.HashPassword(OpPass), R)) Logger.Custom("  Operator created: %s [%s]  %s%n", Parts[1], R, R.PermissionString());
                         else Logger.Warn("username already exists");
                     }
                     case "delopt", "deleteoperator" -> {
@@ -815,7 +815,7 @@ public class CLI {
                             Logger.Warn("Cannot delete admin");
                             continue;
                         }
-                        if (Database.DeleteOperator(Parts[1])) System.out.printf("  Deleted: %s%n", Parts[1]);
+                        if (Database.DeleteOperator(Parts[1])) Logger.Custom("  Deleted: %s%n", Parts[1]);
                         else Logger.Warn("operator not found");
                     }
                     case "kick", "kickopt" -> {
@@ -831,7 +831,7 @@ public class CLI {
                             Logger.Warn("Cannot kick admin or yourself");
                             continue;
                         }
-                        if (Database.DeleteOperator(Parts[1])) System.out.printf("  Kicked (removed): %s%n", Parts[1]);
+                        if (Database.DeleteOperator(Parts[1])) Logger.Custom("  Kicked (removed): %s%n", Parts[1]);
                         else Logger.Warn("operator not found");
                     }
                     case "setrole", "changerole" -> {
@@ -852,7 +852,7 @@ public class CLI {
                             Logger.Warn("only SUPER can promote to SUPER");
                             continue;
                         }
-                        if (Database.UpdateOperatorRole(Parts[1], NR)) System.out.printf("  Role updated: %s > %s  %s%n", Parts[1], NR, NR.PermissionString());
+                        if (Database.UpdateOperatorRole(Parts[1], NR)) Logger.Custom("  Role updated: %s > %s  %s%n", Parts[1], NR, NR.PermissionString());
                         else Logger.Warn("operator not found");
                     }
                     case "passwd", "changepassword" -> {
@@ -868,7 +868,7 @@ public class CLI {
                             Logger.Warn("password must be ≥ 8 chars");
                             continue;
                         }
-                        if (Database.UpdateOperatorPassword(Parts[1], TeamDatabase.HashPassword(Parts[2]))) System.out.printf("  Password updated: %s%n", Parts[1]);
+                        if (Database.UpdateOperatorPassword(Parts[1], TeamDatabase.HashPassword(Parts[2]))) Logger.Custom("  Password updated: %s%n", Parts[1]);
                         else Logger.Warn("operator not found");
                     }
                     case "listopt", "listoperators" -> ShowOperators();
@@ -933,7 +933,7 @@ public class CLI {
                         try {
                             int Sid = Integer.parseInt(Parts[1]);
                             String N = Database.GetAgentNote(Sid);
-                            System.out.printf("  Note [session-%d]: %s%s%s%n", Sid, AnsiColor.White, N.isEmpty() ? "(empty)" : N, AnsiColor.Reset);
+                            Logger.Custom("  Note [session-%d]: %s%s%s%n", Sid, AnsiColor.White, N.isEmpty() ? "(empty)" : N, AnsiColor.Reset);
                         } catch (NumberFormatException E) {
                             Logger.Warn("invalid session ID");
                         }
@@ -1012,8 +1012,8 @@ public class CLI {
                             String PivotNote = "[PIVOT] " + Target;
                             Database.SetAgentNote(Sid, PivotNote);
                             Database.SaveCommandLog(Sid, OperatorName != null ? OperatorName : "cli", "pivot " + Target, "Pivot route set: " + Target, true);
-                            System.out.printf("  %sPivot route registered: session-%d > %s%s%n", AnsiColor.Green, Sid, Target, AnsiColor.Reset);
-                            System.out.printf("  %s  ℹ  Use your agent to initiate connection to %s:%d%s%n", AnsiColor.White, PivotHost, PivotPort, AnsiColor.Reset);
+                            Logger.Custom("  %sPivot route registered: session-%d > %s%s%n", AnsiColor.Green, Sid, Target, AnsiColor.Reset);
+                            Logger.Custom("  %s  ℹ  Use your agent to initiate connection to %s:%d%s%n", AnsiColor.White, PivotHost, PivotPort, AnsiColor.Reset);
                         } catch (NumberFormatException E) {
                             Logger.Warn("invalid session ID");
                         }
@@ -1079,21 +1079,21 @@ public class CLI {
         Session S = Opt.get();
         System.out.println(Box("SESSION INFO - #" + SessionId));
         System.out.println();
-        System.out.printf("  %sID         %s%d%n", AnsiColor.Red, AnsiColor.White, S.GetId());
-        System.out.printf("  %sName       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetDisplayName());
-        System.out.printf("  %sType       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetSessionType().name());
-        System.out.printf("  %sHostname   %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetHostname());
-        System.out.printf("  %sUser       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetUser());
-        System.out.printf("  %sOS         %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetOs());
-        System.out.printf("  %sArch       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetArch());
-        System.out.printf("  %sAgent IP   %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetAgentIp());
-        System.out.printf("  %sKey        %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetSessionKey());
-        System.out.printf("  %sEncrypted  %s%b%n", AnsiColor.Red, AnsiColor.White, S.IsEncrypted());
-        System.out.printf("  %smTLS       %s%b%n", AnsiColor.Red, AnsiColor.White, S.IsMtlsEnabled());
-        System.out.printf("  %sCert CN    %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetCertCn());
-        System.out.printf("  %sShell Mode %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetShellMode());
+        Logger.Custom("  %sID         %s%d%n", AnsiColor.Red, AnsiColor.White, S.GetId());
+        Logger.Custom("  %sName       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetDisplayName());
+        Logger.Custom("  %sType       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetSessionType().name());
+        Logger.Custom("  %sHostname   %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetHostname());
+        Logger.Custom("  %sUser       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetUser());
+        Logger.Custom("  %sOS         %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetOs());
+        Logger.Custom("  %sArch       %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetArch());
+        Logger.Custom("  %sAgent IP   %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetAgentIp());
+        Logger.Custom("  %sKey        %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetSessionKey());
+        Logger.Custom("  %sEncrypted  %s%b%n", AnsiColor.Red, AnsiColor.White, S.IsEncrypted());
+        Logger.Custom("  %smTLS       %s%b%n", AnsiColor.Red, AnsiColor.White, S.IsMtlsEnabled());
+        Logger.Custom("  %sCert CN    %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetCertCn());
+        Logger.Custom("  %sShell Mode %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetShellMode());
         String Note = Database.GetAgentNote(SessionId);
-        System.out.printf("  %sNote       %s%s%n", AnsiColor.Red, AnsiColor.White, Note.isEmpty() ? "(none)" : Note);
+        Logger.Custom("  %sNote       %s%s%n", AnsiColor.Red, AnsiColor.White, Note.isEmpty() ? "(none)" : Note);
         System.out.println();
     }
 
@@ -1106,13 +1106,13 @@ public class CLI {
             Logger.Info("No command history\n");
             return;
         }
-        System.out.printf("  %s%-5s %-12s %-14s %-36s %s%s%n", AnsiColor.Red, "SID", "OPERATOR", "STATUS", "COMMAND", "TIMESTAMP", AnsiColor.Reset);
+        Logger.Custom("  %s%-5s %-12s %-14s %-36s %s%s%n", AnsiColor.Red, "SID", "OPERATOR", "STATUS", "COMMAND", "TIMESTAMP", AnsiColor.Reset);
         System.out.println(Divider());
         for (Map<String, Object> R : Hist) {
             boolean Ok = Boolean.parseBoolean(R.getOrDefault("Success", "false").toString());
             String Cmd = R.getOrDefault("Command", "").toString();
             if (Cmd.length() > 36) Cmd = Cmd.substring(0, 35) + "…";
-            System.out.printf("  %s%-5s %-12s %s%-14s%s %-36s %s%s%n", AnsiColor.White, R.getOrDefault("AgentId", "?"), R.getOrDefault("Operator", "?"), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "ok" : "fail", AnsiColor.White, Cmd, R.getOrDefault("Timestamp", ""), AnsiColor.Reset);
+            Logger.Custom("  %s%-5s %-12s %s%-14s%s %-36s %s%s%n", AnsiColor.White, R.getOrDefault("AgentId", "?"), R.getOrDefault("Operator", "?"), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "ok" : "fail", AnsiColor.White, Cmd, R.getOrDefault("Timestamp", ""), AnsiColor.Reset);
         }
         System.out.println();
     }
@@ -1121,14 +1121,14 @@ public class CLI {
         System.out.println(Box("PENDING TASKS"));
         System.out.println();
         int Total = Server != null ? Server.GetSessions().Count() : 0;
-        System.out.printf("  %sActive sessions: %s%d%s%n", AnsiColor.Red, AnsiColor.White, Total, AnsiColor.Reset);
+        Logger.Custom("  %sActive sessions: %s%d%s%n", AnsiColor.Red, AnsiColor.White, Total, AnsiColor.Reset);
         Logger.Info("Use 'broadcast' or 'exec' to queue commands to sessions");
         System.out.println();
     }
 
     private void StartWebPanel(String Host, int Port) {
         if (WebPanel != null) {
-            System.out.printf("  %sWeb panel already running%s%n", AnsiColor.Red, AnsiColor.Reset);
+            Logger.Custom("  %sWeb panel already running%s%n", AnsiColor.Red, AnsiColor.Reset);
             return;
         }
         try {
@@ -1137,22 +1137,22 @@ public class CLI {
                 WebPanel.AttachServer(Server, ServerStartTime);
             }
             WebPanel.Run(Host, Port);
-            System.out.printf("  %sWeb panel started > http://%s:%d/%s%n", AnsiColor.Green, Host, Port, AnsiColor.Reset);
+            Logger.Custom("  %sWeb panel started > http://%s:%d/%s%n", AnsiColor.Green, Host, Port, AnsiColor.Reset);
         } catch (Exception E) {
             Logger.Error("Web panel start failed: " + E.getMessage());
-            System.out.printf("  %sWeb panel failed: %s%s%n", AnsiColor.Red, E.getMessage(), AnsiColor.Reset);
+            Logger.Custom("  %sWeb panel failed: %s%s%n", AnsiColor.Red, E.getMessage(), AnsiColor.Reset);
             WebPanel = null;
         }
     }
 
     private void StopWebPanel() {
         if (WebPanel == null) {
-            System.out.printf("  %sWeb panel not running%s%n", AnsiColor.Red, AnsiColor.Reset);
+            Logger.Custom("  %sWeb panel not running%s%n", AnsiColor.Red, AnsiColor.Reset);
             return;
         }
         WebPanel.Stop();
         WebPanel = null;
-        System.out.printf("  %sWeb panel stopped%s%n", AnsiColor.Green, AnsiColor.Reset);
+        Logger.Custom("  %sWeb panel stopped%s%n", AnsiColor.Green, AnsiColor.Reset);
     }
 
     private void ShowWebStatus() {
@@ -1187,7 +1187,7 @@ public class CLI {
         this.IsTeamServerMode = true;
         BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
         if (!TeamLogin(Reader)) return;
-        System.out.printf("  %n%sStarting listener on %s:%d%s%n%n", AnsiColor.Green, Host, Port, AnsiColor.Reset);
+        Logger.Custom("  %n%sStarting listener on %s:%d%s%n%n", AnsiColor.Green, Host, Port, AnsiColor.Reset);
         if (!StartServer(Host, Port, Mode)) return;
         try {
             Thread.sleep(300);
