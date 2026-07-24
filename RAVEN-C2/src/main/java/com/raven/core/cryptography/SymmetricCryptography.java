@@ -8,7 +8,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class SymmetricCrypto {
+public class SymmetricCryptography {
 
     private static final String Algorithm = "AES";
     private static final String Transformation = "AES/GCM/NoPadding";
@@ -19,7 +19,7 @@ public class SymmetricCrypto {
     private SecretKey Key;
     private byte[] RawKey;
 
-    public SymmetricCrypto() {}
+    public SymmetricCryptography() {}
 
     public byte[] GenerateKey() throws Exception {
         KeyGenerator Kg = KeyGenerator.getInstance(Algorithm);

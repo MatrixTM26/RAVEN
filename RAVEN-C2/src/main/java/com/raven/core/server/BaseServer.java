@@ -1,18 +1,31 @@
 package com.raven.core.server;
 
 import com.google.gson.Gson;
-import com.raven.core.cryptography.SymmetricCrypto;
+import com.raven.core.cryptography.SymmetricCryptography;
 import com.raven.core.event.EventManager;
 import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
 import com.raven.core.session.Session;
 import com.raven.core.session.SessionManager;
 import com.raven.utils.ServerConfig;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PushbackInputStream;
 import java.net.Socket;
-import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public abstract class BaseServer {
 
@@ -32,7 +45,7 @@ public abstract class BaseServer {
     protected final SessionManager Sessions;
     protected final EventManager Events;
     protected volatile boolean Running;
-    protected final ConcurrentHashMap<Integer, SymmetricCrypto> SessionCryptos = new ConcurrentHashMap<>();
+    protected final ConcurrentHashMap<Integer, SymmetricCryptography> SessionCryptos = new ConcurrentHashMap<>();
     protected final ConcurrentHashMap<Integer, Object> CommandLocks = new ConcurrentHashMap<>();
     protected final ConcurrentHashMap<Integer, Object> SocketLocks = new ConcurrentHashMap<>();
 
@@ -45,8 +58,8 @@ public abstract class BaseServer {
         this.Events = new EventManager();
     }
 
-    protected SymmetricCrypto NewSessionCrypto() throws Exception {
-        SymmetricCrypto C = new SymmetricCrypto();
+    protected SymmetricCryptography NewSessionCrypto() throws Exception {
+        SymmetricCryptography C = new SymmetricCryptography();
         C.GenerateKey();
         return C;
     }
@@ -114,7 +127,7 @@ public abstract class BaseServer {
         return new DetectionResult(Type, PbIn, P);
     }
 
-    protected Map<String, Object> RavenHandshake(InputStream In, OutputStream Out, int TimeoutMs, SymmetricCrypto Crypto) throws Exception {
+    protected Map<String, Object> RavenHandshake(InputStream In, OutputStream Out, int TimeoutMs, SymmetricCryptography Crypto) throws Exception {
         ByteArrayOutputStream Buf = new ByteArrayOutputStream();
         long Dead = System.currentTimeMillis() + TimeoutMs;
         int Depth = 0;
@@ -213,7 +226,7 @@ public abstract class BaseServer {
                     if (!IsRaw) {
                         Object SockLock = SocketLocks.get(SessionId);
                         if (SockLock == null) break;
-                        SymmetricCrypto Crypto = SessionCryptos.get(SessionId);
+                        SymmetricCryptography Crypto = SessionCryptos.get(SessionId);
                         if (Crypto == null) break;
                         synchronized (SockLock) {
                             try {
@@ -272,7 +285,7 @@ public abstract class BaseServer {
                     if (Resp == null || Resp.length == 0) return Fail("  No response");
                     return new String[] { "true", StripAnsi(new String(Resp, "UTF-8")) };
                 } else {
-                    SymmetricCrypto Crypto = SessionCryptos.get(SessionId);
+                    SymmetricCryptography Crypto = SessionCryptos.get(SessionId);
                     if (Crypto == null) return Fail("Session crypto missing");
                     Object SLck = SocketLocks.get(SessionId);
                     if (SLck == null) return Fail("Socket lock missing");
@@ -294,7 +307,7 @@ public abstract class BaseServer {
         }
     }
 
-    private byte[] BuildFrame(SymmetricCrypto Crypto, byte[] Plaintext) throws Exception {
+    private byte[] BuildFrame(SymmetricCryptography Crypto, byte[] Plaintext) throws Exception {
         byte[] Encrypted = Crypto.Encrypt(Plaintext);
         byte[] Frame = new byte[Encrypted.length + EndMarker.length];
         System.arraycopy(Encrypted, 0, Frame, 0, EndMarker.length > 0 ? Encrypted.length : 0);
@@ -303,7 +316,7 @@ public abstract class BaseServer {
         return Frame;
     }
 
-    protected byte[] ReadFramedResponse(Socket Sock, int TimeoutMs, SymmetricCrypto Crypto) throws IOException {
+    protected byte[] ReadFramedResponse(Socket Sock, int TimeoutMs, SymmetricCryptography Crypto) throws IOException {
         Sock.setSoTimeout(TimeoutMs);
         ByteArrayOutputStream Buf = new ByteArrayOutputStream();
         byte[] Tmp = new byte[Config.GetBufferSize()];
@@ -418,7 +431,7 @@ public abstract class BaseServer {
 
     private String[] HandleUpload(Session S, String Command) {
         if (S.IsRawMode()) return Fail("Upload unsupported in raw mode");
-        SymmetricCrypto Crypto = SessionCryptos.get(S.GetId());
+        SymmetricCryptography Crypto = SessionCryptos.get(S.GetId());
         if (Crypto == null) return Fail("Session crypto missing");
         String[] Parts = Command.split("\\s+", 3);
         if (Parts.length < 2) return Fail("Usage: upload <local> [remote]");
@@ -456,7 +469,7 @@ public abstract class BaseServer {
     }
 
     private String[] SendThenDownload(Session S, String Command) {
-        SymmetricCrypto Crypto = SessionCryptos.get(S.GetId());
+        SymmetricCryptography Crypto = SessionCryptos.get(S.GetId());
         if (Crypto == null) return Fail("Session crypto missing");
         Object SLck = SocketLocks.get(S.GetId());
         if (SLck == null) return Fail("Socket lock missing");
@@ -472,7 +485,7 @@ public abstract class BaseServer {
         }
     }
 
-    private String[] HandleDownload(Session S, SymmetricCrypto Crypto) {
+    private String[] HandleDownload(Session S, SymmetricCryptography Crypto) {
         try {
             ByteArrayOutputStream Buf = new ByteArrayOutputStream();
             byte[] Tmp = new byte[Config.GetBufferSize()];
@@ -562,7 +575,7 @@ public abstract class BaseServer {
         return SessionCryptos.values().iterator().next().GetKeyAsBase64Url();
     }
 
-    public SymmetricCrypto GetSessionCrypto(int SessionId) {
+    public SymmetricCryptography GetSessionCrypto(int SessionId) {
         return SessionCryptos.get(SessionId);
     }
 
