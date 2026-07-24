@@ -1,7 +1,7 @@
 package com.raven.core.server;
 
 import com.raven.core.cryptography.CertificateManager;
-import com.raven.core.cryptography.SymmetricCrypto;
+import com.raven.core.cryptography.SymmetricCryptography;
 import com.raven.core.event.EventManager;
 import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
@@ -224,7 +224,7 @@ public final class RavenServer extends BaseServer {
             return -1;
         }
 
-        SymmetricCrypto Crypto = NewSessionCrypto();
+        SymmetricCryptography Crypto = NewSessionCrypto();
 
         Map<String, Object> Info = RavenHandshake(Det.Stream, Client.getOutputStream(), Config.GetConnectionTimeout(), Crypto);
 
@@ -322,7 +322,7 @@ public final class RavenServer extends BaseServer {
             }
         }
 
-        SymmetricCrypto Crypto = NewSessionCrypto();
+        SymmetricCryptography Crypto = NewSessionCrypto();
         String Token = GenerateToken();
         Session S = BuildSession(Client, Client.getRemoteSocketAddress().toString(), Info, false);
         S.SetSessionType(Session.Type.RAVEN);
@@ -349,7 +349,7 @@ public final class RavenServer extends BaseServer {
             HttpReply(Out, 403, "Forbidden", "Invalid token".getBytes());
             return;
         }
-        SymmetricCrypto Crypto = SessionCryptos.get(Id);
+        SymmetricCryptography Crypto = SessionCryptos.get(Id);
         if (Crypto == null) {
             HttpReply(Out, 500, "Error", "Crypto missing".getBytes());
             return;
@@ -366,7 +366,7 @@ public final class RavenServer extends BaseServer {
             return;
         }
         if (Body.length > 0) {
-            SymmetricCrypto Crypto = SessionCryptos.get(Id);
+            SymmetricCryptography Crypto = SessionCryptos.get(Id);
             if (Crypto != null) {
                 byte[] Dec = Base64.getDecoder().decode(Body);
                 PendingOutputs.put(Id, Crypto.DecryptString(Dec));
