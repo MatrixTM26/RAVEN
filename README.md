@@ -14,12 +14,9 @@
 # RAVEN
 
 ![AGPL](https://img.shields.io/badge/AGPL-v3-000000?style=for-the-badge&logo=gnu&logoColor=ffffff&labelColor=000000&color=03001a)
-![OpenJDK](https://img.shields.io/badge/OpenJDK-17+-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=03001a)
-![Red Teaming](https://img.shields.io/badge/RED%20TEAMING-000000?style=for-the-badge&logo=keepassxc&logoColor=ff0000&labelColor=000000&color=03001a)
-![Cyber Security](https://img.shields.io/badge/CYBER%20SECURITY-000000?style=for-the-badge&logo=socket&logoColor=009ceb&labelColor=000000&color=03001a)
-![Cryptography](https://img.shields.io/badge/CRYPTOGRAPHY-000000?style=for-the-badge&logo=letsencrypt&logoColor=0eff39&labelColor=000000&color=03001a)
-![Maven](https://img.shields.io/badge/Maven-000000?style=for-the-badge&logo=apachemaven&logoColor=ee6a2a&labelColor=000000&color=03001a)
-![Networking](https://img.shields.io/badge/Networking-000000?style=for-the-badge&logo=cloudflare&logoColor=26ff7d&labelColor=000000&color=03001a)
+![OpenJDK](https://img.shields.io/badge/OpenJDK-21.0.1-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=03001a)
+![Maven](https://img.shields.io/badge/Maven-3.6.0-000000?style=for-the-badge&logo=apachemaven&logoColor=ee6a2a&labelColor=000000&color=03001a)
+![Red Teaming](https://img.shields.io/badge/RED-TEAMING-000000?style=for-the-badge&logo=keepassxc&logoColor=ff0000&labelColor=000000&color=03001a)
 
 > **_Author:_** _MatrixTM26_ **_GitHub:_** _[MatrixTM26](https://github.com/MatrixTM26)_
 
@@ -164,7 +161,7 @@ java -jar target/raven-3.0.0.jar -G
 ### Initialize CA and Server Certificate
 
 ```bash
-java -jar target/raven-3.0.0.jar --init-certs
+java -jar target/raven-3.0.0.jar -I
 ```
 
 ### Generate Agent Certificates
@@ -262,8 +259,8 @@ java -jar target/raven-3.0.0.jar -F -TSW -tp 5001         # fmTLS + TeamServer W
 | `broadcast <id,id,...> [command]` | Broadcast to specific sessions      | all         |
 | `exit`                            | Exit and shutdown server            | all         |
 | `listopt`                         | List all operators                  | all         |
-| `addop <user> <pass> <ROLE>`      | Add new operator                    | ADMIN+      |
-| `delop <user>`                    | Delete operator permanently         | ADMIN+      |
+| `addopt <user> <pass> <ROLE>`      | Add new operator                    | ADMIN+      |
+| `delopt <user>`                    | Delete operator permanently         | ADMIN+      |
 | `kick <user>`                     | Kick operator                       | SUPER ADMIN |
 | `setrole <user> <ROLE>`           | Change operator role/permission     | SUPER ADMIN |
 | `passwd <user> <new pass>`        | Change operator password            | ADMIN+      |
@@ -380,14 +377,5 @@ java -jar target/raven-3.0.0.jar -OP
 
 - **Author:** [MatrixTM26](https://github.com/MatrixTM26)
 - **License:** [AGPL-V3](./LICENSE)
-
-<!---
-## <img src="https://cdn.simpleicons.org/githubsponsors/ff0000" width="18"> Support Me
-
-[![Ko-fi](https://img.shields.io/badge/KO--FI-000000?style=for-the-badge&logo=kofi&logoColor=fff707)](https://ko-fi.com/MatrixTM26)
-[![Trakteer](https://img.shields.io/badge/TRAKTEER-000000?style=for-the-badge&logo=buymeacoffee&logoColor=ff6a6a)](https://trakteer.id/MatrixTM26)
-[![PayPal](https://img.shields.io/badge/PAYPAL-000000?style=for-the-badge&logo=paypal&logoColor=0000ff)](https://paypal.me/TeukuMaulana)
-
---->
 
 <p align="center">Copyright &copy;2023-2026 MatrixTM26 &middot; All Rights Reserved</p>
