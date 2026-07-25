@@ -24,15 +24,12 @@
 
 ## <img src="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/circle-info.svg" width="18"> Overview
 
-> [!CAUTION]
 > This tool is currently under development, in some release versions, you may encounter functional errors or logic flaws.
 
 <details>
 <summary>LEGAL DISCLAIMER</summary>
 
-
-> [!CAUTION] 
-> **RAVEN Framework is a offensive security tool designed exclusively for:**
+> **RAVEN C2 Framework is a offensive security tool designed exclusively for:**
 >
 > - Authorized penetration testing and red team engagements
 > - Controlled lab and research environments
