@@ -1,10 +1,13 @@
 package com.raven.interfaces.GUI.module.core.server;
 
 import com.raven.core.event.EventManager;
+import com.raven.core.event.EventManager.EventType;
 import com.raven.core.server.ListenerMode;
 import com.raven.core.server.RavenServer;
+import com.raven.interfaces.GUI.module.UI.color.Palette;
 import com.raven.utils.ServerConfig;
 import java.time.Instant;
+import java.util.Map;
 import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
@@ -26,6 +29,8 @@ public class ServerController {
     private final EventManager.EventListener eventHandler;
     private final Runnable onStart;
     private final Runnable onStop;
+
+    private static final String I_CIRCLE = "\uEF4A";
 
     public ServerController(ServerConfig config, Label statusDot, Label serverStatusLabel, Label serverInfoLabel, Button startBtn, Button stopBtn, Consumer<String> log, EventManager.EventListener eventHandler, Runnable onStart, Runnable onStop) {
         this.config = config;
@@ -52,15 +57,23 @@ public class ServerController {
         Thread t = new Thread(server::AcceptConnections, "AcceptConnections");
         t.setDaemon(true);
         t.start();
+
         Platform.runLater(() -> {
-            serverStatusLabel.setText("Online");
-            serverStatusLabel.setTextFill(Color.web("#4caf50"));
-            serverInfoLabel.setText(host + ":" + port + "  |  " + config.GetServerMode().toUpperCase());
-            statusDot.setText("Online");
-            statusDot.setTextFill(Color.web("#4caf50"));
-            startBtn.setDisable(true);
-            stopBtn.setDisable(false);
+            if (serverStatusLabel != null) {
+                serverStatusLabel.setText("Online");
+                serverStatusLabel.setTextFill(Color.web(Palette.GREEN));
+            }
+            if (serverInfoLabel != null) {
+                serverInfoLabel.setText(host + ":" + port + "  |  " + config.GetServerMode().toUpperCase());
+            }
+            if (statusDot != null) {
+                statusDot.setText(I_CIRCLE + "  Online");
+                statusDot.setStyle("-fx-text-fill:" + Palette.GREEN + "; -fx-font-size:11px;" + " -fx-font-family:'Material Icons','Segoe UI';");
+            }
+            if (startBtn != null) startBtn.setDisable(true);
+            if (stopBtn != null) stopBtn.setDisable(false);
         });
+
         log.accept("[+] Server started — " + host + ":" + port);
         log.accept("[+] Session key: " + server.GetKeyBase64());
         if (onStart != null) onStart.run();
@@ -70,15 +83,21 @@ public class ServerController {
         if (server == null) return;
         server.StopServer();
         startTime = null;
+
         Platform.runLater(() -> {
-            serverStatusLabel.setText("Offline");
-            serverStatusLabel.setTextFill(Color.web("#f44336"));
-            serverInfoLabel.setText("Not running");
-            statusDot.setText("Offline");
-            statusDot.setTextFill(Color.web("#f44336"));
-            startBtn.setDisable(false);
-            stopBtn.setDisable(true);
+            if (serverStatusLabel != null) {
+                serverStatusLabel.setText("Offline");
+                serverStatusLabel.setTextFill(Color.web(Palette.DANGER));
+            }
+            if (serverInfoLabel != null) serverInfoLabel.setText("Not running");
+            if (statusDot != null) {
+                statusDot.setText(I_CIRCLE + "  Offline");
+                statusDot.setStyle("-fx-text-fill:" + Palette.DANGER + "; -fx-font-size:11px;" + " -fx-font-family:'Material Icons','Segoe UI';");
+            }
+            if (startBtn != null) startBtn.setDisable(false);
+            if (stopBtn != null) stopBtn.setDisable(true);
         });
+
         log.accept("[!] Server stopped");
         if (onStop != null) onStop.run();
     }

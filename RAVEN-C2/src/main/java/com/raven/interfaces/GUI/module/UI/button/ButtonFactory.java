@@ -19,23 +19,23 @@ public final class ButtonFactory {
 
     private static String baseStyle(Variant v) {
         return switch (v) {
-            case ACCENT -> fill(Palette.ACCENT, Palette.TEXT_HEAD, Palette.ACCENT);
-            case SUCCESS -> fill(Palette.SUCCESS, Palette.TEXT_HEAD, Palette.SUCCESS);
-            case DANGER -> fill(Palette.DANGER, Palette.TEXT_HEAD, Palette.DANGER);
-            case OUTLINED -> outlined(Palette.BORDER_ALT, Palette.TEXT);
-            case FLAT -> flat(Palette.TEXT);
-            default -> fill(Palette.SURFACE2, Palette.TEXT, Palette.BORDER);
+            case ACCENT   -> fill(Palette.ACCENT,   Palette.TEXT_HEAD, Palette.ACCENT);
+            case SUCCESS  -> fill(Palette.SUCCESS,  Palette.TEXT_HEAD, Palette.SUCCESS);
+            case DANGER   -> fill(Palette.DANGER,   Palette.TEXT_HEAD, Palette.DANGER);
+            case OUTLINED -> outlined(Palette.BORDER, Palette.TEXT);
+            case FLAT     -> flat(Palette.TEXT);
+            default       -> fill(Palette.SURFACE2, Palette.TEXT,      Palette.BORDER);
         };
     }
 
     private static String hoverStyle(Variant v) {
         return switch (v) {
-            case ACCENT -> fill(Palette.ACCENT_HOV, Palette.TEXT_HEAD, Palette.ACCENT_HOV);
-            case SUCCESS -> fill("#388e3c", Palette.TEXT_HEAD, "#388e3c");
-            case DANGER -> fill(Palette.DANGER_HOV, Palette.TEXT_HEAD, Palette.DANGER_HOV);
-            case OUTLINED -> outlined(Palette.ACCENT, Palette.ACCENT);
-            case FLAT -> flat(Palette.ACCENT);
-            default -> fill(Palette.BORDER, Palette.TEXT_HEAD, Palette.BORDER_ALT);
+            case ACCENT   -> fill(Palette.ACCENT_DIM,  Palette.TEXT_HEAD, Palette.ACCENT_DIM);
+            case SUCCESS  -> fill("#81c784",            Palette.TEXT_HEAD, "#81c784");
+            case DANGER   -> fill(Palette.DANGER_DEEP, Palette.TEXT_HEAD, Palette.DANGER_DEEP);
+            case OUTLINED -> outlined(Palette.ACCENT,  Palette.ACCENT);
+            case FLAT     -> flat(Palette.ACCENT);
+            default       -> fill(Palette.SURFACE,     Palette.TEXT_HEAD, Palette.BORDER);
         };
     }
 
@@ -48,7 +48,6 @@ public final class ButtonFactory {
                "-fx-border-radius:0;" +
                "-fx-font-family:'Segoe UI';" +
                "-fx-font-size:11px;" +
-               "-fx-font-weight:normal;" +
                "-fx-padding:5 14 5 14;" +
                "-fx-cursor:hand;";
     }

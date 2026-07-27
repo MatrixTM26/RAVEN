@@ -73,11 +73,20 @@ function InstallMavenWindows {
     }
 }
 
+function GetCommandVersion {
+    param([string]$Command)
+    $PreviousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $Output = & $Command 2>&1 | ForEach-Object { "$_" } | Select-Object -First 1
+    $ErrorActionPreference = $PreviousPreference
+    return $Output
+}
+
 function CheckAndInstallJava {
     PrintInfo "Checking OpenJDK Java installation"
     $JavaCmd = Get-Command java -ErrorAction SilentlyContinue
     if ($JavaCmd) {
-        $JavaVersion = & java -version 2>&1 | Select-Object -First 1
+        $JavaVersion = GetCommandVersion -Command "java" 
         PrintWarn "Java already installed: $JavaVersion"
     } else {
         PrintWarn "Java not found, detecting package manager..."
@@ -92,7 +101,7 @@ function CheckAndInstallMaven {
     PrintInfo "Checking Maven installation"
     $MvnCmd = Get-Command mvn -ErrorAction SilentlyContinue
     if ($MvnCmd) {
-        $MvnVersion = & mvn -version 2>&1 | Select-Object -First 1
+        $MvnVersion = GetCommandVersion -Command "mvn"
         PrintWarn "Maven already installed: $MvnVersion"
     } else {
         PrintWarn "Maven not found, detecting package manager..."
