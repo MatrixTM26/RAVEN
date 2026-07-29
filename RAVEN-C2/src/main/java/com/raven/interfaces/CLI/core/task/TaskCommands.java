@@ -1,8 +1,8 @@
-package com.raven.interfaces.CLI.module.task;
+package com.raven.interfaces.CLI.core.task;
 
 import com.raven.core.database.TeamDatabase;
 import com.raven.core.output.Logger;
-import com.raven.interfaces.CLI.module.session.SessionCommands;
+import com.raven.interfaces.CLI.core.session.SessionCommands;
 import com.raven.interfaces.CLI.module.terminal.TerminalRenderer;
 import com.raven.utils.AnsiColor;
 import java.util.List;
@@ -33,17 +33,17 @@ public final class TaskCommands {
             : "COMMAND HISTORY - session-" + SessionId + " (last " + Limit + ")";
         System.out.println(Renderer.Box(Title));
         System.out.println();
-        if (History.isEmpty()) { Logger.Info("No command history\n"); return; }
+        if (History.isEmpty()) { Logger.Info("no command history\n"); return; }
 
-        Logger.Custom("  %s%-5s %-12s %-14s %-36s %s%s%n",
+        Logger.Custom("  %s%-5s %-12s %-8s %-36s %s%s%n",
             AnsiColor.Red, "SID", "OPERATOR", "STATUS", "COMMAND", "TIMESTAMP", AnsiColor.Reset);
         System.out.println(Renderer.Divider());
 
         for (Map<String, Object> Record : History) {
             boolean Success = Boolean.parseBoolean(Record.getOrDefault("Success", "false").toString());
             String  Command = Record.getOrDefault("Command", "").toString();
-            if (Command.length() > 36) Command = Command.substring(0, 35) + "…";
-            Logger.Custom("  %s%-5s %-12s %s%-14s%s %-36s %s%s%n",
+            if (Command.length() > 36) Command = Command.substring(0, 35) + "-";
+            Logger.Custom("  %s%-5s %-12s %s%-8s%s %-36s %s%s%n",
                 AnsiColor.White,
                 Record.getOrDefault("AgentId", "?"),
                 Record.getOrDefault("Operator", "?"),
@@ -98,8 +98,7 @@ public final class TaskCommands {
             Logger.Warn("invalid port");
             return;
         }
-        String PivotNote = "[PIVOT] " + Target;
-        Database.SetAgentNote(SessionId, PivotNote);
+        Database.SetAgentNote(SessionId, "[PIVOT] " + Target);
         Database.SaveCommandLog(SessionId,
             OperatorName != null ? OperatorName : "cli",
             "pivot " + Target, "Pivot route set: " + Target, true);

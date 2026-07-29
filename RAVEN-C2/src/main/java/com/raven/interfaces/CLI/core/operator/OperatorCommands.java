@@ -1,4 +1,4 @@
-package com.raven.interfaces.CLI.module.operator;
+package com.raven.interfaces.CLI.core.operator;
 
 import com.raven.core.database.TeamDatabase;
 import com.raven.core.database.TeamDatabase.OperatorRole;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 public final class OperatorCommands {
 
-    private final TeamDatabase    Database;
+    private final TeamDatabase     Database;
     private final TerminalRenderer Renderer;
 
     private String       OperatorName;
@@ -33,17 +33,9 @@ public final class OperatorCommands {
         this.IsTeamServerMode = IsTeamServerMode;
     }
 
-    public boolean CanManage() {
-        return !IsTeamServerMode || (OperatorRoleValue != null && OperatorRoleValue.CanManage());
-    }
-
-    public boolean CanKick() {
-        return !IsTeamServerMode || (OperatorRoleValue != null && OperatorRoleValue.CanKickOperator());
-    }
-
-    public boolean CanExecute() {
-        return !IsTeamServerMode || (OperatorRoleValue != null && OperatorRoleValue.CanExecute());
-    }
+    public boolean CanManage()  { return !IsTeamServerMode || (OperatorRoleValue != null && OperatorRoleValue.CanManage()); }
+    public boolean CanKick()    { return !IsTeamServerMode || (OperatorRoleValue != null && OperatorRoleValue.CanKickOperator()); }
+    public boolean CanExecute() { return !IsTeamServerMode || (OperatorRoleValue != null && OperatorRoleValue.CanExecute()); }
 
     public boolean Login(BufferedReader Reader) throws IOException {
         System.out.println(Renderer.Box("TEAMSERVER LOGIN"));
@@ -60,8 +52,8 @@ public final class OperatorCommands {
 
             Logger.Custom("  %sPassword:%s ", AnsiColor.Red, AnsiColor.Reset);
             System.out.flush();
-            String Password;
-            Console SystemConsole = System.console();
+            String   Password;
+            Console  SystemConsole = System.console();
             if (SystemConsole != null) {
                 char[] PasswordChars = SystemConsole.readPassword();
                 Password = PasswordChars != null ? new String(PasswordChars) : "";
@@ -71,8 +63,7 @@ public final class OperatorCommands {
             if (Password == null) return false;
 
             if (!Database.ValidateOperator(Username, TeamDatabase.HashPassword(Password))) {
-                Logger.Custom("  %sInvalid credentials - Attempt %d/3%s%n%n",
-                    AnsiColor.Red, Attempt, AnsiColor.Reset);
+                Logger.Custom("  %sInvalid credentials - Attempt %d/3%s%n%n", AnsiColor.Red, Attempt, AnsiColor.Reset);
                 continue;
             }
 
@@ -95,7 +86,7 @@ public final class OperatorCommands {
         CLIBanner.Print();
         if (IsTeamServerMode && OperatorName != null) {
             System.out.println();
-            Logger.Custom("  %s[TEAMSERVER MODE]%s  OPERATOR: %s%s%s  Role: %s%s%s%n",
+            Logger.Custom("  %s[TEAMSERVER MODE]%s  Operator: %s%s%s  Role: %s%s%s%n",
                 AnsiColor.Red, AnsiColor.Reset,
                 AnsiColor.White, OperatorName, AnsiColor.Reset,
                 AnsiColor.White, OperatorRoleValue != null ? OperatorRoleValue.name() : "?", AnsiColor.Reset);
@@ -109,7 +100,7 @@ public final class OperatorCommands {
         List<Map<String, Object>> Operators = Database.GetOperators();
         System.out.println(Renderer.Box("OPERATORS (" + Operators.size() + ")"));
         System.out.println();
-        Logger.Custom("  %s%-18s %-14s %-24s %-20s%s%n",
+        Logger.Custom("  %s%-18s %-14s %-30s %-20s%s%n",
             AnsiColor.Green, "USERNAME", "ROLE", "PERMISSIONS", "LAST SEEN", AnsiColor.Reset);
         System.out.println(Renderer.Divider());
 
@@ -117,18 +108,18 @@ public final class OperatorCommands {
             OperatorRole Role   = OperatorRole.FromString(Operator.get("Role").toString());
             boolean      IsSelf = Operator.get("Username").toString().equals(OperatorName);
             String       Mark   = IsSelf ? AnsiColor.Green + " < YOU" + AnsiColor.White : "";
-            Logger.Custom("  %s%-18s %-14s %-24s %-20s%s%s%n",
+            Logger.Custom("  %s%-18s %-14s %-30s %-20s%s%s%n",
                 AnsiColor.White,
                 Operator.get("Username"),
                 Role.name(),
-                "[" + Role.ShortPerm() + "] " + Role.PermissionString().replaceAll("^\\[.*?\\]\\s*", ""),
+                Role.PermissionString(),
                 Operator.getOrDefault("LastSeen", "Never"),
                 Mark,
                 AnsiColor.Reset);
         }
 
         System.out.println();
-        Logger.Info(AnsiColor.Red + "Roles:" + AnsiColor.Reset);
+        Logger.Custom("  %sRole Reference:%s%n", AnsiColor.Red, AnsiColor.Reset);
         for (OperatorRole Role : OperatorRole.values())
             Logger.Custom("    %s%-14s%s %s%n", AnsiColor.White, Role.name(), AnsiColor.Reset, Role.PermissionString());
         System.out.println();
@@ -136,19 +127,20 @@ public final class OperatorCommands {
 
     public void AddOperator(String Username, String Password, String RoleName, String AdminUsername) {
         if (!CanManage()) { Logger.Warn("ADMIN/SUPER required"); return; }
-        if (Password.length() < 8) { Logger.Warn("password must be ≥ 8 chars"); return; }
+        if (Password.length() < 8) { Logger.Warn("password must be >= 8 chars"); return; }
         OperatorRole Role = OperatorRole.FromString(RoleName);
         if (Role == OperatorRole.SUPER && (OperatorRoleValue == null || !OperatorRoleValue.IsSuperAdmin())) {
             Logger.Warn("only SUPER can create SUPER accounts"); return;
         }
         if (Database.CreateOperator(Username, TeamDatabase.HashPassword(Password), Role))
             Logger.Custom("  Operator created: %s [%s]  %s%n", Username, Role, Role.PermissionString());
-        else Logger.Warn("username already exists");
+        else
+            Logger.Warn("username already exists");
     }
 
     public void DeleteOperator(String Username, String AdminUsername) {
         if (!CanManage()) { Logger.Warn("ADMIN/SUPER required"); return; }
-        if (Username.equalsIgnoreCase(AdminUsername)) { Logger.Warn("Cannot delete admin"); return; }
+        if (Username.equalsIgnoreCase(AdminUsername)) { Logger.Warn("cannot delete admin"); return; }
         if (Database.DeleteOperator(Username)) Logger.Custom("  Deleted: %s%n", Username);
         else Logger.Warn("operator not found");
     }
@@ -156,7 +148,7 @@ public final class OperatorCommands {
     public void KickOperator(String Username, String AdminUsername) {
         if (!CanKick()) { Logger.Warn("SUPER role required to kick operators"); return; }
         if (Username.equalsIgnoreCase(AdminUsername) || Username.equals(OperatorName)) {
-            Logger.Warn("Cannot kick admin or yourself"); return;
+            Logger.Warn("cannot kick admin or yourself"); return;
         }
         if (Database.DeleteOperator(Username)) Logger.Custom("  Kicked (removed): %s%n", Username);
         else Logger.Warn("operator not found");
@@ -164,21 +156,23 @@ public final class OperatorCommands {
 
     public void SetRole(String Username, String RoleName, String AdminUsername) {
         if (!CanManage()) { Logger.Warn("ADMIN/SUPER required"); return; }
-        if (Username.equalsIgnoreCase(AdminUsername)) { Logger.Warn("Cannot change admin role"); return; }
+        if (Username.equalsIgnoreCase(AdminUsername)) { Logger.Warn("cannot change admin role"); return; }
         OperatorRole NewRole = OperatorRole.FromString(RoleName);
         if (NewRole == OperatorRole.SUPER && (OperatorRoleValue == null || !OperatorRoleValue.IsSuperAdmin())) {
             Logger.Warn("only SUPER can promote to SUPER"); return;
         }
         if (Database.UpdateOperatorRole(Username, NewRole))
             Logger.Custom("  Role updated: %s > %s  %s%n", Username, NewRole, NewRole.PermissionString());
-        else Logger.Warn("operator not found");
+        else
+            Logger.Warn("operator not found");
     }
 
     public void ChangePassword(String Username, String NewPassword) {
         if (!CanManage()) { Logger.Warn("ADMIN/SUPER required"); return; }
-        if (NewPassword.length() < 8) { Logger.Warn("password must be ≥ 8 chars"); return; }
+        if (NewPassword.length() < 8) { Logger.Warn("password must be >= 8 chars"); return; }
         if (Database.UpdateOperatorPassword(Username, TeamDatabase.HashPassword(NewPassword)))
             Logger.Custom("  Password updated: %s%n", Username);
-        else Logger.Warn("operator not found");
+        else
+            Logger.Warn("operator not found");
     }
 }

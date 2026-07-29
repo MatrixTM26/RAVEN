@@ -1,4 +1,4 @@
-package com.raven.interfaces.CLI.module.web;
+package com.raven.interfaces.CLI.core.web;
 
 import com.raven.core.output.Logger;
 import com.raven.core.server.ListenerMode;
@@ -12,7 +12,7 @@ public final class WebPanelManager {
 
     private final ServerConfig Config;
 
-    private WebApp      WebPanel;
+    private WebApp       WebPanel;
     private ListenerMode ActiveMode;
 
     public WebPanelManager(ServerConfig Config) {
@@ -38,8 +38,6 @@ public final class WebPanelManager {
                 AnsiColor.Green, Host, Port, AnsiColor.Reset);
         } catch (Exception Exception) {
             Logger.Error("Web panel start failed: " + Exception.getMessage());
-            Logger.Custom("  %sWeb panel failed: %s%s%n",
-                AnsiColor.Red, Exception.getMessage(), AnsiColor.Reset);
             WebPanel = null;
         }
     }
@@ -55,11 +53,10 @@ public final class WebPanelManager {
     }
 
     public void ShowStatus() {
-        if (WebPanel == null) {
+        if (WebPanel == null)
             Logger.Info("Web Panel  : " + AnsiColor.Red + "Offline" + AnsiColor.Reset);
-        } else {
+        else
             Logger.Info("Web Panel  : " + AnsiColor.Green + "Online" + AnsiColor.Reset);
-        }
     }
 
     public boolean IsRunning() {

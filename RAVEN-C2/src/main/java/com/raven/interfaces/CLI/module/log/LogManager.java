@@ -1,8 +1,7 @@
 package com.raven.interfaces.CLI.module.log;
 
-import com.raven.interfaces.CLI.module.terminal.TerminalRenderer;
-import com.raven.utils.AnsiColor;
 import com.raven.core.output.Logger;
+import com.raven.interfaces.CLI.module.terminal.TerminalRenderer;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,7 +23,7 @@ public final class LogManager {
 
     public void Add(String Message, boolean PrintNow) {
         String Timestamp = LocalDateTime.now().format(TimestampFormat);
-        String Entry     = "[" + Timestamp + "]" + Message;
+        String Entry     = "[" + Timestamp + "] " + Message;
         Entries.add(Entry);
         if (Entries.size() > MaxEntries) Entries.remove(0);
         if (PrintNow) Logger.Info(Entry);
@@ -38,7 +37,7 @@ public final class LogManager {
         System.out.println(Renderer.Box("RECENT LOGS"));
         System.out.println();
         if (Entries.isEmpty()) {
-            Logger.Info(Renderer.Indent("  no logs") + "\n");
+            Logger.Info(Renderer.Indent("no logs") + "\n");
             return;
         }
         int Start = Math.max(0, Entries.size() - 25);

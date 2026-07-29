@@ -1,4 +1,4 @@
-package com.raven.interfaces.CLI.module.server;
+package com.raven.interfaces.CLI.core.server;
 
 import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
@@ -18,24 +18,24 @@ import java.util.Map;
 
 public final class ServerManager {
 
-    private static final Object     SharedServerLock     = new Object();
-    private static volatile RavenServer SharedServer     = null;
-    private static volatile Instant SharedServerStart    = null;
+    private static final Object     SharedServerLock  = new Object();
+    private static volatile RavenServer SharedServer  = null;
+    private static volatile Instant SharedServerStart = null;
 
     private final ServerConfig      Config;
     private final LogManager        LogManager;
     private final TerminalRenderer  Renderer;
 
-    private RavenServer Server;
-    private Instant     ServerStartTime;
-    private boolean     IsTeamServerMode;
-    private String      OperatorName;
+    private RavenServer  Server;
+    private Instant      ServerStartTime;
+    private boolean      IsTeamServerMode;
+    private String       OperatorName;
     private ListenerMode ActiveMode;
 
     public ServerManager(ServerConfig Config, LogManager LogManager, TerminalRenderer Renderer) {
-        this.Config      = Config;
-        this.LogManager  = LogManager;
-        this.Renderer    = Renderer;
+        this.Config     = Config;
+        this.LogManager = LogManager;
+        this.Renderer   = Renderer;
     }
 
     public void SetContext(boolean IsTeamServerMode, String OperatorName, ListenerMode ActiveMode) {
@@ -60,18 +60,18 @@ public final class ServerManager {
                 boolean[] Result = NewServer.StartServer();
                 if (!Result[0]) {
                     if (IsPortAlreadyBound(Host, Port)) {
-                        Logger.Info("Operator " + OperatorName + " attached to existing listener on " + Host + ":" + Port + " (cross-process, Database-only mode)");
+                        Logger.Info("Operator " + OperatorName + " attached to existing listener on " + Host + ":" + Port);
                         ServerStartTime = Instant.now();
-                        LogManager.Add(AnsiColor.White + "  attached to listener on " + Host + ":" + Port + " (session commands limited in cross-process mode)" + AnsiColor.Reset, true);
+                        LogManager.Add(AnsiColor.White + "  attached to listener on " + Host + ":" + Port + " (cross-process mode)" + AnsiColor.Reset, true);
                         return true;
                     }
                     LogManager.Add(AnsiColor.Red + "  failed to start server" + AnsiColor.Reset, true);
                     return false;
                 }
-                SharedServer  = NewServer;
+                SharedServer      = NewServer;
                 SharedServerStart = Instant.now();
-                Server          = SharedServer;
-                ServerStartTime = SharedServerStart;
+                Server            = SharedServer;
+                ServerStartTime   = SharedServerStart;
                 Thread AcceptThread = new Thread(SharedServer::AcceptConnections, "AcceptConnections");
                 AcceptThread.setDaemon(true);
                 AcceptThread.start();
@@ -83,7 +83,7 @@ public final class ServerManager {
         Server.AddEventListener(this::HandleEvent);
         boolean[] Result = Server.StartServer();
         if (!Result[0]) {
-            LogManager.Add(AnsiColor.Red + "  Failed to start server" + AnsiColor.Reset, true);
+            LogManager.Add(AnsiColor.Red + "  failed to start server" + AnsiColor.Reset, true);
             return false;
         }
         ServerStartTime = Instant.now();
@@ -110,32 +110,27 @@ public final class ServerManager {
 
         if (Server == null || !Server.IsRunning()) {
             if (IsTeamServerMode && ServerStartTime != null) {
-                Logger.Custom("  %sStatus      %sONLINE (cross-process)%n", AnsiColor.Red, AnsiColor.Green);
-                Logger.Custom("  %sMode        %s%s%n",   AnsiColor.Red, AnsiColor.White, ActiveMode.name());
-                Logger.Custom("  %sAddress     %s%s:%d%n",AnsiColor.Red, AnsiColor.White, Config.GetServerHost(), Config.GetServerPort());
-                Logger.Custom("  %sUptime      %s%s (local session)%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(UptimeSeconds));
-                Logger.Custom("  %sSessions    %s(N/A - cross-process)%n", AnsiColor.Red, AnsiColor.White);
+                Logger.Custom("  %sStatus    %sONLINE (cross-process)%n", AnsiColor.Red, AnsiColor.Green);
+                Logger.Custom("  %sMode      %s%s%n",   AnsiColor.Red, AnsiColor.White, ActiveMode.name());
+                Logger.Custom("  %sAddress   %s%s:%d%n",AnsiColor.Red, AnsiColor.White, Config.GetServerHost(), Config.GetServerPort());
+                Logger.Custom("  %sUptime    %s%s%n",   AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(UptimeSeconds));
+                Logger.Custom("  %sSessions  %s(N/A - cross-process)%n", AnsiColor.Red, AnsiColor.White);
             } else {
                 Logger.Custom("  %sStatus    %sOFFLINE%n", AnsiColor.Red, AnsiColor.Red);
             }
         } else {
-            Logger.Custom("  %sStatus      %sONLINE%n",   AnsiColor.Red, AnsiColor.Green);
-            Logger.Custom("  %sMode        %s%s%n",       AnsiColor.Red, AnsiColor.White, ActiveMode.name());
-            Logger.Custom("  %sAddress     %s%s:%d%n",    AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
-            Logger.Custom("  %sUptime      %s%s%n",       AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(UptimeSeconds));
-            Logger.Custom("  %sSessions    %s%d%n",       AnsiColor.Red, AnsiColor.White, Server.GetSessions().Count());
+            Logger.Custom("  %sStatus    %sONLINE%n",  AnsiColor.Red, AnsiColor.Green);
+            Logger.Custom("  %sMode      %s%s%n",      AnsiColor.Red, AnsiColor.White, ActiveMode.name());
+            Logger.Custom("  %sAddress   %s%s:%d%n",   AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
+            Logger.Custom("  %sUptime    %s%s%n",      AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(UptimeSeconds));
+            Logger.Custom("  %sSessions  %s%d%n",      AnsiColor.Red, AnsiColor.White, Server.GetSessions().Count());
         }
 
-        Logger.Custom("  %sDatabase    %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, DatabaseState, DatabaseType);
-        if (IsTeamServerMode && OperatorName != null) {
-            Logger.Custom("  %sOperator    %s%s%n", AnsiColor.Red, AnsiColor.White, OperatorName);
-        }
+        Logger.Custom("  %sDatabase  %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, DatabaseState, DatabaseType);
+        if (IsTeamServerMode && OperatorName != null)
+            Logger.Custom("  %sOperator  %s%s%n", AnsiColor.Red, AnsiColor.White, OperatorName);
         System.out.println();
     }
-
-    public RavenServer GetServer()          { return Server; }
-    public Instant     GetServerStartTime() { return ServerStartTime; }
-    public boolean     IsRunning()          { return Server != null && Server.IsRunning(); }
 
     private void HandleEvent(EventType Type, Map<String, Object> Data) {
         switch (Type) {
@@ -151,6 +146,10 @@ public final class ServerManager {
                 LogManager.Add(AnsiColor.Red + "  Error: " + Data.get("Message") + AnsiColor.Reset, true);
         }
     }
+
+    public RavenServer GetServer()          { return Server; }
+    public Instant     GetServerStartTime() { return ServerStartTime; }
+    public boolean     IsRunning()          { return Server != null && Server.IsRunning(); }
 
     private static boolean IsPortAlreadyBound(String Host, int Port) {
         try (ServerSocket TestSocket = new ServerSocket()) {

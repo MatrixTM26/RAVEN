@@ -1,4 +1,4 @@
-package com.raven.interfaces.CLI.module.session;
+package com.raven.interfaces.CLI.core.session;
 
 import com.raven.core.database.TeamDatabase;
 import com.raven.core.output.Logger;
@@ -26,14 +26,14 @@ public final class SessionCommands {
     private int         CurrentSessionId = -1;
 
     public SessionCommands(TerminalRenderer Renderer, LogManager LogManager, TeamDatabase Database) {
-        this.Renderer  = Renderer;
+        this.Renderer   = Renderer;
         this.LogManager = LogManager;
-        this.Database  = Database;
+        this.Database   = Database;
     }
 
-    public void SetServer(RavenServer Server)     { this.Server       = Server; }
-    public void SetOperator(String OperatorName)  { this.OperatorName = OperatorName; }
-    public int  GetCurrentSessionId()             { return CurrentSessionId; }
+    public void SetServer(RavenServer Server)    { this.Server       = Server; }
+    public void SetOperator(String OperatorName) { this.OperatorName = OperatorName; }
+    public int  GetCurrentSessionId()            { return CurrentSessionId; }
 
     public void ShowSessions() {
         System.out.println(Renderer.Box("ACTIVE SESSIONS"));
@@ -46,10 +46,7 @@ public final class SessionCommands {
         }
 
         List<Session> Sessions = Server.GetSessions().GetAll();
-        if (Sessions.isEmpty()) {
-            Logger.Info("no active sessions");
-            return;
-        }
+        if (Sessions.isEmpty()) { Logger.Info("no active sessions\n"); return; }
 
         Logger.Custom("  %s%-5s %-14s %-14s %-16s %-10s %-10s %s%s%n",
             AnsiColor.Blue, "ID", "NAME/CERT", "TYPE", "IP", "OS", "USER", "SESSION-KEY", AnsiColor.Reset);
@@ -73,31 +70,28 @@ public final class SessionCommands {
     }
 
     public void ShowSessionInfo(int SessionId) {
-        if (Server == null) {
-            Logger.Info("unavailable in cross-process mode - use primary operator terminal");
-            return;
-        }
+        if (Server == null) { Logger.Info("unavailable in cross-process mode"); return; }
         Optional<Session> Found = Server.GetSessions().Get(SessionId);
         if (Found.isEmpty()) { Logger.Warn("session not found"); return; }
         Session ActiveSession = Found.get();
 
         System.out.println(Renderer.Box("SESSION INFO - #" + SessionId));
         System.out.println();
-        Logger.Custom("  %sID         %s%d%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetId());
-        Logger.Custom("  %sName       %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetDisplayName());
-        Logger.Custom("  %sType       %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetSessionType().name());
-        Logger.Custom("  %sHostname   %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetHostname());
-        Logger.Custom("  %sUser       %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetUser());
-        Logger.Custom("  %sOS         %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetOs());
-        Logger.Custom("  %sArch       %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetArch());
-        Logger.Custom("  %sAgent IP   %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetAgentIp());
-        Logger.Custom("  %sKey        %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetSessionKey());
-        Logger.Custom("  %sEncrypted  %s%b%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.IsEncrypted());
-        Logger.Custom("  %smTLS       %s%b%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.IsMtlsEnabled());
-        Logger.Custom("  %sCert CN    %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetCertCn());
-        Logger.Custom("  %sShell Mode %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetShellMode());
+        Logger.Custom("  %sID          %s%d%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetId());
+        Logger.Custom("  %sName        %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetDisplayName());
+        Logger.Custom("  %sType        %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetSessionType().name());
+        Logger.Custom("  %sHostname    %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetHostname());
+        Logger.Custom("  %sUser        %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetUser());
+        Logger.Custom("  %sOS          %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetOs());
+        Logger.Custom("  %sArch        %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetArch());
+        Logger.Custom("  %sAgent IP    %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetAgentIp());
+        Logger.Custom("  %sKey         %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetSessionKey());
+        Logger.Custom("  %sEncrypted   %s%b%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.IsEncrypted());
+        Logger.Custom("  %smTLS        %s%b%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.IsMtlsEnabled());
+        Logger.Custom("  %sCert CN     %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetCertCn());
+        Logger.Custom("  %sShell Mode  %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetShellMode());
         String Note = Database.GetAgentNote(SessionId);
-        Logger.Custom("  %sNote       %s%s%n",          AnsiColor.Red, AnsiColor.White, Note.isEmpty() ? "(none)" : Note);
+        Logger.Custom("  %sNote        %s%s%n",          AnsiColor.Red, AnsiColor.White, Note.isEmpty() ? "(none)" : Note);
         System.out.println();
     }
 
@@ -110,19 +104,15 @@ public final class SessionCommands {
             return;
         }
         Map<String, Integer> Stats = Server.GetSessions().GetStats();
-        Logger.Custom("  %sServer  %s%s:%d%n",   AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
-        Logger.Custom("  %sTOTAL   %s%d%n",      AnsiColor.Red, AnsiColor.White, Stats.get("Total"));
-        Logger.Custom("  %sRAVEN   %s%d%n",      AnsiColor.Red, AnsiColor.White, Stats.get("RAVEN"));
-        Logger.Custom("  %sRAW     %s%d%n",      AnsiColor.Red, AnsiColor.White, Stats.get("REVERSE_SHELL"));
+        Logger.Custom("  %sServer  %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
+        Logger.Custom("  %sTotal   %s%d%n",    AnsiColor.Red, AnsiColor.White, Stats.get("Total"));
+        Logger.Custom("  %sRaven   %s%d%n",    AnsiColor.Red, AnsiColor.White, Stats.get("RAVEN"));
+        Logger.Custom("  %sRaw     %s%d%n",    AnsiColor.Red, AnsiColor.White, Stats.get("REVERSE_SHELL"));
         System.out.println();
     }
 
     public void Execute(int SessionId, String Command) {
-        if (Server == null) {
-            Logger.Warn("session commands unavailable in cross-process mode.");
-            Logger.Info("use the primary operator terminal to exec commands.");
-            return;
-        }
+        if (Server == null) { Logger.Warn("session commands unavailable in cross-process mode."); return; }
         String   Operator = OperatorName != null ? OperatorName : "operator";
         String[] Result   = Server.ExecuteCommand(SessionId, Command);
         boolean  Success  = Boolean.parseBoolean(Result[0]);
@@ -140,7 +130,7 @@ public final class SessionCommands {
     public void Broadcast(List<Integer> SessionIds, String Command) {
         if (Server == null) { Logger.Info("broadcast unavailable in cross-process mode."); return; }
         String Operator = OperatorName != null ? OperatorName : "operator";
-        Logger.Custom("Broadcasting to %d session(s): %s%n", SessionIds.size(), Command);
+        Logger.Custom("  broadcasting to %d session(s): %s%n", SessionIds.size(), Command);
         Map<Integer, String[]> Results = Server.BroadcastCommand(SessionIds, Command);
         System.out.println(Renderer.Box("BROADCAST RESULTS - " + Results.size() + " sessions"));
         System.out.println();
@@ -153,7 +143,7 @@ public final class SessionCommands {
     }
 
     public void BroadcastAll(String Command) {
-        if (Server == null) { Logger.Warn("unavailable in cross-process mode - use primary operator terminal"); return; }
+        if (Server == null) { Logger.Warn("unavailable in cross-process mode"); return; }
         int Total = Server.GetSessions().Count();
         if (Total == 0) { Logger.Info("no active sessions"); return; }
         String Operator = OperatorName != null ? OperatorName : "operator";
@@ -177,7 +167,7 @@ public final class SessionCommands {
 
         System.out.println(Renderer.Box("INTERACTIVE SESSION"));
         Logger.Custom(
-            "%n  %s[%s%s%s] %sID: %s%d %sUSER: %s%s@%s %sOS: %s%s %sARCH: %s%s %sIP: %s%s %sTYPE: %s%s %sKEY: %s%s%s%n",
+            "%n  %s[%s%s%s] %sID: %s%d %sUser: %s%s@%s %sOS: %s%s %sArch: %s%s %sIP: %s%s %sType: %s%s %sKey: %s%s%s%n",
             AnsiColor.Blue, AnsiColor.White, ActiveSession.GetDisplayName(), AnsiColor.Blue,
             AnsiColor.Blue, AnsiColor.White, SessionId,
             AnsiColor.Blue, AnsiColor.White, ActiveSession.GetUser(), ActiveSession.GetHostname(),
@@ -201,10 +191,8 @@ public final class SessionCommands {
                 String Command = Reader.readLine();
                 if (Command == null || Command.trim().isEmpty()) continue;
                 Command = Command.trim();
-
                 if (Command.equalsIgnoreCase("back"))  { CurrentSessionId = -1; Logger.Info("returned to main console"); break; }
                 if (Command.equalsIgnoreCase("clear")) { SystemHelper.ClearScreen(); continue; }
-
                 LogManager.Add(AnsiColor.Blue + "[" + ActiveSession.GetDisplayName() + "]: " + Command + AnsiColor.Reset, false);
                 Execute(SessionId, Command);
             } catch (IOException Exception) {
@@ -228,7 +216,7 @@ public final class SessionCommands {
         System.out.println();
         int Total = Server != null ? Server.GetSessions().Count() : 0;
         Logger.Custom("  %sActive sessions: %s%d%s%n", AnsiColor.Red, AnsiColor.White, Total, AnsiColor.Reset);
-        Logger.Info("Use 'broadcast' or 'exec' to queue commands to sessions");
+        Logger.Info("  use 'broadcast' or 'exec' to queue commands to sessions");
         System.out.println();
     }
 }

@@ -34,12 +34,9 @@ public final class TerminalWidthDetector {
                 return Math.max(MinWidth, Integer.parseInt(ColumnsEnvironment.trim()));
             } catch (NumberFormatException Ignored) {}
         }
-
         if (PollerThread == null || !PollerThread.isAlive()) StartPoller();
-
         int Cached = CachedWidth.get();
         if (Cached > 0) return Cached;
-
         int Detected = Detect();
         CachedWidth.set(Detected);
         return Detected;
@@ -66,7 +63,7 @@ public final class TerminalWidthDetector {
             ProcessBuilder ProcessSetup = new ProcessBuilder("sh", "-c", "stty size < /dev/tty");
             ProcessSetup.redirectErrorStream(true);
             Process RunningProcess = ProcessSetup.start();
-            String Output = new String(RunningProcess.getInputStream().readAllBytes()).trim();
+            String  Output         = new String(RunningProcess.getInputStream().readAllBytes()).trim();
             RunningProcess.waitFor();
             String[] Parts = Output.split("\\s+");
             if (Parts.length >= 2) return Math.max(MinWidth, Integer.parseInt(Parts[1]));
@@ -79,7 +76,7 @@ public final class TerminalWidthDetector {
             ProcessBuilder ProcessSetup = new ProcessBuilder("sh", "-c", "tput cols < /dev/tty");
             ProcessSetup.redirectErrorStream(true);
             Process RunningProcess = ProcessSetup.start();
-            String Output = new String(RunningProcess.getInputStream().readAllBytes()).trim();
+            String  Output         = new String(RunningProcess.getInputStream().readAllBytes()).trim();
             RunningProcess.waitFor();
             if (!Output.isBlank()) return Math.max(MinWidth, Integer.parseInt(Output));
         } catch (Exception Ignored) {}
@@ -101,8 +98,8 @@ public final class TerminalWidthDetector {
             ProcessSetup.redirectErrorStream(true);
             ProcessSetup.redirectInput(ProcessBuilder.Redirect.INHERIT);
             Process RunningProcess = ProcessSetup.start();
-            String Output = new String(RunningProcess.getInputStream().readAllBytes()).trim();
-            boolean Finished = RunningProcess.waitFor(1500, TimeUnit.MILLISECONDS);
+            String  Output         = new String(RunningProcess.getInputStream().readAllBytes()).trim();
+            boolean Finished       = RunningProcess.waitFor(1500, TimeUnit.MILLISECONDS);
             if (!Finished) { RunningProcess.destroyForcibly(); return null; }
             if (!Output.isBlank()) {
                 String Digits = Output.replaceAll("\\D+", "");
@@ -120,8 +117,8 @@ public final class TerminalWidthDetector {
             ProcessBuilder ProcessSetup = new ProcessBuilder("cmd.exe", "/c", "mode con");
             ProcessSetup.redirectErrorStream(true);
             Process RunningProcess = ProcessSetup.start();
-            String Output = new String(RunningProcess.getInputStream().readAllBytes());
-            boolean Finished = RunningProcess.waitFor(1500, TimeUnit.MILLISECONDS);
+            String  Output         = new String(RunningProcess.getInputStream().readAllBytes());
+            boolean Finished       = RunningProcess.waitFor(1500, TimeUnit.MILLISECONDS);
             if (!Finished) { RunningProcess.destroyForcibly(); return null; }
             for (String Line : Output.split("\\r?\\n")) {
                 String Lower = Line.toLowerCase();
