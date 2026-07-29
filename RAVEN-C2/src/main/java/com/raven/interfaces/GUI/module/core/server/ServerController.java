@@ -16,101 +16,109 @@ import javafx.scene.paint.Color;
 
 public class ServerController {
 
-    private RavenServer server;
-    private Instant startTime;
+    private static final String IconCircle = "\uEF4A";
 
-    private final ServerConfig config;
-    private final Label statusDot;
-    private final Label serverStatusLabel;
-    private final Label serverInfoLabel;
-    private final Button startBtn;
-    private final Button stopBtn;
-    private final Consumer<String> log;
-    private final EventManager.EventListener eventHandler;
-    private final Runnable onStart;
-    private final Runnable onStop;
+    private RavenServer Server;
+    private Instant StartTime;
 
-    private static final String I_CIRCLE = "\uEF4A";
+    private final ServerConfig Configuration;
+    private final Label StatusDot;
+    private final Label ServerStatusLabel;
+    private final Label ServerInfoLabel;
+    private final Button StartButton;
+    private final Button StopButton;
+    private final Consumer<String> LogConsumer;
+    private final EventManager.EventListener EventHandler;
+    private final Runnable OnStartCallback;
+    private final Runnable OnStopCallback;
 
-    public ServerController(ServerConfig config, Label statusDot, Label serverStatusLabel, Label serverInfoLabel, Button startBtn, Button stopBtn, Consumer<String> log, EventManager.EventListener eventHandler, Runnable onStart, Runnable onStop) {
-        this.config = config;
-        this.statusDot = statusDot;
-        this.serverStatusLabel = serverStatusLabel;
-        this.serverInfoLabel = serverInfoLabel;
-        this.startBtn = startBtn;
-        this.stopBtn = stopBtn;
-        this.log = log;
-        this.eventHandler = eventHandler;
-        this.onStart = onStart;
-        this.onStop = onStop;
+    public ServerController(ServerConfig Configuration,
+                            Label StatusDot,
+                            Label ServerStatusLabel,
+                            Label ServerInfoLabel,
+                            Button StartButton,
+                            Button StopButton,
+                            Consumer<String> LogConsumer,
+                            EventManager.EventListener EventHandler,
+                            Runnable OnStartCallback,
+                            Runnable OnStopCallback) {
+        this.Configuration    = Configuration;
+        this.StatusDot        = StatusDot;
+        this.ServerStatusLabel= ServerStatusLabel;
+        this.ServerInfoLabel  = ServerInfoLabel;
+        this.StartButton      = StartButton;
+        this.StopButton       = StopButton;
+        this.LogConsumer      = LogConsumer;
+        this.EventHandler     = EventHandler;
+        this.OnStartCallback  = OnStartCallback;
+        this.OnStopCallback   = OnStopCallback;
     }
 
-    public void Start(String host, int port) {
-        server = new RavenServer(host, port, ListenerMode.FromString(config.GetServerMode()), config);
-        server.AddEventListener(eventHandler);
-        boolean[] result = server.StartServer();
-        if (!result[0]) {
-            log.accept("[!] Failed to start server");
+    public void Start(String Host, int Port) {
+        Server = new RavenServer(Host, Port, ListenerMode.FromString(Configuration.GetServerMode()), Configuration);
+        Server.AddEventListener(EventHandler);
+        boolean[] Result = Server.StartServer();
+        if (!Result[0]) {
+            LogConsumer.accept("[!] Failed to start server");
             return;
         }
-        startTime = Instant.now();
-        Thread t = new Thread(server::AcceptConnections, "AcceptConnections");
-        t.setDaemon(true);
-        t.start();
+        StartTime = Instant.now();
+        Thread AcceptThread = new Thread(Server::AcceptConnections, "AcceptConnections");
+        AcceptThread.setDaemon(true);
+        AcceptThread.start();
 
         Platform.runLater(() -> {
-            if (serverStatusLabel != null) {
-                serverStatusLabel.setText("Online");
-                serverStatusLabel.setTextFill(Color.web(Palette.GREEN));
+            if (ServerStatusLabel != null) {
+                ServerStatusLabel.setText("Online");
+                ServerStatusLabel.setTextFill(Color.web(Palette.AccentGreen));
             }
-            if (serverInfoLabel != null) {
-                serverInfoLabel.setText(host + ":" + port + "  |  " + config.GetServerMode().toUpperCase());
+            if (ServerInfoLabel != null)
+                ServerInfoLabel.setText(Host + ":" + Port + "  |  " + Configuration.GetServerMode().toUpperCase());
+            if (StatusDot != null) {
+                StatusDot.setText(IconCircle + "  Online");
+                StatusDot.setStyle(
+                    "-fx-text-fill:" + Palette.AccentGreen + ";" +
+                    "-fx-font-size:11px;" +
+                    "-fx-font-family:'Material Icons','Segoe UI';"
+                );
             }
-            if (statusDot != null) {
-                statusDot.setText(I_CIRCLE + "  Online");
-                statusDot.setStyle("-fx-text-fill:" + Palette.GREEN + "; -fx-font-size:11px;" + " -fx-font-family:'Material Icons','Segoe UI';");
-            }
-            if (startBtn != null) startBtn.setDisable(true);
-            if (stopBtn != null) stopBtn.setDisable(false);
+            if (StartButton != null) StartButton.setDisable(true);
+            if (StopButton  != null) StopButton.setDisable(false);
         });
 
-        log.accept("[+] Server started — " + host + ":" + port);
-        log.accept("[+] Session key: " + server.GetKeyBase64());
-        if (onStart != null) onStart.run();
+        LogConsumer.accept("[+] Server started — " + Host + ":" + Port);
+        LogConsumer.accept("[+] Session key: " + Server.GetKeyBase64());
+        if (OnStartCallback != null) OnStartCallback.run();
     }
 
     public void Stop() {
-        if (server == null) return;
-        server.StopServer();
-        startTime = null;
+        if (Server == null) return;
+        Server.StopServer();
+        StartTime = null;
 
         Platform.runLater(() -> {
-            if (serverStatusLabel != null) {
-                serverStatusLabel.setText("Offline");
-                serverStatusLabel.setTextFill(Color.web(Palette.DANGER));
+            if (ServerStatusLabel != null) {
+                ServerStatusLabel.setText("Offline");
+                ServerStatusLabel.setTextFill(Color.web(Palette.AccentRed));
             }
-            if (serverInfoLabel != null) serverInfoLabel.setText("Not running");
-            if (statusDot != null) {
-                statusDot.setText(I_CIRCLE + "  Offline");
-                statusDot.setStyle("-fx-text-fill:" + Palette.DANGER + "; -fx-font-size:11px;" + " -fx-font-family:'Material Icons','Segoe UI';");
+            if (ServerInfoLabel != null) ServerInfoLabel.setText("Not running");
+            if (StatusDot != null) {
+                StatusDot.setText(IconCircle + "  Offline");
+                StatusDot.setStyle(
+                    "-fx-text-fill:" + Palette.AccentRed + ";" +
+                    "-fx-font-size:11px;" +
+                    "-fx-font-family:'Material Icons','Segoe UI';"
+                );
             }
-            if (startBtn != null) startBtn.setDisable(false);
-            if (stopBtn != null) stopBtn.setDisable(true);
+            if (StartButton != null) StartButton.setDisable(false);
+            if (StopButton  != null) StopButton.setDisable(true);
         });
 
-        log.accept("[!] Server stopped");
-        if (onStop != null) onStop.run();
+        LogConsumer.accept("[!] Server stopped");
+        if (OnStopCallback != null) OnStopCallback.run();
     }
 
-    public RavenServer GetServer() {
-        return server;
-    }
-
-    public Instant GetStartTime() {
-        return startTime;
-    }
-
-    public boolean IsRunning() {
-        return server != null && server.IsRunning();
-    }
+    public RavenServer GetServer()    { return Server; }
+    public Instant     GetStartTime() { return StartTime; }
+    public boolean     IsRunning()    { return Server != null && Server.IsRunning(); }
 }

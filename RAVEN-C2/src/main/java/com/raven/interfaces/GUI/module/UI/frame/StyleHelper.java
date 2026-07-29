@@ -9,42 +9,70 @@ public final class StyleHelper {
 
     private StyleHelper() {}
 
-    public static void ApplyInput(TextField f) {
-        String base = inputBase();
-        f.setStyle(base);
-        f.focusedProperty().addListener((obs, o, n) -> f.setStyle(n ? inputFocused() : base));
+    public static void ApplyTerminal(TextArea TextAreaNode) {
+        TextAreaNode.setStyle(TerminalStyle());
+        TextAreaNode.setWrapText(true);
     }
 
-    public static void ApplyTerm(TextArea a) {
-        a.setStyle(TermStyle());
-        a.setWrapText(true);
+    public static void ApplyInput(TextField TextFieldNode) {
+        String BaseStyle = InputBaseStyle();
+        TextFieldNode.setStyle(BaseStyle);
+        TextFieldNode.focusedProperty().addListener((Observable, OldValue, Focused) ->
+            TextFieldNode.setStyle(Focused ? InputFocusedStyle() : BaseStyle)
+        );
     }
 
-    public static String TermStyle() {
-        return "-fx-background-color:" + Palette.TERM_BG + ";" + "-fx-control-inner-background:" + Palette.TERM_BG + ";" + "-fx-text-fill:" + Palette.TERM_TEXT + ";" + "-fx-highlight-fill:rgba(129,212,250,0.3);" + "-fx-font-family:'Consolas','JetBrains Mono',monospace;" + "-fx-font-size:12px;" + "-fx-padding:10 12 10 12;" + "-fx-background-radius:0;" + "-fx-border-color:" + Palette.BORDER + ";" + "-fx-border-width:1;" + "-fx-border-radius:0;";
+    public static String TerminalStyle() {
+        return "-fx-background-color:" + Palette.TerminalBackground + ";" +
+               "-fx-control-inner-background:" + Palette.TerminalBackground + ";" +
+               "-fx-text-fill:" + Palette.TerminalText + ";" +
+               "-fx-highlight-fill:rgba(10,132,255,0.25);" +
+               "-fx-font-family:'JetBrains Mono','Cascadia Code','Consolas',monospace;" +
+               "-fx-font-size:12px;" +
+               "-fx-padding:12 14 12 14;" +
+               "-fx-background-radius:0;" +
+               "-fx-border-color:transparent;";
     }
 
-    public static Region HDivider() {
-        Region r = new Region();
-        r.setPrefHeight(1);
-        r.setMaxWidth(Double.MAX_VALUE);
-        r.setStyle("-fx-background-color:" + Palette.BORDER + ";");
-        return r;
+    public static Region HorizontalDivider() {
+        Region Divider = new Region();
+        Divider.getStyleClass().add("h-div");
+        Divider.setPrefHeight(1);
+        Divider.setMaxWidth(Double.MAX_VALUE);
+        return Divider;
     }
 
-    public static Region VDivider() {
-        Region r = new Region();
-        r.setPrefWidth(1);
-        r.setPrefHeight(16);
-        r.setStyle("-fx-background-color:" + Palette.BORDER + ";");
-        return r;
+    public static Region VerticalDivider() {
+        Region Divider = new Region();
+        Divider.getStyleClass().add("v-div");
+        Divider.setPrefWidth(1);
+        Divider.setPrefHeight(16);
+        return Divider;
     }
 
-    private static String inputBase() {
-        return "-fx-background-color:" + Palette.SURFACE + ";" + "-fx-text-fill:" + Palette.TEXT + ";" + "-fx-prompt-text-fill:" + Palette.TEXT_DIM + ";" + "-fx-font-family:'Segoe UI';" + "-fx-font-size:12px;" + "-fx-padding:6 10 6 10;" + "-fx-background-radius:0;" + "-fx-border-color:" + Palette.BORDER + ";" + "-fx-border-width:1;" + "-fx-border-radius:0;";
+    private static String InputBaseStyle() {
+        return "-fx-background-color:" + Palette.BackgroundInput + ";" +
+               "-fx-text-fill:" + Palette.TextPrimary + ";" +
+               "-fx-prompt-text-fill:" + Palette.TextQuaternary + ";" +
+               "-fx-font-family:'Segoe UI';" +
+               "-fx-font-size:12px;" +
+               "-fx-padding:7 11 7 11;" +
+               "-fx-background-radius:7;" +
+               "-fx-border-color:" + Palette.BorderDefault + ";" +
+               "-fx-border-width:1;" +
+               "-fx-border-radius:7;";
     }
 
-    private static String inputFocused() {
-        return "-fx-background-color:" + Palette.SURFACE + ";" + "-fx-text-fill:" + Palette.TEXT + ";" + "-fx-prompt-text-fill:" + Palette.TEXT_DIM + ";" + "-fx-font-family:'Segoe UI';" + "-fx-font-size:12px;" + "-fx-padding:6 10 6 10;" + "-fx-background-radius:0;" + "-fx-border-color:" + Palette.ACCENT + ";" + "-fx-border-width:1;" + "-fx-border-radius:0;";
+    private static String InputFocusedStyle() {
+        return "-fx-background-color:" + Palette.BackgroundInput + ";" +
+               "-fx-text-fill:" + Palette.TextPrimary + ";" +
+               "-fx-prompt-text-fill:" + Palette.TextQuaternary + ";" +
+               "-fx-font-family:'Segoe UI';" +
+               "-fx-font-size:12px;" +
+               "-fx-padding:7 11 7 11;" +
+               "-fx-background-radius:7;" +
+               "-fx-border-color:" + Palette.AccentBlue + ";" +
+               "-fx-border-width:1;" +
+               "-fx-border-radius:7;";
     }
 }
