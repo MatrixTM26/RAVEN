@@ -1,17 +1,33 @@
 package com.raven.interfaces;
 
-import com.google.gson.*;
-import com.raven.core.output.Logger;
+import com.google.gson.Gson;
+import com.raven.core.command.CommandRegistry;
+import com.raven.core.command.CommandRegistry.Category;
+import com.raven.core.command.CommandRegistry.CommandDef;
+import com.raven.core.database.TeamDatabase.OperatorRole;
+import com.raven.core.output.PromptManager;
 import com.raven.utils.AnsiColor;
 import com.raven.utils.ServerConfig;
-import java.io.*;
-import java.net.*;
-import java.net.http.*;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import com.raven.utils.TerminalHelper;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class TeamClient {
+
+    private static final String PROMPT_TOP = AnsiColor.Red + "┌──{" + AnsiColor.White + "RAVEN-CLIENT" + AnsiColor.Red + "}" + AnsiColor.Reset;
+    private static final String PROMPT_BOTTOM = AnsiColor.Red + "└─" + AnsiColor.White + ">>" + AnsiColor.Reset + " ";
+    private static final String INDENT = "  ";
 
     private final ServerConfig Config;
     private final String TsHost;
@@ -19,167 +35,342 @@ public final class TeamClient {
     private final HttpClient Http;
     private final Gson Json = new Gson();
 
-    private String Token = null;
-    private String OperatorName = null;
-    private String OperatorRole = null;
+    private String Token;
+    private String OperatorName;
+    private OperatorRole OperatorRoleValue;
     private volatile boolean Running = true;
-
-    private static final DateTimeFormatter TimeFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final String I = "    ";
 
     public TeamClient(ServerConfig Config, String TsHost, int TsPort) {
         this.Config = Config;
         this.TsHost = TsHost;
         this.TsPort = TsPort;
         this.Http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
-    }
-
-    private String Base() {
-        return "http://" + TsHost + ":" + TsPort;
-    }
-
-    private Map<String, Object> Post(String Path, Map<String, Object> Body) throws Exception {
-        String BodyStr = Json.toJson(Body != null ? Body : new HashMap<>());
-        HttpRequest.Builder Req = HttpRequest.newBuilder()
-            .uri(URI.create(Base() + Path))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(BodyStr));
-        if (Token != null) Req.header("Authorization", "Bearer " + Token);
-        HttpResponse<String> Resp = Http.send(Req.build(), HttpResponse.BodyHandlers.ofString());
-        @SuppressWarnings("unchecked")
-        Map<String, Object> R = Json.fromJson(Resp.body(), Map.class);
-        return R != null ? R : new HashMap<>();
-    }
-
-    private Map<String, Object> Get(String Path) throws Exception {
-        HttpRequest.Builder Req = HttpRequest.newBuilder()
-            .uri(URI.create(Base() + Path))
-            .header("Content-Type", "application/json")
-            .GET();
-        if (Token != null) Req.header("Authorization", "Bearer " + Token);
-        HttpResponse<String> Resp = Http.send(Req.build(), HttpResponse.BodyHandlers.ofString());
-        @SuppressWarnings("unchecked")
-        Map<String, Object> R = Json.fromJson(Resp.body(), Map.class);
-        return R != null ? R : new HashMap<>();
-    }
-
-    private boolean Login() {
-        System.out.println();
-        System.out.println(Box("TEAMCLIENT — CONNECT TO TEAMSERVER"));
-        System.out.println();
-        System.out.printf(I + "%sTeamServer: %s%s:%d%s%n", AnsiColor.Red, AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
-        System.out.println();
-
-        try {
-            Map<String, Object> Probe = Post("/api/auth/login", new HashMap<>());
-            if (Probe.containsKey("Error")) {
-                String ErrMsg = Probe.get("Error").toString();
-                if (!ErrMsg.toLowerCase().contains("credential") && !ErrMsg.toLowerCase().contains("required") && !ErrMsg.isEmpty()) {
-                    System.out.printf(I + "%s✘ TeamServer rejected probe: %s%s%n", AnsiColor.Red, ErrMsg, AnsiColor.Reset);
-                    return false;
-                }
-            }
-        } catch (java.net.ConnectException E) {
-            System.out.printf(I + "%s✘ Connection refused — %s:%d%s%n", AnsiColor.Red, TsHost, TsPort, AnsiColor.Reset);
-            System.out.println();
-            System.out.println(I + "TeamClient requires a running TeamServer Web (-TSW), not TeamServer CLI (-TSC).");
-            System.out.println(I + "Start the server first:");
-            System.out.println();
-            System.out.printf(I + "  %s# Operator 1 (primary — starts server + web panel)%s%n", AnsiColor.White, AnsiColor.Reset);
-            System.out.printf(I + "  java -jar raven.jar -TSW -p 4444 -tp %d%n%n", TsPort);
-            System.out.printf(I + "  %s# Operator 2+ (connect to running server)%s%n", AnsiColor.White, AnsiColor.Reset);
-            System.out.printf(I + "  java -jar raven.jar -TC -ts %s -tp %d%n%n", TsHost, TsPort);
-            return false;
-        } catch (Exception E) {
-            String Msg = E.getMessage() != null ? E.getMessage() : E.getClass().getSimpleName();
-            System.out.printf(I + "%s✘ TeamServer unreachable: %s%s%n%n", AnsiColor.Red, Msg, AnsiColor.Reset);
-            System.out.println(I + "Ensure TeamServer is running with -TSW flag.");
-            return false;
-        }
-
-        BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
-        for (int Try = 0; Try < 3; Try++) {
-            try {
-                System.out.printf(I + "%sUsername: %s", AnsiColor.White, AnsiColor.Reset);
-                String User = Reader.readLine();
-                if (User == null || User.isBlank()) return false;
-                System.out.printf(I + "%sPassword: %s", AnsiColor.White, AnsiColor.Reset);
-                String Pass = Reader.readLine();
-                if (Pass == null) return false;
-
-                Map<String, Object> Body = new LinkedHashMap<>();
-                Body.put("Username", User.trim());
-                Body.put("Password", Pass.trim());
-                Map<String, Object> Resp = Post("/api/auth/login", Body);
-
-                if (Resp.containsKey("Error")) {
-                    System.out.printf(I + "%s✘ %s%s%n", AnsiColor.Red, Resp.get("Error"), AnsiColor.Reset);
-                    continue;
-                }
-                Token = Resp.getOrDefault("Token", "").toString();
-                OperatorName = Resp.getOrDefault("Username", User.trim()).toString();
-                OperatorRole = Resp.getOrDefault("Role", "MEMBER").toString();
-
-                System.out.printf("%n" + I + "%s✔ Welcome, %s [%s]%s%n", AnsiColor.Green, OperatorName, OperatorRole, AnsiColor.Reset);
-                System.out.printf(I + "%sConnected to TeamServer at %s:%d%s%n%n", AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
-                return true;
-            } catch (Exception E) {
-                System.out.printf(I + "%s✘ Error: %s%s%n", AnsiColor.Red, E.getMessage(), AnsiColor.Reset);
-            }
-        }
-        return false;
+        PromptManager.SetPrompt(PROMPT_BOTTOM);
     }
 
     public void Run() {
         if (!Login()) return;
-        Prompt();
         BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
         while (Running) {
             try {
-                System.out.print(AnsiColor.Red + "┌──(RAVEN-CLIENT)" + AnsiColor.Reset + "\n" + AnsiColor.Red + "└─>> " + AnsiColor.Reset);
-                String Line = Reader.readLine();
-                if (Line == null) break;
-                Line = Line.trim();
-                if (Line.isEmpty()) continue;
-                String[] Parts = Line.split("\\s+");
+                System.out.println();
+                System.out.println(PROMPT_TOP);
+                System.out.print(PROMPT_BOTTOM);
+                System.out.flush();
+                PromptManager.MarkVisible(true);
+                String Input = Reader.readLine();
+                PromptManager.MarkVisible(false);
+                if (Input == null) break;
+                Input = Input.trim();
+                if (Input.isEmpty()) continue;
+                String[] Parts = Input.split("\\s+", 3);
                 String Cmd = Parts[0].toLowerCase();
-                switch (Cmd) {
-                    case "sessions", "agents" -> ShowSessions();
-                    case "exec" -> CmdExec(Parts, Line);
-                    case "broadcast" -> CmdBroadcast(Parts, Line);
-                    case "kill" -> CmdKill(Parts);
-                    case "sysinfo", "info" -> CmdSysinfo(Parts);
-                    case "whoami" -> CmdExecSimple(Parts, "whoami");
-                    case "sleep" -> CmdSleep(Parts);
-                    case "screenshot" -> CmdScreenshot(Parts);
-                    case "download" -> CmdDownload(Parts);
-                    case "upload" -> CmdUpload(Parts);
-                    case "note" -> CmdNote(Parts);
-                    case "getnote" -> CmdGetNote(Parts);
-                    case "history" -> CmdHistory(Parts);
-                    case "listopt" -> CmdListOperators();
-                    case "chat" -> CmdChat();
-                    case "chathistory" -> CmdChatHistory();
-                    case "ch" -> CmdChatSend(Parts, Line, false);
-                    case "gc" -> CmdChatSend(Parts, Line, true);
-                    case "status" -> CmdStatus();
-                    case "logs" -> CmdLogs();
-                    case "help" -> Prompt();
-                    case "clear" -> System.out.print("\033[H\033[2J");
-                    case "exit", "quit" -> {
-                        Running = false;
-                        try {
-                            Post("/api/auth/logout", null);
-                        } catch (Exception Ign) {}
-                        System.out.printf(I + "%s⏻ Disconnected from TeamServer%s%n%n", AnsiColor.White, AnsiColor.Reset);
-                    }
-                    default -> System.out.printf(I + "%s✘ Unknown: %s — type 'help'%s%n", AnsiColor.Red, Cmd, AnsiColor.Reset);
-                }
-            } catch (IOException E) {
+                Dispatch(Cmd, Parts, Input);
+            } catch (IOException Ex) {
                 break;
             }
         }
         System.exit(0);
+    }
+
+    private void Dispatch(String Cmd, String[] P, String Line) {
+        switch (Cmd) {
+            case "exit", "quit" -> {
+                Running = false;
+                try {
+                    Post("/api/auth/logout", null);
+                } catch (Exception Ign) {}
+                Logger.Ok("Disconnected from TeamServer");
+            }
+            case "help" -> ShowHelp();
+            case "clear" -> TerminalHelper.Clear();
+            case "sessions", "agents" -> ShowSessions();
+            case "status" -> ShowStatus();
+            case "logs" -> ShowLogs();
+            case "chat" -> ShowChat();
+            case "chathistory" -> ShowChatHistory(100);
+            case "listopt" -> ShowOperators();
+            case "exec" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("exec").Usage());
+                    break;
+                }
+                try {
+                    Exec(ParseInt(P[1]), Line.substring(Line.indexOf(P[2])));
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "broadcast" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("broadcast").Usage());
+                    break;
+                }
+                DoBroadcast(P[1].toLowerCase(), Line.substring(Line.indexOf(P[2])));
+            }
+            case "kill" -> {
+                if (P.length < 2) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("kill").Usage());
+                    break;
+                }
+                try {
+                    Kill(ParseInt(P[1]));
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "sysinfo", "info" -> {
+                if (P.length < 2) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("sysinfo").Usage());
+                    break;
+                }
+                try {
+                    ShowSessionInfo(ParseInt(P[1]));
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "whoami" -> {
+                if (P.length < 2) Logger.Warn("usage: whoami <id>");
+                else SimpleExec(P, "whoami");
+            }
+            case "ps" -> {
+                if (P.length < 2) Logger.Warn("usage: ps <id>");
+                else SimpleExec(P, "ps");
+            }
+            case "pwd" -> {
+                if (P.length < 2) Logger.Warn("usage: pwd <id>");
+                else SimpleExec(P, "pwd");
+            }
+            case "env" -> {
+                if (P.length < 2) Logger.Warn("usage: env <id>");
+                else SimpleExec(P, "env");
+            }
+            case "ifconfig", "ipconfig" -> {
+                if (P.length < 2) Logger.Warn("usage: ifconfig <id>");
+                else SimpleExec(P, "ifconfig");
+            }
+            case "netstat" -> {
+                if (P.length < 2) Logger.Warn("usage: netstat <id>");
+                else SimpleExec(P, "netstat");
+            }
+            case "screenshot" -> {
+                if (P.length < 2) Logger.Warn("usage: screenshot <id>");
+                else SimpleExec(P, "screenshot");
+            }
+            case "ping" -> {
+                if (P.length < 2) Logger.Warn("usage: ping <id>");
+                else SimpleExec(P, "ping");
+            }
+            case "reconnect" -> {
+                if (P.length < 2) Logger.Warn("usage: reconnect <id>");
+                else SimpleExec(P, "reconnect");
+            }
+            case "sleep" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("sleep").Usage());
+                    break;
+                }
+                try {
+                    Exec(ParseInt(P[1]), "sleep " + P[2]);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "ls" -> {
+                if (P.length < 2) {
+                    Logger.Warn("usage: ls <id> [path]");
+                    break;
+                }
+                try {
+                    Exec(ParseInt(P[1]), P.length > 2 ? "ls " + P[2] : "ls");
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "cat" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: cat <id> <file>");
+                    break;
+                }
+                try {
+                    Exec(ParseInt(P[1]), "cat " + P[2]);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "download" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("download").Usage());
+                    break;
+                }
+                try {
+                    DoDownload(ParseInt(P[1]), P[2]);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "upload" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("upload").Usage());
+                    break;
+                }
+                try {
+                    String[] Up = P[2].split("\\s+", 2);
+                    DoUpload(ParseInt(P[1]), Up[0], Up.length > 1 ? Up[1] : "");
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "note" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("note").Usage());
+                    break;
+                }
+                try {
+                    SetNote(ParseInt(P[1]), P[2]);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "getnote" -> {
+                if (P.length < 2) {
+                    Logger.Warn("usage: " + CommandRegistry.Get("getnote").Usage());
+                    break;
+                }
+                try {
+                    GetNote(ParseInt(P[1]));
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "history" -> {
+                int Id = P.length > 1 ? ParseIntSafe(P[1], 0) : 0;
+                int Lim = P.length > 2 ? ParseIntSafe(P[2], 50) : 50;
+                ShowHistory(Id, Lim);
+            }
+            case "ch" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: ch <name> <msg>");
+                    break;
+                }
+                SendChat(P[1], Line.substring(Line.indexOf(P[2])));
+            }
+            case "gc" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: gc <all|name,...> <msg>");
+                    break;
+                }
+                String Target = P[1].toLowerCase();
+                String Msg = Line.substring(Line.indexOf(P[2]));
+                if (Target.equals("all")) {
+                    SendChat("all", Msg);
+                } else {
+                    for (String N : Target.split(",")) {
+                        String T = N.trim();
+                        if (!T.isEmpty()) SendChat(T, Msg);
+                    }
+                }
+            }
+            case "shell" -> {
+                if (P.length < 3) {
+                    Logger.Warn("usage: shell <id> <cmd>");
+                    break;
+                }
+                try {
+                    Exec(ParseInt(P[1]), "shell " + P[2]);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "self-destruct", "selfdestruct" -> {
+                if (OperatorRoleValue == null || !OperatorRoleValue.CanManage()) {
+                    Logger.Warn("ADMIN/SUPER required");
+                    break;
+                }
+                if (P.length < 2) {
+                    Logger.Warn("usage: self-destruct <id>");
+                    break;
+                }
+                try {
+                    Exec(ParseInt(P[1]), "self-destruct");
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "sessions-history", "sesshistory" -> {
+                int Lim = P.length > 1 ? ParseIntSafe(P[1], 50) : 50;
+                ShowSessionHistory(Lim);
+            }
+            default -> {
+                Logger.Error("unknown command: " + Cmd);
+                Logger.Info("type 'help' for available commands");
+            }
+        }
+    }
+
+    private boolean Login() {
+        System.out.println();
+        System.out.println(TerminalHelper.Box("TEAMCLIENT — CONNECT TO TEAMSERVER"));
+        System.out.println();
+        Logger.Custom(INDENT + "%sTeamServer:%s %s:%d%n%n", AnsiColor.Red, AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
+        try {
+            Post("/api/auth/login", new LinkedHashMap<>());
+        } catch (java.net.ConnectException Ex) {
+            Logger.Error("connection refused — " + TsHost + ":" + TsPort);
+            System.out.println();
+            Logger.Custom(INDENT + "TeamClient requires a running TeamServer Web (-TSW).%n");
+            Logger.Custom(INDENT + "Start with: java -jar raven.jar -TSW -p 4444 -tp %d%n%n", TsPort);
+            return false;
+        } catch (Exception Ex) {
+            Logger.Error("TeamServer unreachable: " + Ex.getMessage());
+            return false;
+        }
+        BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
+        for (int Try = 0; Try < 3; Try++) {
+            try {
+                Logger.Custom(INDENT + "%sUsername:%s ", AnsiColor.White, AnsiColor.Reset);
+                System.out.flush();
+                String User = Reader.readLine();
+                if (User == null || User.isBlank()) return false;
+                Logger.Custom(INDENT + "%sPassword:%s ", AnsiColor.White, AnsiColor.Reset);
+                System.out.flush();
+                String Pass = Reader.readLine();
+                if (Pass == null) return false;
+                Map<String, Object> Body = new LinkedHashMap<>();
+                Body.put("Username", User.trim());
+                Body.put("Password", Pass.trim());
+                Map<String, Object> Resp = Post("/api/auth/login", Body);
+                if (Resp.containsKey("Error")) {
+                    Logger.Error(Resp.get("Error").toString() + " (" + (Try + 1) + "/3)");
+                    continue;
+                }
+                Token = Resp.getOrDefault("Token", "").toString();
+                OperatorName = Resp.getOrDefault("Username", User.trim()).toString();
+                OperatorRoleValue = OperatorRole.FromString(Resp.getOrDefault("Role", "MEMBER").toString());
+                System.out.println();
+                Logger.Ok("Welcome, " + OperatorName + " [" + OperatorRoleValue + "]");
+                Logger.Custom(INDENT + "%sConnected to TeamServer at %s:%d%s%n%n", AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
+                return true;
+            } catch (Exception Ex) {
+                Logger.Error(Ex.getMessage());
+            }
+        }
+        Logger.Error("authentication failed");
+        return false;
+    }
+
+    private void ShowHelp() {
+        System.out.println(TerminalHelper.Box("TEAMCLIENT COMMANDS"));
+        System.out.println();
+        Logger.Custom(INDENT + "%sConnected as:%s %s[%s / %s]%s  Server: %s%s:%d%s%n%n", AnsiColor.Red, AnsiColor.White, AnsiColor.Green, OperatorName != null ? OperatorName : "—", OperatorRoleValue != null ? OperatorRoleValue.name() : "—", AnsiColor.White, AnsiColor.Red, TsHost, TsPort, AnsiColor.Reset);
+        for (Category Cat : Category.values()) {
+            List<CommandDef> Cmds = CommandRegistry.ByCategory(Cat);
+            if (Cmds.isEmpty()) continue;
+            Logger.Custom(INDENT + "%s%s%s%n", AnsiColor.Red, Cat.name(), AnsiColor.Reset);
+            for (CommandDef Def : Cmds) Logger.Custom(INDENT + "  %s%-42s%s %s%n", AnsiColor.White, Def.Usage(), AnsiColor.Reset, Def.Description());
+            System.out.println();
+        }
     }
 
     private void ShowSessions() {
@@ -187,305 +378,113 @@ public final class TeamClient {
             Map<String, Object> R = Get("/api/agents");
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> Agents = (List<Map<String, Object>>) R.getOrDefault("Agents", new ArrayList<>());
-            System.out.println();
-            System.out.println(Box("ACTIVE SESSIONS"));
+            System.out.println(TerminalHelper.Box("ACTIVE SESSIONS (" + Agents.size() + ")"));
             System.out.println();
             if (Agents.isEmpty()) {
-                System.out.println(I + "  No active sessions\n");
+                Logger.Info(INDENT + "no active sessions");
+                System.out.println();
                 return;
             }
-            System.out.printf(I + "%s%-5s %-14s %-14s %-16s %-10s %-10s %s%s%n", AnsiColor.Red, "ID", "NAME/CERT", "TYPE", "IP", "OS", "USER", "SESSION-KEY", AnsiColor.Reset);
-            System.out.println(I + "─".repeat(95));
+            Logger.Custom(INDENT + "%s%-5s %-14s %-16s %-14s %-10s %-10s %s%s%n", AnsiColor.Red, "ID", "NAME", "IP", "TYPE", "OS", "USER", "KEY", AnsiColor.Reset);
+            System.out.println(TerminalHelper.Divider());
             for (Map<String, Object> A : Agents) {
-                System.out.printf(I + "%s#%-4s %-14s %-14s %-16s %-10s %-10s %s%s%n", AnsiColor.White, A.getOrDefault("ID", "?"), truncate(A.getOrDefault("AgentName", "?").toString().toUpperCase(), 13), A.getOrDefault("Type", "?"), A.getOrDefault("AgentIP", "?"), truncate(A.getOrDefault("OS", "?").toString(), 9), truncate(A.getOrDefault("User", "?").toString(), 9), A.getOrDefault("SessionKey", "—"), AnsiColor.Reset);
+                Logger.Custom(INDENT + "%s#%-4s %-14s %-16s %-14s %-10s %-10s %s%s%n", AnsiColor.White, A.getOrDefault("ID", "?"), TerminalHelper.Truncate(A.getOrDefault("AgentName", "?").toString(), 14), TerminalHelper.Truncate(A.getOrDefault("AgentIP", "?").toString(), 16), A.getOrDefault("Type", "?"), TerminalHelper.Truncate(A.getOrDefault("OS", "?").toString(), 10), TerminalHelper.Truncate(A.getOrDefault("User", "?").toString(), 10), A.getOrDefault("SessionKey", "—"), AnsiColor.Reset);
             }
             System.out.println();
-        } catch (Exception E) {
-            Err(E);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
         }
     }
 
-    private void CmdExec(String[] Parts, String Line) {
-        if (Parts.length < 3) {
-            Warn("Usage: exec <id> <cmd>");
-            return;
-        }
-        try {
-            int Id = Integer.parseInt(Parts[1]);
-            String Cmd = Line.substring(Line.indexOf(Parts[2]));
-            Map<String, Object> Body = new LinkedHashMap<>();
-            Body.put("AgentId", Id);
-            Body.put("Command", Cmd);
-            Body.put("Operator", OperatorName);
-            Map<String, Object> R = Post("/api/command/execute", Body);
-            boolean Ok = Boolean.parseBoolean(R.getOrDefault("Success", "false").toString());
-            printOutput(Ok, R.getOrDefault("Output", "").toString());
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdBroadcast(String[] Parts, String Line) {
-        if (Parts.length < 3) {
-            Warn("Usage: broadcast <all|id1,id2,...> <cmd>");
-            return;
-        }
-        try {
-            String Target = Parts[1].toLowerCase();
-            String Cmd = Line.substring(Line.indexOf(Parts[2]));
-            Map<String, Object> Body = new LinkedHashMap<>();
-            Body.put("Command", Cmd);
-            Body.put("Operator", OperatorName);
-            Map<String, Object> R;
-            if (Target.equals("all")) {
-                R = Post("/api/command/broadcastall", Body);
-            } else {
-                List<Integer> Ids = new ArrayList<>();
-                for (String S : Target.split(",")) {
-                    try {
-                        Ids.add(Integer.parseInt(S.trim()));
-                    } catch (Exception Ign) {}
-                }
-                Body.put("AgentIds", Ids);
-                R = Post("/api/command/broadcast", Body);
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> Results = (Map<String, Object>) R.getOrDefault("Results", new HashMap<>());
-            Results.forEach((Id, V) -> {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> Res = (Map<String, Object>) V;
-                boolean Ok = Boolean.parseBoolean(Res.getOrDefault("Success", "false").toString());
-                System.out.printf(I + "%s[%s] %s%s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, Id, Ok ? "✔ " : "✘ ", Res.getOrDefault("Output", ""), AnsiColor.Reset);
-            });
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdKill(String[] Parts) {
-        if (Parts.length < 2) {
-            Warn("Usage: kill <id>");
-            return;
-        }
-        try {
-            Map<String, Object> Body = new LinkedHashMap<>();
-            Body.put("AgentId", Integer.parseInt(Parts[1]));
-            Map<String, Object> R = Post("/api/agents/kill", Body);
-            boolean Ok = Boolean.parseBoolean(R.getOrDefault("Success", "false").toString());
-            if (Ok) Ok("Session-" + Parts[1] + " terminated");
-            else Err("Kill failed: " + R.getOrDefault("Error", "?"));
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdSysinfo(String[] Parts) {
-        if (Parts.length < 2) {
-            Warn("Usage: sysinfo <id>");
-            return;
-        }
+    private void ShowSessionInfo(int Id) {
         try {
             Map<String, Object> R = Get("/api/agents");
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> Agents = (List<Map<String, Object>>) R.getOrDefault("Agents", new ArrayList<>());
-            int Id = Integer.parseInt(Parts[1]);
             Map<String, Object> A = Agents.stream()
-                .filter(X -> Integer.parseInt(X.getOrDefault("ID", "-1").toString()) == Id)
+                .filter(X -> ParseIntSafe(X.getOrDefault("ID", "-1").toString(), -1) == Id)
                 .findFirst()
                 .orElse(null);
             if (A == null) {
-                Warn("Session not found");
+                Logger.Warn("session not found");
                 return;
             }
-            System.out.println(Box("SESSION INFO — #" + Id));
+            System.out.println(TerminalHelper.Box("SESSION INFO — #" + Id));
             System.out.println();
-            A.forEach((K, V) -> System.out.printf(I + "%s%-12s%s %s%n", AnsiColor.Red, K, AnsiColor.White, V));
+            A.forEach((K, V) -> Logger.Custom(INDENT + "%s%-14s%s %s%n", AnsiColor.Red, K, AnsiColor.White, V));
+            Logger.Custom("%s%n", AnsiColor.Reset);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void ShowStatus() {
+        try {
+            Map<String, Object> R = Get("/api/server/status");
+            System.out.println(TerminalHelper.Box("SERVER STATUS"));
             System.out.println();
-        } catch (Exception E) {
-            Err(E);
+            Logger.Custom(INDENT + "%sStatus    %s%s%s%n", AnsiColor.Red, AnsiColor.Green, R.getOrDefault("Status", "?"), AnsiColor.Reset);
+            Logger.Custom(INDENT + "%sMode      %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Mode", "?"));
+            Logger.Custom(INDENT + "%sAddress   %s%s:%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Host", "?"), R.getOrDefault("Port", "?"));
+            Logger.Custom(INDENT + "%sUptime    %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Uptime", "?"));
+            Logger.Custom(INDENT + "%sSessions  %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Agents", 0));
+            Logger.Custom(INDENT + "%sDB        %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, "true".equals(R.getOrDefault("DbOnline", "false").toString()) ? "connected" : "offline", R.getOrDefault("DbType", "?"));
+            Logger.Custom(INDENT + "%sServer    %shttp://%s:%d%s%n%n", AnsiColor.Red, AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
         }
     }
 
-    private void CmdExecSimple(String[] Parts, String Cmd) {
-        if (Parts.length < 2) {
-            Warn("Usage: " + Cmd + " <id>");
-            return;
-        }
-        String[] P = new String[] { Cmd, Parts[1], Cmd };
-        CmdExec(P, Cmd + " " + Parts[1] + " " + Cmd);
-    }
-
-    private void CmdSleep(String[] Parts) {
-        if (Parts.length < 3) {
-            Warn("Usage: sleep <id> <seconds>");
-            return;
-        }
-        CmdExec(new String[] { "exec", Parts[1], "sleep " + Parts[2] }, "exec " + Parts[1] + " sleep " + Parts[2]);
-    }
-
-    private void CmdScreenshot(String[] Parts) {
-        if (Parts.length < 2) {
-            Warn("Usage: screenshot <id>");
-            return;
-        }
+    private void ShowLogs() {
         try {
-            Map<String, Object> Body = Map.of("AgentId", Integer.parseInt(Parts[1]), "Operator", OperatorName);
-            Map<String, Object> R = Post("/api/command/screenshot", Body);
-            boolean Ok = Boolean.parseBoolean(R.getOrDefault("Success", "false").toString());
-            printOutput(Ok, R.getOrDefault("Output", "").toString());
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdDownload(String[] Parts) {
-        if (Parts.length < 3) {
-            Warn("Usage: download <id> <remote-path>");
-            return;
-        }
-        try {
-            Map<String, Object> Body = Map.of("AgentId", Integer.parseInt(Parts[1]), "Path", Parts[2], "Operator", OperatorName);
-            Map<String, Object> R = Post("/api/command/download", Body);
-            boolean Ok = Boolean.parseBoolean(R.getOrDefault("Success", "false").toString());
-            printOutput(Ok, R.getOrDefault("Output", "").toString());
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdUpload(String[] Parts) {
-        if (Parts.length < 3) {
-            Warn("Usage: upload <id> <local-path> [remote-path]");
-            return;
-        }
-        try {
-            Map<String, Object> Body = new LinkedHashMap<>();
-            Body.put("AgentId", Integer.parseInt(Parts[1]));
-            Body.put("LocalPath", Parts[2]);
-            Body.put("RemotePath", Parts.length > 3 ? Parts[3] : "");
-            Body.put("Operator", OperatorName);
-            Map<String, Object> R = Post("/api/command/upload", Body);
-            boolean Ok = Boolean.parseBoolean(R.getOrDefault("Success", "false").toString());
-            printOutput(Ok, R.getOrDefault("Output", "").toString());
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdNote(String[] Parts) {
-        if (Parts.length < 3) {
-            Warn("Usage: note <id> <text>");
-            return;
-        }
-        try {
-            String Note = String.join(" ", Arrays.copyOfRange(Parts, 2, Parts.length));
-            Map<String, Object> R = Post("/api/agents/note", Map.of("AgentId", Integer.parseInt(Parts[1]), "Note", Note));
-            if (Boolean.parseBoolean(R.getOrDefault("Success", "false").toString())) Ok("Note saved for Session-" + Parts[1]);
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdGetNote(String[] Parts) {
-        if (Parts.length < 2) {
-            Warn("Usage: getnote <id>");
-            return;
-        }
-        try {
-            Map<String, Object> R = Get("/api/agents");
+            Map<String, Object> R = Get("/api/logs");
             @SuppressWarnings("unchecked")
-            List<Map<String, Object>> Agents = (List<Map<String, Object>>) R.getOrDefault("Agents", new ArrayList<>());
-            int Id = Integer.parseInt(Parts[1]);
-            Optional<Map<String, Object>> A = Agents.stream()
-                .filter(X -> Integer.parseInt(X.getOrDefault("ID", "-1").toString()) == Id)
-                .findFirst();
-            System.out.printf(I + "Note [%d]: %s%s%s%n", Id, AnsiColor.White, A.map(X -> X.getOrDefault("Note", "(none)").toString()).orElse("(session not found)"), AnsiColor.Reset);
-        } catch (Exception E) {
-            Err(E);
+            List<String> Logs = (List<String>) R.getOrDefault("Logs", new ArrayList<>());
+            System.out.println(TerminalHelper.Box("RECENT LOGS (last 30)"));
+            System.out.println();
+            Logs.stream()
+                .skip(Math.max(0, Logs.size() - 30))
+                .forEach(L -> Logger.Custom(INDENT + "%s%s%s%n", AnsiColor.White, L, AnsiColor.Reset));
+            System.out.println();
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
         }
     }
 
-    private void CmdHistory(String[] Parts) {
-        try {
-            int Id = Parts.length > 1 ? Integer.parseInt(Parts[1]) : 0;
-            int Lim = Parts.length > 2 ? Integer.parseInt(Parts[2]) : 50;
-            Map<String, Object> Body = Map.of("AgentId", Id, "Limit", Lim);
-            Map<String, Object> R = Post("/api/command/history", Body);
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> Hist = (List<Map<String, Object>>) R.getOrDefault("History", new ArrayList<>());
-            System.out.println(Box("COMMAND HISTORY (last " + Lim + ")"));
-            System.out.println();
-            if (Hist.isEmpty()) {
-                System.out.println(I + " No history\n");
-                return;
-            }
-            System.out.printf(I + "%s%-5s %-12s %-14s %-36s %s%s%n", AnsiColor.Red, "SID", "OPERATOR", "STATUS", "COMMAND", "TIMESTAMP", AnsiColor.Reset);
-            System.out.println(I + "─".repeat(80));
-            for (Map<String, Object> H : Hist) {
-                boolean Ok = Boolean.parseBoolean(H.getOrDefault("Success", "false").toString());
-                String Cmd = H.getOrDefault("Command", "").toString();
-                if (Cmd.length() > 36) Cmd = Cmd.substring(0, 35) + "…";
-                System.out.printf(I + "%s%-5s %-12s %s%-14s%s %-36s %s%s%n", AnsiColor.White, H.getOrDefault("AgentId", "?"), H.getOrDefault("Operator", "?"), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "✔ ok" : "✘ fail", AnsiColor.White, Cmd, H.getOrDefault("Timestamp", ""), AnsiColor.Reset);
-            }
-            System.out.println();
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdListOperators() {
-        try {
-            Map<String, Object> R = Get("/api/team/operators");
-            @SuppressWarnings("unchecked")
-            List<Map<String, Object>> Ops = (List<Map<String, Object>>) R.getOrDefault("Operators", new ArrayList<>());
-            System.out.println(Box("OPERATORS (" + Ops.size() + ")"));
-            System.out.println();
-            System.out.printf(I + "%s%-18s %-10s %-24s %-20s%s%n", AnsiColor.Red, "USERNAME", "ROLE", "PERMISSIONS", "LAST SEEN", AnsiColor.Reset);
-            System.out.println(I + "─".repeat(75));
-            for (Map<String, Object> Op : Ops) {
-                String Role = Op.getOrDefault("Role", "MEMBER").toString();
-                String Perm = com.raven.core.database.TeamDatabase.OperatorRole.FromString(Role).PermissionString().replaceAll("^\\[.*?\\]\\s*", "");
-                String Mark = Op.getOrDefault("Username", "").toString().equals(OperatorName) ? " ◀ YOU" : "";
-                System.out.printf(I + "%s%-18s %-10s %-24s %-20s%s%s%n", AnsiColor.White, Op.getOrDefault("Username", "?"), Role, "[" + com.raven.core.database.TeamDatabase.OperatorRole.FromString(Role).ShortPerm() + "] " + Perm, Op.getOrDefault("LastSeen", "Never"), Mark, AnsiColor.Reset);
-            }
-            System.out.println();
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdChat() {
+    private void ShowChat() {
         try {
             Map<String, Object> R = Post("/api/team/chat/messages", null);
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> Msgs = (List<Map<String, Object>>) R.getOrDefault("Messages", new ArrayList<>());
-            System.out.println(Box("CHAT MESSAGES"));
+            System.out.println(TerminalHelper.Box("CHAT MESSAGES"));
             System.out.println();
             if (Msgs.isEmpty()) {
-                System.out.println(I + "⚠ No messages\n");
+                Logger.Info(INDENT + "no messages");
+                System.out.println();
                 return;
             }
             for (Map<String, Object> M : Msgs) {
                 String From = M.getOrDefault("From", "?").toString();
                 String To = M.getOrDefault("To", "all").toString();
                 boolean Mine = From.equals(OperatorName);
-                System.out.printf(I + "%s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, M.getOrDefault("Time", ""), Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
+                Logger.Custom(INDENT + "%s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, M.getOrDefault("Time", ""), Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
             }
             System.out.println();
-        } catch (Exception E) {
-            Err(E);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
         }
     }
 
-    private void CmdChatHistory() {
+    private void ShowChatHistory(int Limit) {
         try {
-            Map<String, Object> R = Post("/api/team/chat/logs", Map.of("Limit", 100));
+            Map<String, Object> R = Post("/api/team/chat/logs", Map.of("Limit", Limit));
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> Logs = (List<Map<String, Object>>) R.getOrDefault("Logs", new ArrayList<>());
-            System.out.println(Box("CHAT HISTORY (DB — last 100)"));
+            System.out.println(TerminalHelper.Box("CHAT HISTORY (DB — last " + Limit + ")"));
             System.out.println();
             if (Logs.isEmpty()) {
-                System.out.println(I + "⚠ No chat history\n");
+                Logger.Info(INDENT + "no chat history");
+                System.out.println();
                 return;
             }
             List<Map<String, Object>> Rev = new ArrayList<>(Logs);
@@ -496,150 +495,254 @@ public final class TeamClient {
                 String Ts = M.getOrDefault("timestamp", "").toString();
                 if (Ts.length() > 19) Ts = Ts.substring(11, 19);
                 boolean Mine = From.equals(OperatorName);
-                System.out.printf(I + "%s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("message", ""), AnsiColor.Reset);
+                Logger.Custom(INDENT + "%s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("message", ""), AnsiColor.Reset);
             }
             System.out.println();
-        } catch (Exception E) {
-            Err(E);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
         }
     }
 
-    private void CmdChatSend(String[] Parts, String Line, boolean Global) {
-        if (Global) {
-            if (Parts.length < 3) {
-                Warn("Usage: gc all <message>");
-                return;
-            }
-            String Msg = Line.substring(Line.indexOf(Parts[2]));
-            try {
-                Post("/api/team/chat/send", Map.of("To", "all", "Message", Msg));
-                Ok("Broadcast: " + Msg);
-            } catch (Exception E) {
-                Err(E);
-            }
-        } else {
-            if (Parts.length < 3) {
-                Warn("Usage: ch <name> <message>");
-                return;
-            }
-            String To = Parts[1];
-            String Msg = Line.substring(Line.indexOf(Parts[2]));
-            try {
-                Post("/api/team/chat/send", Map.of("To", To, "Message", Msg));
-                Ok("Sent to " + To + ": " + Msg);
-            } catch (Exception E) {
-                Err(E);
-            }
-        }
-    }
-
-    private void CmdStatus() {
+    private void ShowOperators() {
         try {
-            Map<String, Object> R = Get("/api/server/status");
-            System.out.println(Box("SERVER STATUS"));
-            System.out.println();
-            System.out.printf(I + "%sStatus   %s%s%s%n", AnsiColor.Red, AnsiColor.Green, R.getOrDefault("Status", "?"), AnsiColor.Reset);
-            System.out.printf(I + "%sMode     %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Mode", "?"));
-            System.out.printf(I + "%sAddress  %s%s:%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Host", "?"), R.getOrDefault("Port", "?"));
-            System.out.printf(I + "%sUptime   %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Uptime", "?"));
-            System.out.printf(I + "%sSessions %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Agents", 0));
-            System.out.printf(I + "%sDB       %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("DbOnline", false).toString().equals("true") ? "Connected" : "Offline", R.getOrDefault("DbType", "?"));
-            System.out.printf(I + "%sServer   %shttp://%s:%d%s%n%n", AnsiColor.Red, AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
-        } catch (Exception E) {
-            Err(E);
-        }
-    }
-
-    private void CmdLogs() {
-        try {
-            Map<String, Object> R = Get("/api/logs");
+            Map<String, Object> R = Get("/api/team/operators");
             @SuppressWarnings("unchecked")
-            List<String> Logs = (List<String>) R.getOrDefault("Logs", new ArrayList<>());
-            System.out.println(Box("RECENT LOGS"));
+            List<Map<String, Object>> Ops = (List<Map<String, Object>>) R.getOrDefault("Operators", new ArrayList<>());
+            System.out.println(TerminalHelper.Box("OPERATORS (" + Ops.size() + ")"));
             System.out.println();
-            Logs.stream()
-                .skip(Math.max(0, Logs.size() - 30))
-                .forEach(L -> System.out.println(I + AnsiColor.White + L + AnsiColor.Reset));
+            Logger.Custom(INDENT + "%s%-18s %-10s %-24s %-20s%s%n", AnsiColor.Red, "USERNAME", "ROLE", "PERMISSIONS", "LAST SEEN", AnsiColor.Reset);
+            System.out.println(TerminalHelper.Divider());
+            for (Map<String, Object> Op : Ops) {
+                OperatorRole R2 = OperatorRole.FromString(Op.getOrDefault("Role", "MEMBER").toString());
+                boolean Me = Op.getOrDefault("Username", "").toString().equals(OperatorName);
+                Logger.Custom(INDENT + "%s%-18s %-10s %-24s %-20s%s%s%n", AnsiColor.White, Op.getOrDefault("Username", "?"), R2.name(), R2.PermissionString(), Op.getOrDefault("LastSeen", "Never"), Me ? AnsiColor.Green + " ◀ YOU" : "", AnsiColor.Reset);
+            }
             System.out.println();
-        } catch (Exception E) {
-            Err(E);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
         }
     }
 
-    private void Prompt() {
-        String R = AnsiColor.Red,
-            W = AnsiColor.White,
-            X = AnsiColor.Reset,
-            NL = "\n";
-        System.out.println(NL + I + W + "SESSION COMMANDS" + X);
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "sessions / agents", "List active sessions");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "exec <id> <cmd>", "Execute command");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "broadcast <all|ids> <cmd>", "Broadcast command");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "kill <id>", "Terminate session");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "sysinfo <id>", "Full session info");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "whoami <id>", "Run whoami");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "sleep <id> <secs>", "Set sleep interval");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "screenshot <id>", "Request screenshot");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "download <id> <path>", "Download file");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "upload <id> <local> [remote]", "Upload file");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "note <id> <text>", "Set session note");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "getnote <id>", "Get session note");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "history [id] [limit]", "Command history");
-        System.out.println();
-        System.out.println(I + W + "TEAM / STATUS" + X);
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "listopt", "List operators");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "chat", "In-memory chat");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "chathistory", "Chat history from DB");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "ch <name> <msg>", "DM an operator");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "gc all <msg>", "Broadcast chat");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "status", "Server status");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "logs", "Recent logs");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "help", "This help");
-        System.out.printf(I + "  " + R + "%-32s" + X + "%s%n", "exit / quit", "Disconnect");
-        System.out.println();
-        System.out.printf(I + W + "Connected as: %s[%s]%s  TeamServer: %s%s:%d%s%n%n", AnsiColor.Green, OperatorName != null ? OperatorName + " / " + OperatorRole : "—", AnsiColor.White, AnsiColor.Red, TsHost, TsPort, X);
-    }
-
-    private String Box(String Title) {
-        int W = 95;
-        int Pad = (W - 2 - Title.length()) / 2;
-        String Line = "─".repeat(W);
-        return "\n" + I + "┌" + Line + "┐" + "\n" + I + "│" + " ".repeat(Pad) + Title + " ".repeat(W - Pad - Title.length()) + "│" + "\n" + I + "└" + Line + "┘";
-    }
-
-    private void printOutput(boolean Ok, String Out) {
-        if (Ok) {
-            String Border = "─".repeat(88);
-            System.out.println(I + "┌─ Output " + border(79));
-            for (String L : Out.split("\n")) System.out.println(I + "│ " + L);
-            System.out.println(I + "└" + border(89));
-        } else {
-            System.out.printf(I + "%s✘ %s%s%n", AnsiColor.Red, Out, AnsiColor.Reset);
+    private void ShowHistory(int AgentId, int Limit) {
+        try {
+            Map<String, Object> Body = Map.of("AgentId", AgentId, "Limit", Limit);
+            Map<String, Object> R = Post("/api/command/history", Body);
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> Hist = (List<Map<String, Object>>) R.getOrDefault("History", new ArrayList<>());
+            System.out.println(TerminalHelper.Box("COMMAND HISTORY (last " + Limit + (AgentId > 0 ? " — session-" + AgentId : "") + ")"));
+            System.out.println();
+            if (Hist.isEmpty()) {
+                Logger.Info(INDENT + "no history");
+                System.out.println();
+                return;
+            }
+            Logger.Custom(INDENT + "%s%-5s %-12s %-10s %-36s %s%s%n", AnsiColor.Red, "SID", "OPERATOR", "STATUS", "COMMAND", "TIMESTAMP", AnsiColor.Reset);
+            System.out.println(TerminalHelper.Divider());
+            for (Map<String, Object> H : Hist) {
+                boolean Ok = Boolean.parseBoolean(H.getOrDefault("Success", "false").toString());
+                String Cmd = TerminalHelper.Truncate(H.getOrDefault("Command", "").toString(), 36);
+                Logger.Custom(INDENT + "%s%-5s %-12s %s%-10s%s %-36s %s%s%n", AnsiColor.White, H.getOrDefault("AgentId", "?"), TerminalHelper.Truncate(H.getOrDefault("Operator", "?").toString(), 12), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "✔ ok" : "✘ fail", AnsiColor.White, Cmd, H.getOrDefault("Timestamp", ""), AnsiColor.Reset);
+            }
+            System.out.println();
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
         }
+    }
+
+    private void ShowSessionHistory(int Limit) {
+        try {
+            Map<String, Object> R = Post("/api/sessions/history", Map.of("Limit", Limit));
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> Sess = (List<Map<String, Object>>) R.getOrDefault("Sessions", new ArrayList<>());
+            System.out.println(TerminalHelper.Box("SESSION HISTORY (last " + Limit + ")"));
+            System.out.println();
+            Sess.forEach(S -> Logger.Custom(INDENT + "%s%s%s%n", AnsiColor.White, S, AnsiColor.Reset));
+            System.out.println();
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void Exec(int Id, String Cmd) {
+        try {
+            Map<String, Object> Body = new LinkedHashMap<>();
+            Body.put("AgentId", Id);
+            Body.put("Command", Cmd);
+            Body.put("Operator", OperatorName);
+            Map<String, Object> R = Post("/api/command/execute", Body);
+            boolean Ok = Boolean.parseBoolean(R.getOrDefault("Success", "false").toString());
+            PrintOutput(Ok, R.getOrDefault("Output", "").toString());
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void SimpleExec(String[] Parts, String Cmd) {
+        try {
+            Exec(ParseInt(Parts[1]), Cmd);
+        } catch (NumberFormatException Ex) {
+            Logger.Warn("invalid session ID");
+        }
+    }
+
+    private void DoBroadcast(String Target, String Cmd) {
+        try {
+            Map<String, Object> Body = new LinkedHashMap<>();
+            Body.put("Command", Cmd);
+            Body.put("Operator", OperatorName);
+            Map<String, Object> R;
+            if (Target.equals("all")) {
+                R = Post("/api/command/broadcastall", Body);
+            } else {
+                List<Integer> Ids = new ArrayList<>();
+                for (String S : Target.split(","))
+                    try {
+                        Ids.add(Integer.parseInt(S.trim()));
+                    } catch (Exception Ign) {}
+                Body.put("AgentIds", Ids);
+                R = Post("/api/command/broadcast", Body);
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> Results = (Map<String, Object>) R.getOrDefault("Results", new LinkedHashMap<>());
+            Results.forEach((Id, V) -> {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> Res = (Map<String, Object>) V;
+                boolean Ok = Boolean.parseBoolean(Res.getOrDefault("Success", "false").toString());
+                Logger.Custom(INDENT + "%s[session-%s] %s%s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, Id, Ok ? "✔ " : "✘ ", Res.getOrDefault("Output", ""), AnsiColor.Reset);
+            });
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void Kill(int Id) {
+        try {
+            Map<String, Object> R = Post("/api/agents/kill", Map.of("AgentId", Id));
+            if (Boolean.parseBoolean(R.getOrDefault("Success", "false").toString())) Logger.Ok("session-" + Id + " terminated");
+            else Logger.Error("kill failed: " + R.getOrDefault("Error", "?"));
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void DoDownload(int Id, String Path) {
+        try {
+            Map<String, Object> R = Post("/api/command/download", Map.of("AgentId", Id, "Path", Path, "Operator", OperatorName));
+            PrintOutput(Boolean.parseBoolean(R.getOrDefault("Success", "false").toString()), R.getOrDefault("Output", "").toString());
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void DoUpload(int Id, String Local, String Remote) {
+        try {
+            Map<String, Object> Body = new LinkedHashMap<>();
+            Body.put("AgentId", Id);
+            Body.put("LocalPath", Local);
+            Body.put("RemotePath", Remote);
+            Body.put("Operator", OperatorName);
+            Map<String, Object> R = Post("/api/command/upload", Body);
+            PrintOutput(Boolean.parseBoolean(R.getOrDefault("Success", "false").toString()), R.getOrDefault("Output", "").toString());
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void SetNote(int Id, String Note) {
+        try {
+            Map<String, Object> R = Post("/api/agents/note", Map.of("AgentId", Id, "Note", Note));
+            if (Boolean.parseBoolean(R.getOrDefault("Success", "false").toString())) Logger.Ok("Note saved for session-" + Id);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void GetNote(int Id) {
+        try {
+            Map<String, Object> R = Get("/api/agents");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> Agents = (List<Map<String, Object>>) R.getOrDefault("Agents", new ArrayList<>());
+            Agents.stream()
+                .filter(A -> ParseIntSafe(A.getOrDefault("ID", "-1").toString(), -1) == Id)
+                .findFirst()
+                .ifPresentOrElse(A -> Logger.Custom(INDENT + "Note [%d]: %s%s%s%n", Id, AnsiColor.White, A.getOrDefault("Note", "(none)"), AnsiColor.Reset), () -> Logger.Warn("session not found"));
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void SendChat(String To, String Msg) {
+        try {
+            Post("/api/team/chat/send", Map.of("To", To, "Message", Msg));
+            Logger.Custom(INDENT + "%s→ %s:%s %s%n", AnsiColor.Green, To, AnsiColor.Reset, Msg);
+        } catch (Exception Ex) {
+            Logger.Error(Ex.getMessage());
+        }
+    }
+
+    private void PrintOutput(boolean Ok, String Out) {
+        if (Ok) System.out.println(TerminalHelper.OutputBox(Out));
+        else Logger.Error(Out);
         System.out.println();
     }
 
-    private String border(int N) {
-        return "─".repeat(N);
+    private Map<String, Object> Post(String Path, Map<String, Object> Body) throws Exception {
+        String Payload = Json.toJson(Body != null ? Body : new LinkedHashMap<>());
+        HttpRequest.Builder Req = HttpRequest.newBuilder()
+            .uri(URI.create("http://" + TsHost + ":" + TsPort + Path))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(Payload));
+        if (Token != null) Req.header("Authorization", "Bearer " + Token);
+        HttpResponse<String> Resp = Http.send(Req.build(), HttpResponse.BodyHandlers.ofString());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> R = Json.fromJson(Resp.body(), Map.class);
+        return R != null ? R : new LinkedHashMap<>();
     }
 
-    private void Ok(String M) {
-        System.out.printf(I + "%s✔ %s%s%n%n", AnsiColor.Green, M, AnsiColor.Reset);
+    private Map<String, Object> Get(String Path) throws Exception {
+        HttpRequest.Builder Req = HttpRequest.newBuilder()
+            .uri(URI.create("http://" + TsHost + ":" + TsPort + Path))
+            .header("Content-Type", "application/json")
+            .GET();
+        if (Token != null) Req.header("Authorization", "Bearer " + Token);
+        HttpResponse<String> Resp = Http.send(Req.build(), HttpResponse.BodyHandlers.ofString());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> R = Json.fromJson(Resp.body(), Map.class);
+        return R != null ? R : new LinkedHashMap<>();
     }
 
-    private void Warn(String M) {
-        System.out.printf(I + "%s⚠ %s%s%n", AnsiColor.White, M, AnsiColor.Reset);
+    private static int ParseInt(String S) {
+        return Integer.parseInt(S.trim());
     }
 
-    private void Err(Exception E) {
-        System.out.printf(I + "%s✘ %s%s%n", AnsiColor.Red, E.getMessage(), AnsiColor.Reset);
+    private static int ParseIntSafe(String S, int D) {
+        try {
+            return Integer.parseInt(S.trim());
+        } catch (Exception Ex) {
+            return D;
+        }
     }
 
-    private void Err(String M) {
-        System.out.printf(I + "%s✘ %s%s%n", AnsiColor.Red, M, AnsiColor.Reset);
-    }
+    private static final class Logger {
 
-    private static String truncate(String S, int N) {
-        return S.length() > N ? S.substring(0, N - 1) + "…" : S;
+        static void Ok(String M) {
+            System.out.printf("  %s✔ %s%s%n%n", AnsiColor.Green, M, AnsiColor.Reset);
+        }
+
+        static void Warn(String M) {
+            System.out.printf("  %s⚠ %s%s%n", AnsiColor.White, M, AnsiColor.Reset);
+        }
+
+        static void Error(String M) {
+            System.out.printf("  %s✘ %s%s%n", AnsiColor.Red, M, AnsiColor.Reset);
+        }
+
+        static void Info(String M) {
+            System.out.println(M);
+        }
+
+        static void Custom(String Fmt, Object... A) {
+            System.out.printf(Fmt, A);
+        }
     }
 }

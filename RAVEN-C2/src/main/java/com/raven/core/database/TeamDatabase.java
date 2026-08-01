@@ -120,6 +120,8 @@ public abstract class TeamDatabase {
 
     public abstract String GetAgentNote(int AgentId);
 
+    public abstract List<Map<String, Object>> GetAllAgentNotes();
+
     public abstract boolean CreateOperator(String Username, String PasswordHash, OperatorRole Role);
 
     public abstract boolean ValidateOperator(String Username, String PasswordHash);

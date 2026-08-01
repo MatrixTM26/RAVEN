@@ -148,8 +148,21 @@ public final class PostgresDatabase extends TeamDatabase {
     public String GetAgentNote(int AgentId) {
         List<Map<String, Object>> Rows = query("SELECT note FROM tcnotes WHERE agentid=?", AgentId);
         if (Rows.isEmpty()) return "";
-        Object V = Rows.get(0).get("note");
-        return V != null ? V.toString() : "";
+        Object Value = Rows.get(0).get("note");
+        return Value != null ? Value.toString() : "";
+    }
+
+    @Override
+    public List<Map<String, Object>> GetAllAgentNotes() {
+        List<Map<String, Object>> Rows = query("SELECT agentid, note FROM tcnotes ORDER BY agentid");
+        List<Map<String, Object>> Result = new ArrayList<>();
+        for (Map<String, Object> Row : Rows) {
+            Map<String, Object> Entry = new LinkedHashMap<>();
+            Entry.put("AgentId", Row.get("agentid"));
+            Entry.put("Note", Row.get("note"));
+            Result.add(Entry);
+        }
+        return Result;
     }
 
     @Override

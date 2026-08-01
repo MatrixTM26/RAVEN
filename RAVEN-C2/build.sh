@@ -11,7 +11,7 @@ readonly Reset='\033[0m'
 TotalSteps=4
 CurrentStep=0
 
-ConfigFile="maven/pom.xml"
+ConfigFile="pom.xml"
 
 PrintInfo() {
     local Message="$1"

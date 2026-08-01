@@ -4,26 +4,36 @@ public final class Palette {
 
     private Palette() {}
 
-    public static final String BG         = "#1c1c1c";
-    public static final String BG_ALT     = "#242424";
-    public static final String BG_DEEP    = "#141414";
-    public static final String SURFACE    = "#2a2a2a";
-    public static final String SURFACE2   = "#313131";
-    public static final String BORDER     = "#3d3d3d";
-    public static final String BORDER_ALT = "#4a4a4a";
+    public static final String Background        = "#1c1c1e";
+    public static final String BackgroundDeep    = "#111113";
+    public static final String BackgroundPanel   = "#232325";
+    public static final String BackgroundSurface = "#2c2c2e";
+    public static final String BackgroundInput   = "#2c2c2e";
+    public static final String BackgroundVoid    = "#0d0d0f";
 
-    public static final String ACCENT     = "#2196f3";
-    public static final String ACCENT_HOV = "#1976d2";
-    public static final String SUCCESS    = "#4caf50";
-    public static final String DANGER     = "#f44336";
-    public static final String DANGER_HOV = "#d32f2f";
-    public static final String WARNING    = "#ff9800";
+    public static final String BorderSubtle      = "#2c2c2e";
+    public static final String BorderDefault     = "#3a3a3c";
+    public static final String BorderStrong      = "#48484a";
 
-    public static final String TEXT       = "#e0e0e0";
-    public static final String TEXT_MUTED = "#8a8a8a";
-    public static final String TEXT_DIM   = "#5a5a5a";
-    public static final String TEXT_HEAD  = "#ffffff";
+    public static final String AccentBlue        = "#0a84ff";
+    public static final String AccentGreen       = "#30d158";
+    public static final String AccentRed         = "#ff453a";
+    public static final String AccentOrange      = "#ff9f0a";
+    public static final String AccentTeal        = "#5ac8fa";
+    public static final String AccentPink        = "#ff375f";
 
-    public static final String TERM_BG    = "#0d1117";
-    public static final String TERM_TEXT  = "#c9d1d9";
+    public static final String TextPrimary       = "#f2f2f7";
+    public static final String TextSecondary     = "#aeaeb2";
+    public static final String TextTertiary      = "#636366";
+    public static final String TextQuaternary    = "#3a3a3c";
+
+    public static final String TerminalBackground = "#0d0d0f";
+    public static final String TerminalText       = "#c9d1d9";
+    public static final String TerminalGreen      = "#30d158";
+    public static final String TerminalBlue       = "#0a84ff";
+    public static final String TerminalPink       = "#ff375f";
+
+    public static final String StatusOnline      = AccentGreen;
+    public static final String StatusOffline     = AccentRed;
+    public static final String StatusWarning     = AccentOrange;
 }

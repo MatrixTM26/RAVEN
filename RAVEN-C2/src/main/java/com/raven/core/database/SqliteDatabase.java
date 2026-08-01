@@ -243,6 +243,23 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
+    public List<Map<String, Object>> GetAllAgentNotes() {
+        List<Map<String, Object>> Result = new ArrayList<>();
+        try (PreparedStatement Statement = Conn.prepareStatement("SELECT agentid, note FROM tcnotes ORDER BY agentid")) {
+            ResultSet ResultSet = Statement.executeQuery();
+            while (ResultSet.next()) {
+                Map<String, Object> Row = new LinkedHashMap<>();
+                Row.put("AgentId", ResultSet.getInt("agentid"));
+                Row.put("Note", ResultSet.getString("note"));
+                Result.add(Row);
+            }
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetAllAgentNotes: " + Exception.getMessage());
+        }
+        return Result;
+    }
+
+    @Override
     public boolean CreateOperator(String Username, String PasswordHash, OperatorRole Role) {
         try (PreparedStatement Ps = Conn.prepareStatement("INSERT OR IGNORE INTO tcoperators (username,passwordhash,role,createdat,lastseen) VALUES (?,?,?,?,?)")) {
             Ps.setString(1, Username);
