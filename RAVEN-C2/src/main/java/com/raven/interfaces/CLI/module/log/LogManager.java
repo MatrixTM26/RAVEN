@@ -1,48 +1,46 @@
 package com.raven.interfaces.CLI.module.log;
 
+import com.raven.core.output.EventLog;
 import com.raven.core.output.Logger;
 import com.raven.interfaces.CLI.module.terminal.TerminalRenderer;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class LogManager {
 
-    private static final DateTimeFormatter TimestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    private final List<String>     Entries;
-    private final int              MaxEntries;
+    private final EventLog Log;
     private final TerminalRenderer Renderer;
 
     public LogManager(int MaxEntries, TerminalRenderer Renderer) {
-        this.MaxEntries = MaxEntries;
-        this.Renderer   = Renderer;
-        this.Entries    = new CopyOnWriteArrayList<>();
+        this.Log = new EventLog(MaxEntries);
+        this.Renderer = Renderer;
     }
 
     public void Add(String Message, boolean PrintNow) {
-        String Timestamp = LocalDateTime.now().format(TimestampFormat);
-        String Entry     = "[" + Timestamp + "] " + Message;
-        Entries.add(Entry);
-        if (Entries.size() > MaxEntries) Entries.remove(0);
-        if (PrintNow) Logger.Info(Entry);
+        Log.Add(Message, PrintNow);
+    }
+
+    public void Add(String Message) {
+        Log.Add(Message, false);
     }
 
     public int Count() {
-        return Entries.size();
+        return Log.Count();
+    }
+
+    public EventLog GetEventLog() {
+        return Log;
     }
 
     public void Show() {
         System.out.println(Renderer.Box("RECENT LOGS"));
         System.out.println();
-        if (Entries.isEmpty()) {
+        List<String> Last = Log.GetLast(25);
+        if (Last.isEmpty()) {
             Logger.Info(Renderer.Indent("no logs") + "\n");
             return;
         }
-        int Start = Math.max(0, Entries.size() - 25);
-        for (int Index = Start; Index < Entries.size(); Index++) {
-            Logger.Info(Renderer.Indent(Entries.get(Index)));
+        for (String Entry : Last) {
+            Logger.Info(Renderer.Indent(Entry));
         }
         System.out.println();
     }

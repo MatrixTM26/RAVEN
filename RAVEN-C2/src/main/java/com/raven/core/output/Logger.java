@@ -1,5 +1,6 @@
 package com.raven.core.output;
 
+import com.raven.core.output.PromptManager;
 import com.raven.utils.AnsiColor;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -92,7 +93,7 @@ public final class Logger {
         String Times = Timestamp();
         String PlainLine = "  [" + Times + "] [" + PlainTag + "] " + Formatted;
         String ColorLine = AnsiColor.White + "  [" + ColorCode + PlainTag + AnsiColor.White + "] " + AnsiColor.Dim + Formatted + AnsiColor.Reset;
-        System.out.println(ColorLine);
+        PromptManager.PrintAbove(ColorLine);
         if (FileEnabled) FileQueue.offer(PlainLine);
     }
 

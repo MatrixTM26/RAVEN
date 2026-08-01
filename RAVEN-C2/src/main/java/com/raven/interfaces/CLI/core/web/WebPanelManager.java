@@ -30,9 +30,6 @@ public final class WebPanelManager {
         }
         try {
             WebPanel = new WebApp(Config, ActiveMode);
-            if (Server != null && Server.IsRunning()) {
-                WebPanel.AttachServer(Server, ServerStartTime);
-            }
             WebPanel.Run(Host, Port);
             Logger.Custom("  %sWeb panel started > http://%s:%d/%s%n",
                 AnsiColor.Green, Host, Port, AnsiColor.Reset);

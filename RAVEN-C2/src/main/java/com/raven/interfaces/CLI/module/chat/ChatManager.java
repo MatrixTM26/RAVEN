@@ -3,6 +3,7 @@ package com.raven.interfaces.CLI.module.chat;
 import com.raven.core.database.TeamDatabase;
 import com.raven.core.output.Logger;
 import com.raven.interfaces.CLI.module.terminal.TerminalRenderer;
+import com.raven.utils.AnsiColor;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -42,8 +43,7 @@ public final class ChatManager {
         MessageHistory.add(Entry);
         if (MessageHistory.size() > MaxMessages) MessageHistory.remove(0);
         Database.SaveChatLog(OperatorName, Recipient, Message);
-        Logger.Custom("  Message sent to [%s%s%s]%n",
-            com.raven.utils.AnsiColor.Green, Recipient, com.raven.utils.AnsiColor.Reset);
+        Logger.Custom("  Message sent to [%s%s%s]%n", AnsiColor.Green, Recipient, AnsiColor.Reset);
     }
 
     public void ShowLocalMessages() {
@@ -59,11 +59,11 @@ public final class ChatManager {
             boolean IsMine    = From.equals(CurrentOperator);
             String  ToLabel   = To.equals("all") ? "all" : "> " + To;
             Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n",
-                IsMine ? com.raven.utils.AnsiColor.Green : com.raven.utils.AnsiColor.White,
+                IsMine ? AnsiColor.Green : AnsiColor.White,
                 Timestamp,
-                IsMine ? com.raven.utils.AnsiColor.Green : com.raven.utils.AnsiColor.Red,
-                From, com.raven.utils.AnsiColor.Reset,
-                ToLabel, Content, com.raven.utils.AnsiColor.Reset);
+                IsMine ? AnsiColor.Green : AnsiColor.Red,
+                From, AnsiColor.Reset,
+                ToLabel, Content, AnsiColor.Reset);
         }
         System.out.println();
     }
@@ -85,11 +85,11 @@ public final class ChatManager {
             boolean IsMine  = From.equals(CurrentOperator);
             String  ToLabel = "all".equals(To) ? "all" : "> " + To;
             Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n",
-                IsMine ? com.raven.utils.AnsiColor.Green : com.raven.utils.AnsiColor.White,
+                IsMine ? AnsiColor.Green : AnsiColor.White,
                 Timestamp,
-                IsMine ? com.raven.utils.AnsiColor.Green : com.raven.utils.AnsiColor.Red,
-                From, com.raven.utils.AnsiColor.Reset,
-                ToLabel, Content, com.raven.utils.AnsiColor.Reset);
+                IsMine ? AnsiColor.Green : AnsiColor.Red,
+                From, AnsiColor.Reset,
+                ToLabel, Content, AnsiColor.Reset);
         }
         System.out.println();
     }
