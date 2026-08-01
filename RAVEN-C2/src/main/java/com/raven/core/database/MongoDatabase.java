@@ -130,14 +130,30 @@ public final class MongoDatabase extends TeamDatabase {
     @Override
     public String GetAgentNote(int AgentId) {
         try {
-            Document Doc = ColNotes.find(Filters.eq("agentid", AgentId)).first();
-            if (Doc == null) return "";
-            Object V = Doc.get("note");
-            return V != null ? V.toString() : "";
-        } catch (Exception E) {
-            Logger.Error("Mongo GetAgentNote: " + E.getMessage());
+            Document Document = ColNotes.find(Filters.eq("agentid", AgentId)).first();
+            if (Document == null) return "";
+            Object Value = Document.get("note");
+            return Value != null ? Value.toString() : "";
+        } catch (Exception Exception) {
+            Logger.Error("Mongo GetAgentNote: " + Exception.getMessage());
             return "";
         }
+    }
+
+    @Override
+    public List<Map<String, Object>> GetAllAgentNotes() {
+        List<Map<String, Object>> Result = new ArrayList<>();
+        try {
+            for (Document Document : ColNotes.find()) {
+                Map<String, Object> Row = new LinkedHashMap<>();
+                Row.put("AgentId", Document.get("agentid"));
+                Row.put("Note", Document.getString("note"));
+                Result.add(Row);
+            }
+        } catch (Exception Exception) {
+            Logger.Error("Mongo GetAllAgentNotes: " + Exception.getMessage());
+        }
+        return Result;
     }
 
     @Override

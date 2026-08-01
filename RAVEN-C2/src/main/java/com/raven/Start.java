@@ -40,30 +40,30 @@ public final class Start {
 
         if (Args.contains("-i") || Args.contains("-init-certs")) {
             ShowBanner();
-            InitCertificates(Helper.Arg(Args, "-s", "-server", Config.GetServerHost()));
+            InitCertificates(Helper.Arg(Args, "-s", "-server-host", Config.GetServerHost()));
             return;
         }
 
-        String GenAgent = Helper.Arg(Args, "-a", "-agent", null);
+        String GenAgent = Helper.Arg(Args, "-a", "-generate-agent", null);
         if (GenAgent != null) {
             ShowBanner();
             GenerateAgent(GenAgent, Args);
             return;
         }
 
-        if (Args.contains("-m") || Args.contains("-gen-multi")) {
+        if (Args.contains("-m") || Args.contains("-generate-multi-agent")) {
             ShowBanner();
             GenerateMultiAgent(Args);
             return;
         }
 
-        if (Args.contains("-l") || Args.contains("-list")) {
+        if (Args.contains("-l") || Args.contains("-list-agent")) {
             ShowBanner();
             ListAgents();
             return;
         }
 
-        String Revoke = Helper.Arg(Args, "-r", "-revoke", null);
+        String Revoke = Helper.Arg(Args, "-r", "-revoke-agent", null);
         if (Revoke != null) {
             ShowBanner();
             RevokeAgent(Revoke);
@@ -88,7 +88,7 @@ public final class Start {
 
         ShowBanner();
 
-        String Host = Helper.Arg(Args, "-s", "-host", Config.GetServerHost());
+        String Host = Helper.Arg(Args, "-s", "-server-host", Config.GetServerHost());
         int Port = Helper.ParseInt(Helper.Arg(Args, "-p", "-port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
         ListenerMode Mode = ResolveMode(Args);
 

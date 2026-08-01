@@ -93,7 +93,7 @@ public final class Logger {
         String Times = Timestamp();
         String PlainLine = "  [" + Times + "] [" + PlainTag + "] " + Formatted;
         String ColorLine = AnsiColor.White + "  [" + ColorCode + PlainTag + AnsiColor.White + "] " + AnsiColor.Dim + Formatted + AnsiColor.Reset;
-        PromptManager.PrintAbove(ColorLine);
+        PromptManager.PrintLine(ColorLine);
         if (FileEnabled) FileQueue.offer(PlainLine);
     }
 
