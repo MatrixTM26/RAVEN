@@ -13,6 +13,5 @@ logs/
 *.log
 rmRefLog.sh
 clean.sh
-.vscode/
-.prettierrc
-.clang-format
+exports/
+
