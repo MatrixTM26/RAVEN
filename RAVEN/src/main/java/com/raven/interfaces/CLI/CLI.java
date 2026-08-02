@@ -14,7 +14,7 @@ import com.raven.core.output.PromptManager;
 import com.raven.core.server.ListenerMode;
 import com.raven.core.server.RavenServer;
 import com.raven.core.session.Session;
-import com.raven.interfaces.banner.CLIBanner;
+import com.raven.interfaces.CLI.core.web.WebPanelManager;
 import com.raven.utils.AnsiColor;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.SystemHelper;
@@ -54,11 +54,14 @@ public final class CLI {
     private static volatile Instant SharedServerStart;
     private static final Object ServerLock = new Object();
 
+    private final WebPanelManager WebPanelManager;
+
     public CLI(ServerConfig Config) {
         this.Config = Config;
         this.Db = TeamDatabase.Connect(Config);
         this.Log = new EventLog(Config.GetMaxLogEntries());
         this.Export = new ExportCommand(Db, Log);
+        this.WebPanelManager = new WebPanelManager(Config);
         PromptManager.SetPrompt(PROMPT_BOTTOM);
     }
 
@@ -67,6 +70,7 @@ public final class CLI {
         this.IsTeamMode = false;
         this.OperatorName = Config.GetAdminUsername();
         this.OperatorRole = OperatorRole.SUPER;
+        WebPanelManager.SetActiveMode(Mode);
         if (!StartListener(Host, Port, Mode)) return;
         RunLoop();
     }
@@ -74,6 +78,7 @@ public final class CLI {
     public void RunTeamServer(String Host, int Port, ListenerMode Mode) {
         this.ActiveMode = Mode;
         this.IsTeamMode = true;
+        WebPanelManager.SetActiveMode(Mode);
         BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
         if (!Login(Reader)) return;
         if (!StartListener(Host, Port, Mode)) return;
@@ -199,7 +204,7 @@ public final class CLI {
                 String Input = Reader.readLine();
                 PromptManager.MarkVisible(false);
                 if (Input == null || Input.isBlank()) continue;
-                String[] Parts = Input.trim().split("\\s+", 3);
+                String[] Parts = Input.trim().split("\\s+", 4);
                 String Cmd = Parts[0].toLowerCase();
                 int Updated = Dispatch(Cmd, Parts);
                 if (Updated < 0) break;
@@ -213,6 +218,7 @@ public final class CLI {
 
     private int Dispatch(String Cmd, String[] P) {
         switch (Cmd) {
+            // ── SYSTEM ────────────────────────────────────────────────────────
             case "exit", "quit" -> {
                 Logger.Debug("shutting down");
                 return -1;
@@ -222,8 +228,9 @@ public final class CLI {
                 TerminalHelper.Clear();
                 return 1;
             }
+            // ── SERVER ────────────────────────────────────────────────────────
             case "status" -> {
-                long Up = ServerStartTime != null ? Duration.between(ServerStartTime, Instant.now()).getSeconds() : 0;
+                long Uptime = ServerStartTime != null ? java.time.Duration.between(ServerStartTime, java.time.Instant.now()).getSeconds() : 0;
                 System.out.println(TerminalHelper.Box("SERVER STATUS"));
                 System.out.println();
                 if (Server != null && Server.IsRunning()) {
@@ -231,31 +238,35 @@ public final class CLI {
                     Logger.Custom("  %sMode      %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveMode.name());
                     Logger.Custom("  %sAddress   %s%s:%d%n", AnsiColor.Red, AnsiColor.White, Server.GetHost(), Server.GetPort());
                     Logger.Custom("  %sSessions  %s%d%n", AnsiColor.Red, AnsiColor.White, Server.GetSessions().Count());
-                } else if (IsTeamMode && ServerStartTime != null) {
-                    Logger.Custom("  %sStatus    %sONLINE (cross-process)%n", AnsiColor.Red, AnsiColor.Green);
-                    Logger.Custom("  %sMode      %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveMode.name());
-                    Logger.Custom("  %sSessions  %s(cross-process)%n", AnsiColor.Red, AnsiColor.White);
                 } else {
                     Logger.Custom("  %sStatus    %sOFFLINE%n", AnsiColor.Red, AnsiColor.Red);
                 }
-                Logger.Custom("  %sUptime    %s%s%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(Up));
-                Logger.Custom("  %sDatabase  %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, Db.IsConnected() ? "connected" : "memory", Config.GetDatabaseType());
-                if (IsTeamMode) Logger.Custom("  %sOperator  %s%s [%s]%n", AnsiColor.Red, AnsiColor.White, OperatorName, OperatorRole);
-                System.out.println();
+                Logger.Custom("  %sUptime    %s%s%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(Uptime));
+                Logger.Custom("  %sDatabase  %s%s (%s)%n%n", AnsiColor.Red, AnsiColor.White, Db.IsConnected() ? "connected" : "memory", Config.GetDatabaseType());
+                if (IsTeamMode) Logger.Custom("  %sOperator  %s%s [%s]%n%n", AnsiColor.Red, AnsiColor.White, OperatorName, OperatorRole);
             }
             case "logs" -> {
                 System.out.println(TerminalHelper.Box("RECENT LOGS"));
                 System.out.println();
-                List<String> Last = Log.GetLast(30);
-                if (Last.isEmpty()) {
-                    Logger.Info("  no logs");
-                } else Last.forEach(E -> Logger.Custom("  %s%s%s%n", AnsiColor.White, E, AnsiColor.Reset));
+                List<String> Entries = Log.GetLast(30);
+                if (Entries.isEmpty()) Logger.Info("  no logs");
+                else Entries.forEach(Entry -> Logger.Custom("  %s%s%s%n", AnsiColor.White, Entry, AnsiColor.Reset));
                 System.out.println();
                 return 1;
             }
+            // ── WEB PANEL ─────────────────────────────────────────────────────
+            case "webstart" -> {
+                String WebHost = P.length > 1 ? P[1] : Config.GetWebHost();
+                int WebPort = P.length > 2 ? ParseIntSafe(P[2], Config.GetWebPort()) : Config.GetWebPort();
+                WebPanelManager.Start(WebHost, WebPort, Server, ServerStartTime);
+            }
+            case "webstop" -> WebPanelManager.Stop();
+            case "webstatus" -> WebPanelManager.ShowStatus();
+            // ── SESSION LIST ──────────────────────────────────────────────────
             case "sessions", "agents" -> ShowSessions();
             case "stats" -> ShowStats();
             case "tasks" -> ShowTasks();
+            // ── SESSION CONTROL ───────────────────────────────────────────────
             case "use" -> {
                 if (P.length < 2) {
                     Logger.Info(Usage("use"));
@@ -278,7 +289,22 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), P[2]);
+                    Execute(ParseInt(P[1]), BuildArgs(P, 2));
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "shell" -> {
+                if (!CanExecute()) {
+                    Logger.Warn("insufficient permissions");
+                    break;
+                }
+                if (P.length < 3) {
+                    Logger.Info(Usage("shell"));
+                    break;
+                }
+                try {
+                    Execute(ParseInt(P[1]), "shell " + BuildArgs(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -292,13 +318,17 @@ public final class CLI {
                     Logger.Info(Usage("broadcast"));
                     break;
                 }
-                String Target = P[1].toLowerCase();
-                if (Target.equals("all")) {
-                    BroadcastAll(P[2]);
+                String BcastTarget = P[1].toLowerCase();
+                String BcastCmd = BuildArgs(P, 2);
+                if (BcastTarget.equals("all")) {
+                    BroadcastAll(BcastCmd);
                 } else {
-                    List<Integer> Ids = ParseIds(Target);
-                    if (Ids.isEmpty()) Logger.Info("no valid session IDs");
-                    else Broadcast(Ids, P[2]);
+                    List<Integer> Ids = ParseIds(BcastTarget);
+                    if (Ids.isEmpty()) {
+                        Logger.Warn("no valid session IDs in: " + P[1]);
+                        break;
+                    }
+                    Broadcast(Ids, BcastCmd);
                 }
             }
             case "kill" -> {
@@ -306,14 +336,19 @@ public final class CLI {
                     Logger.Info(Usage("kill"));
                     break;
                 }
+                if (Server == null || !Server.IsRunning()) {
+                    Logger.Warn("server not running");
+                    break;
+                }
                 try {
-                    int Id = ParseInt(P[1]);
-                    if (Server == null || !Server.IsRunning()) {
-                        Logger.Warn("server not running");
+                    int KillId = ParseInt(P[1]);
+                    if (Server.GetSessions().Get(KillId).isEmpty()) {
+                        Logger.Warn("session-" + KillId + " not found");
                         break;
                     }
-                    Server.RemoveSession(Id);
-                    AddLog("[KILL] session-" + Id + " by " + OperatorName, true);
+                    Server.RemoveSession(KillId);
+                    AddLog("[KILL] session-" + KillId + " by " + OperatorName, true);
+                    Logger.Custom("  %s✔ session-%d terminated%s%n%n", AnsiColor.Green, KillId, AnsiColor.Reset);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -329,372 +364,13 @@ public final class CLI {
                     Logger.Warn("invalid session ID");
                 }
             }
-            case "whoami" -> {
-                if (P.length > 1) {
-                    try {
-                        Execute(ParseInt(P[1]), "whoami");
-                    } catch (NumberFormatException Ex) {
-                        Logger.Warn("invalid session ID");
-                    }
-                } else Logger.Info(Usage("whoami"));
-            }
-            case "screenshot" -> {
+            case "ping", "reconnect" -> {
                 if (P.length < 2) {
-                    Logger.Info(Usage("screenshot"));
+                    Logger.Info(Usage(Cmd));
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), "screenshot");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "download" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("download"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "download " + P[2]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "upload" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("upload"));
-                    break;
-                }
-                try {
-                    String[] Up = P[2].split("\\s+", 2);
-                    Execute(ParseInt(P[1]), "upload " + Up[0] + (Up.length > 1 ? " " + Up[1] : ""));
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "sleep" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("sleep"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "sleep " + P[2]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "pivot" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("pivot"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "pivot " + P[2]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "ps" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("ps"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "ps");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "pwd" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("pwd"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "pwd");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "ls" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("ls"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), P.length > 2 ? "ls " + P[2] : "ls");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "cat" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("cat"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "cat " + P[2]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "rm" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("rm"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "rm " + P[2]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "mkdir" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("mkdir"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "mkdir " + P[2]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "env" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("env"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "env");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "ifconfig", "ipconfig" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("ifconfig"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "ifconfig");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "netstat" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("netstat"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "netstat");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "shell" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("shell"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "shell " + P[2]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "history" -> {
-                int Sid = P.length > 1 ? ParseIntSafe(P[1], 0) : 0;
-                int Lim = P.length > 2 ? ParseIntSafe(P[2], 50) : 50;
-                ShowCommandHistory(Sid, Lim);
-            }
-            case "note" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("note"));
-                    break;
-                }
-                try {
-                    Db.SetAgentNote(ParseInt(P[1]), P[2]);
-                    Logger.Success("Note saved for session-" + P[1]);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "getnote" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("getnote"));
-                    break;
-                }
-                try {
-                    int Id = ParseInt(P[1]);
-                    String Note = Db.GetAgentNote(Id);
-                    Logger.Custom("  Note [%d]: %s%s%s%n", Id, AnsiColor.White, Note != null ? Note : "(none)", AnsiColor.Reset);
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "listopt", "listoperators" -> ShowOperators();
-            case "addopt", "addoperator" -> {
-                if (!CanManage()) {
-                    Logger.Warn("ADMIN/SUPER required");
-                    break;
-                }
-                if (P.length < 3) {
-                    Logger.Info(Usage("addopt"));
-                    break;
-                }
-                String[] T = P[2].split("\\s+", 2);
-                String Pass = T[0];
-                String Role = T.length > 1 ? T[1] : "OPERATOR";
-                if (Pass.length() < 8) {
-                    Logger.Warn("password >= 8 chars required");
-                    break;
-                }
-                OperatorRole R = OperatorRole.FromString(Role);
-                if (R == OperatorRole.SUPER && !OperatorRole.IsSuperAdmin()) {
-                    Logger.Warn("only SUPER can create SUPER");
-                    break;
-                }
-                if (Db.CreateOperator(P[1], TeamDatabase.HashPassword(Pass), R)) Logger.Custom("  Operator created: %s [%s]%n", P[1], R);
-                else Logger.Warn("username already exists");
-            }
-            case "delopt", "deleteoperator" -> {
-                if (!CanManage()) {
-                    Logger.Warn("ADMIN/SUPER required");
-                    break;
-                }
-                if (P.length < 2) {
-                    Logger.Info(Usage("delopt"));
-                    break;
-                }
-                if (P[1].equalsIgnoreCase(Config.GetAdminUsername())) {
-                    Logger.Warn("cannot delete admin");
-                    break;
-                }
-                if (Db.DeleteOperator(P[1])) Logger.Custom("  Deleted: %s%n", P[1]);
-                else Logger.Warn("operator not found");
-            }
-            case "kick", "kickopt" -> {
-                if (OperatorRole == null || !OperatorRole.CanKickOperator()) {
-                    Logger.Warn("SUPER role required");
-                    break;
-                }
-                if (P.length < 2) {
-                    Logger.Info(Usage("kick"));
-                    break;
-                }
-                if (P[1].equalsIgnoreCase(Config.GetAdminUsername()) || P[1].equals(OperatorName)) {
-                    Logger.Warn("cannot kick admin or yourself");
-                    break;
-                }
-                if (Db.DeleteOperator(P[1])) Logger.Custom("  Kicked: %s%n", P[1]);
-                else Logger.Warn("operator not found");
-            }
-            case "setrole", "changerole" -> {
-                if (!CanManage()) {
-                    Logger.Warn("ADMIN/SUPER required");
-                    break;
-                }
-                if (P.length < 3) {
-                    Logger.Info(Usage("setrole"));
-                    break;
-                }
-                if (P[1].equalsIgnoreCase(Config.GetAdminUsername())) {
-                    Logger.Warn("cannot change admin role");
-                    break;
-                }
-                OperatorRole NewRole = OperatorRole.FromString(P[2]);
-                if (Db.UpdateOperatorRole(P[1], NewRole)) Logger.Custom("  Role: %s > %s%n", P[1], NewRole);
-                else Logger.Warn("operator not found");
-            }
-            case "passwd", "changepassword" -> {
-                if (!CanManage()) {
-                    Logger.Warn("ADMIN/SUPER required");
-                    break;
-                }
-                if (P.length < 3) {
-                    Logger.Info(Usage("passwd"));
-                    break;
-                }
-                if (P[2].length() < 8) {
-                    Logger.Warn("password >= 8 chars required");
-                    break;
-                }
-                if (Db.UpdateOperatorPassword(P[1], TeamDatabase.HashPassword(P[2]))) Logger.Custom("  Password updated: %s%n", P[1]);
-                else Logger.Warn("operator not found");
-            }
-            case "chat" -> ShowChat();
-            case "chathistory", "chatlog" -> ShowChatHistory(50);
-            case "ch" -> {
-                if (!IsTeamMode) {
-                    Logger.Warn("not in team mode");
-                    break;
-                }
-                if (P.length < 3) {
-                    Logger.Info(Usage("ch"));
-                    break;
-                }
-                Db.SaveChatLog(OperatorName, P[1], P[2]);
-                Logger.Custom("  %s→ %s:%s %s%n", AnsiColor.Green, P[1], AnsiColor.Reset, P[2]);
-            }
-            case "gc" -> {
-                if (!IsTeamMode) {
-                    Logger.Warn("not in team mode");
-                    break;
-                }
-                if (P.length < 3) {
-                    Logger.Info(Usage("gc"));
-                    break;
-                }
-                String Target = P[1].toLowerCase();
-                String Msg = P[2];
-                if (Target.equals("all")) {
-                    Db.SaveChatLog(OperatorName, "all", Msg);
-                    Logger.Custom("  %s→ all:%s %s%n", AnsiColor.Green, AnsiColor.Reset, Msg);
-                } else {
-                    for (String Name : Target.split(",")) {
-                        String N = Name.trim();
-                        if (!N.isEmpty()) {
-                            Db.SaveChatLog(OperatorName, N, Msg);
-                        }
-                    }
-                    Logger.Custom("  %s→ %s:%s %s%n", AnsiColor.Green, Target, AnsiColor.Reset, Msg);
-                }
-            }
-            case "export" -> {
-                if (P.length < 3) {
-                    Logger.Info(Usage("export"));
-                    break;
-                }
-                Export.Run(P[1], P[2]);
-            }
-            case "sessions-history", "sesshistory" -> {
-                int Lim = P.length > 1 ? ParseIntSafe(P[1], 50) : 50;
-                List<Map<String, Object>> Sess = Db.GetSessionHistory(Lim);
-                System.out.println(TerminalHelper.Box("SESSION HISTORY (last " + Lim + ")"));
-                System.out.println();
-                Sess.forEach(S -> Logger.Custom("  %s%s%s%n", AnsiColor.White, S, AnsiColor.Reset));
-                System.out.println();
-            }
-            case "ping" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("ping"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "ping");
-                } catch (NumberFormatException Ex) {
-                    Logger.Warn("invalid session ID");
-                }
-            }
-            case "reconnect" -> {
-                if (P.length < 2) {
-                    Logger.Info(Usage("reconnect"));
-                    break;
-                }
-                try {
-                    Execute(ParseInt(P[1]), "reconnect");
+                    Execute(ParseInt(P[1]), Cmd);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -714,9 +390,231 @@ public final class CLI {
                     Logger.Warn("invalid session ID");
                 }
             }
+            case "sleep" -> {
+                if (P.length < 3) {
+                    Logger.Info(Usage("sleep"));
+                    break;
+                }
+                try {
+                    Execute(ParseInt(P[1]), "sleep " + P[2]);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "jitter" -> {
+                if (P.length < 3) {
+                    Logger.Info(Usage("jitter"));
+                    break;
+                }
+                try {
+                    Execute(ParseInt(P[1]), "jitter " + P[2]);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            // ── TASK ──────────────────────────────────────────────────────────
+            case "history" -> {
+                int AgentId = P.length > 1 ? ParseIntSafe(P[1], 0) : 0;
+                int Limit = P.length > 2 ? ParseIntSafe(P[2], 50) : 50;
+                ShowCommandHistory(AgentId, Limit);
+            }
+            case "sessions-history", "sesshistory" -> {
+                int Limit = P.length > 1 ? ParseIntSafe(P[1], 50) : 50;
+                List<Map<String, Object>> Sessions = Db.GetSessionHistory(Limit);
+                System.out.println(TerminalHelper.Box("SESSION HISTORY (last " + Limit + ")"));
+                System.out.println();
+                if (Sessions.isEmpty()) {
+                    Logger.Info("  no session history");
+                    System.out.println();
+                    break;
+                }
+                Sessions.forEach(Session -> Logger.Custom("  %s%s%s%n", AnsiColor.White, Session, AnsiColor.Reset));
+                System.out.println();
+            }
+            case "note" -> {
+                if (P.length < 3) {
+                    Logger.Info(Usage("note"));
+                    break;
+                }
+                try {
+                    int NoteId = ParseInt(P[1]);
+                    Db.SetAgentNote(NoteId, BuildArgs(P, 2));
+                    Logger.Custom("  %s✔ note saved for session-%d%s%n%n", AnsiColor.Green, NoteId, AnsiColor.Reset);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            case "getnote" -> {
+                if (P.length < 2) {
+                    Logger.Info(Usage("getnote"));
+                    break;
+                }
+                try {
+                    int NoteId = ParseInt(P[1]);
+                    String Note = Db.GetAgentNote(NoteId);
+                    Logger.Custom("  %sNote [session-%d]:%s %s%n%n", AnsiColor.Red, NoteId, AnsiColor.White, Note.isBlank() ? "(empty)" : Note);
+                } catch (NumberFormatException Ex) {
+                    Logger.Warn("invalid session ID");
+                }
+            }
+            // ── OPERATOR ──────────────────────────────────────────────────────
+            case "listopt", "listoperators" -> ShowOperators();
+            case "addopt", "addoperator" -> {
+                if (!CanManage()) {
+                    Logger.Warn("ADMIN/SUPER required");
+                    break;
+                }
+                if (P.length < 3) {
+                    Logger.Info(Usage("addopt"));
+                    break;
+                }
+                String[] AddParts = BuildArgs(P, 2).split("\\s+", 2);
+                String AddPass = AddParts[0];
+                String AddRole = AddParts.length > 1 ? AddParts[1] : "OPERATOR";
+                if (AddPass.length() < 8) {
+                    Logger.Warn("password must be at least 8 characters");
+                    break;
+                }
+                OperatorRole NewRole = OperatorRole.FromString(AddRole);
+                if (NewRole == OperatorRole.SUPER && !OperatorRole.IsSuperAdmin()) {
+                    Logger.Warn("only SUPER can create SUPER operators");
+                    break;
+                }
+                if (Db.CreateOperator(P[1], TeamDatabase.HashPassword(AddPass), NewRole)) Logger.Custom("  %s✔ operator created: %s [%s]%s%n%n", AnsiColor.Green, P[1], NewRole, AnsiColor.Reset);
+                else Logger.Warn("username already exists: " + P[1]);
+            }
+            case "delopt", "deleteoperator" -> {
+                if (!CanManage()) {
+                    Logger.Warn("ADMIN/SUPER required");
+                    break;
+                }
+                if (P.length < 2) {
+                    Logger.Info(Usage("delopt"));
+                    break;
+                }
+                if (P[1].equalsIgnoreCase(Config.GetAdminUsername())) {
+                    Logger.Warn("cannot delete the admin account");
+                    break;
+                }
+                if (Db.DeleteOperator(P[1])) Logger.Custom("  %s✔ deleted: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
+                else Logger.Warn("operator not found: " + P[1]);
+            }
+            case "kick", "kickopt" -> {
+                if (OperatorRole == null || !OperatorRole.CanKickOperator()) {
+                    Logger.Warn("SUPER role required");
+                    break;
+                }
+                if (P.length < 2) {
+                    Logger.Info(Usage("kick"));
+                    break;
+                }
+                if (P[1].equalsIgnoreCase(Config.GetAdminUsername())) {
+                    Logger.Warn("cannot kick the admin account");
+                    break;
+                }
+                if (P[1].equals(OperatorName)) {
+                    Logger.Warn("cannot kick yourself");
+                    break;
+                }
+                if (Db.DeleteOperator(P[1])) Logger.Custom("  %s✔ kicked: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
+                else Logger.Warn("operator not found: " + P[1]);
+            }
+            case "setrole", "changerole" -> {
+                if (!CanManage()) {
+                    Logger.Warn("ADMIN/SUPER required");
+                    break;
+                }
+                if (P.length < 3) {
+                    Logger.Info(Usage("setrole"));
+                    break;
+                }
+                if (P[1].equalsIgnoreCase(Config.GetAdminUsername())) {
+                    Logger.Warn("cannot change the admin role");
+                    break;
+                }
+                OperatorRole SetRole = OperatorRole.FromString(P[2]);
+                if (Db.UpdateOperatorRole(P[1], SetRole)) Logger.Custom("  %s✔ role updated: %s → %s%s%n%n", AnsiColor.Green, P[1], SetRole, AnsiColor.Reset);
+                else Logger.Warn("operator not found: " + P[1]);
+            }
+            case "passwd", "changepassword" -> {
+                if (!CanManage()) {
+                    Logger.Warn("ADMIN/SUPER required");
+                    break;
+                }
+                if (P.length < 3) {
+                    Logger.Info(Usage("passwd"));
+                    break;
+                }
+                if (P[2].length() < 8) {
+                    Logger.Warn("password must be at least 8 characters");
+                    break;
+                }
+                if (Db.UpdateOperatorPassword(P[1], TeamDatabase.HashPassword(P[2]))) Logger.Custom("  %s✔ password updated: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
+                else Logger.Warn("operator not found: " + P[1]);
+            }
+            // ── CHAT ──────────────────────────────────────────────────────────
+            case "chat" -> ShowChat();
+            case "chathistory", "chatlog" -> ShowChatHistory(50);
+            case "ch" -> {
+                if (!IsTeamMode) {
+                    Logger.Warn("team mode required");
+                    break;
+                }
+                if (P.length < 3) {
+                    Logger.Info(Usage("ch"));
+                    break;
+                }
+                Db.SaveChatLog(OperatorName, P[1], BuildArgs(P, 2));
+                Logger.Custom("  %s→ %s%s %s%n", AnsiColor.Green, P[1], AnsiColor.Reset, BuildArgs(P, 2));
+            }
+            case "gc" -> {
+                if (!IsTeamMode) {
+                    Logger.Warn("team mode required");
+                    break;
+                }
+                if (P.length < 3) {
+                    Logger.Info(Usage("gc"));
+                    break;
+                }
+                String GcTarget = P[1].toLowerCase();
+                String GcMsg = BuildArgs(P, 2);
+                if (GcTarget.equals("all")) {
+                    Db.SaveChatLog(OperatorName, "all", GcMsg);
+                } else {
+                    for (String Recipient : GcTarget.split(",")) {
+                        String Trimmed = Recipient.trim();
+                        if (!Trimmed.isEmpty()) Db.SaveChatLog(OperatorName, Trimmed, GcMsg);
+                    }
+                }
+                Logger.Custom("  %s→ %s%s %s%n", AnsiColor.Green, GcTarget, AnsiColor.Reset, GcMsg);
+            }
+            // ── EXPORT ────────────────────────────────────────────────────────
+            case "export" -> {
+                if (P.length < 3) {
+                    Logger.Info(Usage("export"));
+                    break;
+                }
+                Export.Run(P[1], P[2]);
+            }
+            // ── DEFAULT: agent-routed commands ────────────────────────────────
             default -> {
-                Logger.Error("unknown command: " + Cmd);
-                Logger.Info("type 'help' for available commands");
+                if (!CommandRegistry.Has(Cmd)) {
+                    Logger.Error("unknown command: " + Cmd);
+                    Logger.Info("type 'help' for available commands");
+                    break;
+                }
+                if (P.length < 2) {
+                    Logger.Info(Usage(Cmd));
+                    break;
+                }
+                try {
+                    int SessionId = ParseInt(P[1]);
+                    String Arguments = BuildArgs(P, 2);
+                    String FullInput = Arguments.isBlank() ? Cmd : Cmd + " " + Arguments;
+                    Execute(SessionId, FullInput);
+                } catch (NumberFormatException Exception) {
+                    Logger.Warn("invalid session ID — usage: " + Usage(Cmd));
+                }
             }
         }
         return 0;
@@ -725,13 +623,10 @@ public final class CLI {
     private void ShowHelp() {
         System.out.println(TerminalHelper.Box("COMMAND REFERENCE"));
         System.out.println();
-        CLIBanner.Print();
         if (IsTeamMode && OperatorName != null) {
-            System.out.println();
-            Logger.Custom("  %s[TEAMSERVER MODE]%s  Operator: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, OperatorRole != null ? OperatorRole.name() : "?", AnsiColor.Reset);
-            if (OperatorRole != null) Logger.Custom("  %sPermissions:%s %s%n", AnsiColor.Red, AnsiColor.White, OperatorRole.PermissionString());
+            Logger.Custom("  %s[TEAMSERVER]%s  Operator: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, OperatorRole != null ? OperatorRole.name() : "?", AnsiColor.Reset);
+            if (OperatorRole != null) Logger.Custom("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, OperatorRole.PermissionString());
         }
-        System.out.println();
         for (Category Cat : Category.values()) {
             List<CommandDef> Cmds = CommandRegistry.ByCategory(Cat);
             if (Cmds.isEmpty()) continue;
@@ -948,6 +843,7 @@ public final class CLI {
     }
 
     private void Shutdown() {
+        if (WebPanelManager.IsRunning()) WebPanelManager.Stop();
         if (IsTeamMode && SharedServer != null && SharedServer == Server) {
             Logger.Info("teamserver session ended — listener remains active");
         } else if (Server != null && Server.IsRunning()) {
@@ -981,6 +877,16 @@ public final class CLI {
         } catch (Exception Ex) {
             return D;
         }
+    }
+
+    private static String BuildArgs(String[] Parts, int StartIndex) {
+        if (Parts.length <= StartIndex) return "";
+        StringBuilder Builder = new StringBuilder();
+        for (int Index = StartIndex; Index < Parts.length; Index++) {
+            if (Index > StartIndex) Builder.append(' ');
+            Builder.append(Parts[Index]);
+        }
+        return Builder.toString();
     }
 
     private static List<Integer> ParseIds(String S) {
