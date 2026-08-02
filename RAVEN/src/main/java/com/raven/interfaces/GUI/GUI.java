@@ -2,8 +2,11 @@ package com.raven.interfaces.GUI;
 
 import com.raven.core.event.EventManager.EventType;
 import com.raven.interfaces.GUI.module.UI.color.Palette;
-import com.raven.interfaces.GUI.module.UI.component.ComponentFactory;
-import com.raven.interfaces.GUI.module.UI.frame.*;
+import com.raven.interfaces.GUI.module.UI.controller.*;
+import com.raven.interfaces.GUI.module.UI.frame.FxmlLoader;
+import com.raven.interfaces.GUI.module.UI.frame.FxmlLoader.LoadResult;
+import com.raven.interfaces.GUI.module.UI.frame.PopupBuilder;
+import com.raven.interfaces.GUI.module.UI.frame.SidebarBuilder;
 import com.raven.interfaces.GUI.module.core.database.AuthService;
 import com.raven.interfaces.GUI.module.core.server.CommandDispatcher;
 import com.raven.interfaces.GUI.module.core.server.ServerController;
@@ -22,72 +25,59 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 
 public class GUI extends Application {
 
-    private static final String IconCircle = "\uEF4A";
+    private static ServerConfig Config;
+    private static boolean      TeamMode = false;
 
-    private static ServerConfig ServerConfiguration;
-    private static boolean TeamModeEnabled = false;
-
-    public static void Launch(ServerConfig Configuration) {
-        ServerConfiguration = Configuration;
-        TeamModeEnabled = false;
+    public static void Launch(ServerConfig Cfg) {
+        Config   = Cfg;
+        TeamMode = false;
         Application.launch(GUI.class);
     }
 
-    public static void LaunchTeam(ServerConfig Configuration) {
-        ServerConfiguration = Configuration;
-        TeamModeEnabled = true;
+    public static void LaunchTeam(ServerConfig Cfg) {
+        Config   = Cfg;
+        TeamMode = true;
         Application.launch(GUI.class);
     }
 
-    private AuthService        Authentication;
-    private SessionManager     SessionController;
-    private ServerController   ServerControl;
-    private CommandDispatcher  CommandDispatcherInstance;
+    private AuthService       Auth;
+    private SessionManager    SessMgr;
+    private ServerController  SrvCtrl;
+    private CommandDispatcher Dispatcher;
 
     private final ObservableList<SessionRow> SessionRows = FXCollections.observableArrayList();
-    private final ObservableList<String>     LogEntries  = FXCollections.observableArrayList();
-
-    private int    SelectedSessionId = -1;
-    private String ActivePage        = "Overview";
+    private int SelectedId = -1;
 
     private final Map<String, Node>  Pages      = new LinkedHashMap<>();
     private final Map<String, HBox>  NavItemMap = new LinkedHashMap<>();
+    private       StackPane          ContentArea;
 
-    private Label[]        StatusIndicatorRef   = new Label[1];
-    private Label[]        UptimeLabelRef       = new Label[1];
-    private Label[]        SessionCountLabelRef = new Label[1];
-    private Label[]        ServerStatusLabelRef = new Label[1];
-    private Label[]        ServerInfoLabelRef   = new Label[1];
-    private Label[]        ToggleStatusLabelRef = new Label[1];
-    private Label[]        SelectedLabelRef     = new Label[1];
-    private TextArea[]     TerminalOutputRef    = new TextArea[1];
-    private TextArea[]     LogOutputRef         = new TextArea[1];
-    private TextField[]    TerminalCommandRef   = new TextField[1];
-    private TextField[]    SessionIdFieldRef    = new TextField[1];
-    private TextField[]    HostFieldRef         = new TextField[1];
-    private TextField[]    PortFieldRef         = new TextField[1];
-    private ToggleButton[] ServerToggleRef      = new ToggleButton[1];
-    private TableView<SessionRow>[] SessionTableRef = new TableView[1];
-    private CommandDispatcher[]     DispatcherRef   = new CommandDispatcher[1];
+    private Label[]            StatusIndicator   = new Label[1];
+    private Label[]            UptimeLabel       = new Label[1];
+    private Label[]            SessionCountLabel = new Label[1];
 
-    private StackPane ContentArea;
+    private OverviewController      OverviewCtrl;
+    private SessionsController      SessionsCtrl;
+    private TerminalController      TerminalCtrl;
+    private ListenerController      ListenerCtrl;
+    private CommandCenterController CmdCtrl;
+    private LogsController          LogsCtrl;
+    private SettingsController      SettingsCtrl;
 
     @Override
     public void start(Stage Stage) {
-        Authentication = new AuthService(ServerConfiguration);
-        if (TeamModeEnabled && !PopupBuilder.ShowLoginDialog(Stage, Authentication)) {
+        Auth = new AuthService(Config);
+        if (TeamMode && !PopupBuilder.ShowLoginDialog(Stage, Auth)) {
             Platform.exit();
             return;
         }
@@ -95,43 +85,38 @@ public class GUI extends Application {
         Stage.setTitle("RAVEN");
         Stage.setWidth(1440);
         Stage.setHeight(900);
-        Stage.setMinWidth(980);
-        Stage.setMinHeight(620);
+        Stage.setMinWidth(920);
+        Stage.setMinHeight(600);
 
-        try {
-            Font.loadFont(getClass().getResourceAsStream("/fonts/MaterialIcons-Regular.ttf"), 16);
-        } catch (Exception Ignored) {}
+        LoadFonts();
 
         ContentArea = new StackPane();
-        ContentArea.setStyle("-fx-background-color:" + Palette.Background + ";");
+        ContentArea.setStyle("-fx-background-color:" + Palette.Bg + ";");
 
-        VBox SidebarNode = SidebarBuilder.Build(
-            this::NavigateToPage, NavItemMap, StatusIndicatorRef,
-            Authentication.GetOperatorName()
+        VBox Sidebar = SidebarBuilder.Build(
+            this::Navigate, NavItemMap, StatusIndicator, Auth.GetOperatorName()
         );
 
-        BuildAllPages();
-        NavigateToPage("Overview");
+        LoadAllPages();
+        Navigate("Overview");
 
-        VBox CenterColumn = new VBox(0);
+        VBox Center = new VBox(0);
         VBox.setVgrow(ContentArea, Priority.ALWAYS);
-        CenterColumn.getChildren().addAll(BuildTopBar(), ContentArea, BuildStatusBar());
+        Center.getChildren().addAll(BuildTopBar(), ContentArea, BuildStatusBar());
 
-        BorderPane RootLayout = new BorderPane();
-        RootLayout.setStyle("-fx-background-color:" + Palette.Background + ";");
-        RootLayout.setLeft(SidebarNode);
-        RootLayout.setCenter(CenterColumn);
+        BorderPane Root = new BorderPane();
+        Root.setStyle("-fx-background-color:" + Palette.Bg + ";");
+        Root.setLeft(Sidebar);
+        Root.setCenter(Center);
 
-        Scene AppScene = new Scene(RootLayout);
-        URL StylesheetUrl = getClass().getResource("styles/css/raven.css");
-        if (StylesheetUrl == null)
-            StylesheetUrl = getClass().getResource("/com/raven/interfaces/GUI/styles/css/raven.css");
-        if (StylesheetUrl != null)
-            AppScene.getStylesheets().add(StylesheetUrl.toExternalForm());
+        Scene AppScene = new Scene(Root);
+        URL Css = getClass().getResource("styles/raven.css");
+        if (Css == null) Css = getClass().getResource("/com/raven/interfaces/GUI/styles/raven.css");
+        if (Css != null) AppScene.getStylesheets().add(Css.toExternalForm());
 
         Stage.setScene(AppScene);
         Stage.setOnCloseRequest(e -> {
-            if (ServerControl != null) ServerControl.Stop();
+            if (SrvCtrl != null) SrvCtrl.Stop();
             Platform.exit();
         });
         Stage.show();
@@ -139,312 +124,302 @@ public class GUI extends Application {
     }
 
     private HBox BuildTopBar() {
-        HBox TopBar = new HBox(10);
-        TopBar.setAlignment(Pos.CENTER_LEFT);
-        TopBar.setPadding(new Insets(0, 16, 0, 16));
-        TopBar.setMinHeight(46);
-        TopBar.setMaxHeight(46);
-        TopBar.setStyle(
-            "-fx-background-color:" + Palette.BackgroundDeep + ";" +
-            "-fx-border-color:transparent transparent " + Palette.BorderSubtle + " transparent;" +
-            "-fx-border-width:0 0 1 0;"
-        );
+        HBox Bar = new HBox(10);
+        Bar.setAlignment(Pos.CENTER_LEFT);
+        Bar.setPadding(new Insets(0, 16, 0, 16));
+        Bar.setMinHeight(44);
+        Bar.setMaxHeight(44);
+        Bar.getStyleClass().add("topbar");
 
-        VBox HeadingBox = new VBox(2);
-        Label TitleLabel = new Label("RAVEN Operations Console");
-        TitleLabel.getStyleClass().add("topbar-title");
-        Label SubtitleLabel = new Label("Listener  ·  Sessions  ·  Terminal  ·  Commands");
-        SubtitleLabel.getStyleClass().add("topbar-sub");
-        HeadingBox.getChildren().addAll(TitleLabel, SubtitleLabel);
+        VBox Heading = new VBox(2);
+        Label Title = new Label("RAVEN Operations Console");
+        Title.getStyleClass().add("topbar-title");
+        Label Sub = new Label("Listener  ·  Sessions  ·  Terminal  ·  Commands");
+        Sub.getStyleClass().add("topbar-sub");
+        Heading.getChildren().addAll(Title, Sub);
 
         Label DevBadge = new Label("development");
         DevBadge.getStyleClass().add("topbar-badge");
 
-        Region FlexSpacer = ComponentFactory.FlexSpacer(true);
+        Region Spacer = new Region();
+        HBox.setHgrow(Spacer, Priority.ALWAYS);
 
-        Label UptimeLabel = new Label("00:00:00");
-        UptimeLabel.getStyleClass().add("status-bar-text");
-        UptimeLabelRef[0] = UptimeLabel;
+        Label Uptime = new Label("00:00:00");
+        Uptime.getStyleClass().add("status-text");
+        UptimeLabel[0] = Uptime;
 
-        Region Divider = StyleHelper.VerticalDivider();
+        Region Div1 = new Region();
+        Div1.setMinWidth(1);
+        Div1.setPrefWidth(1);
+        Div1.setPrefHeight(14);
+        Div1.setStyle("-fx-background-color:" + Palette.Border + ";");
 
-        Label SessionCountLabel = new Label("0 sessions");
-        SessionCountLabel.getStyleClass().add("status-bar-accent");
-        SessionCountLabelRef[0] = SessionCountLabel;
+        Label SessCount = new Label("0 sessions");
+        SessCount.getStyleClass().add("status-accent");
+        SessionCountLabel[0] = SessCount;
 
-        TopBar.getChildren().addAll(HeadingBox, DevBadge, FlexSpacer, UptimeLabel, Divider, SessionCountLabel);
+        Bar.getChildren().addAll(Heading, DevBadge, Spacer, Uptime, Div1, SessCount);
 
-        if (Authentication.GetOperatorName() != null) {
-            TopBar.getChildren().add(StyleHelper.VerticalDivider());
-            StackPane OperatorAvatar = ComponentFactory.CircleChip(Authentication.GetOperatorName(), Palette.AccentBlue, 24);
-            Label OperatorLabel = new Label(
-                Authentication.GetOperatorName() +
-                (Authentication.GetOperatorRole() != null
-                    ? "  [" + Authentication.GetOperatorRole().name() + "]" : "")
-            );
-            OperatorLabel.setStyle("-fx-font-size:10px; -fx-text-fill:" + Palette.TextTertiary + ";");
-            TopBar.getChildren().addAll(OperatorAvatar, OperatorLabel);
+        if (Auth.GetOperatorName() != null) {
+            Region Div2 = new Region();
+            Div2.setMinWidth(1);
+            Div2.setPrefWidth(1);
+            Div2.setPrefHeight(14);
+            Div2.setStyle("-fx-background-color:" + Palette.Border + ";");
+
+            Label Operator = new Label(Auth.GetOperatorName()
+                + (Auth.GetOperatorRole() != null ? "  [" + Auth.GetOperatorRole().name() + "]" : ""));
+            Operator.setStyle("-fx-font-size:10px; -fx-text-fill:" + Palette.WhiteFaint + ";");
+            Bar.getChildren().addAll(Div2, Operator);
         }
-        return TopBar;
+        return Bar;
     }
 
     private HBox BuildStatusBar() {
-        HBox StatusBar = new HBox(8);
-        StatusBar.setAlignment(Pos.CENTER_LEFT);
-        StatusBar.setPadding(new Insets(3, 12, 3, 12));
-        StatusBar.setStyle(
-            "-fx-background-color:" + Palette.BackgroundVoid + ";" +
-            "-fx-border-color:" + Palette.BorderSubtle + " transparent transparent transparent;" +
-            "-fx-border-width:1 0 0 0;"
-        );
+        HBox Bar = new HBox(8);
+        Bar.setAlignment(Pos.CENTER_LEFT);
+        Bar.setPadding(new Insets(3, 14, 3, 14));
+        Bar.setMinHeight(24);
+        Bar.setMaxHeight(24);
+        Bar.getStyleClass().add("statusbar");
 
-        Label StatusDot = new Label(IconCircle);
-        StatusDot.setStyle(
-            "-fx-font-family:'Material Icons';" +
-            "-fx-font-size:7px;" +
-            "-fx-text-fill:" + Palette.AccentOrange + ";"
-        );
-        Label StatusText = new Label("RAVEN v3.0  ·  MatrixTM26");
-        StatusText.getStyleClass().add("status-bar-text");
+        Label Dot = new Label("●");
+        Dot.setStyle("-fx-text-fill:" + Palette.Red + "; -fx-font-size:8px;");
+        Label VerLabel = new Label("RAVEN v3.0  ·  MatrixTM26");
+        VerLabel.getStyleClass().add("status-text");
 
-        Region StatusSpacer = ComponentFactory.FlexSpacer(true);
+        Region Spacer = new Region();
+        HBox.setHgrow(Spacer, Priority.ALWAYS);
 
-        Label ModeLabel = new Label(ServerConfiguration.GetServerMode().toUpperCase());
-        ModeLabel.getStyleClass().add("status-bar-text");
-        StatusBar.getChildren().addAll(StatusDot, StatusText, StatusSpacer, ModeLabel);
-        return StatusBar;
+        Label ModeLabel = new Label(Config.GetServerMode().toUpperCase());
+        ModeLabel.getStyleClass().add("status-text");
+        Bar.getChildren().addAll(Dot, VerLabel, Spacer, ModeLabel);
+        return Bar;
     }
 
-    private void BuildAllPages() {
-        TextArea[] CommandCenterOutputRef = new TextArea[1];
+    private void LoadAllPages() {
+        LoadResult<Node> OvResult = FxmlLoader.Load("Overview.fxml");
+        OverviewCtrl = OvResult.GetController();
+        Pages.put("Overview", OvResult.Root());
 
-        Pages.put("Overview",       PageBuilder.Overview());
-        Pages.put("Sessions",       PageBuilder.Sessions(
-            SessionRows,
-            () -> { if (SessionController != null) SessionController.Refresh(); },
+        LoadResult<Node> SsResult = FxmlLoader.Load("Sessions.fxml");
+        SessionsCtrl = SsResult.GetController();
+        SessionsCtrl.BindData(SessionRows);
+        SessionsCtrl.SetCallbacks(
+            this::RefreshSessions,
             this::OpenExecutePopup,
             this::OpenBroadcastPopup,
-            this::KillSelectedSession,
-            DispatcherRef, SessionTableRef, LogOutputRef,
-            SelectedId -> {
-                SelectedSessionId = SelectedId;
-                if (SelectedLabelRef[0] != null) {
-                    SessionRows.stream()
-                        .filter(Row -> Integer.parseInt(Row.getId()) == SelectedId)
-                        .findFirst()
-                        .ifPresent(Row -> SelectedLabelRef[0].setText(Row.getName() + "  #" + SelectedId));
-                }
-            }
-        ));
-        Pages.put("Terminal",       PageBuilder.Terminal(
-            SessionIdFieldRef, TerminalOutputRef, TerminalCommandRef,
-            this::ExecuteTerminalCommand, SelectedLabelRef
-        ));
-        Pages.put("Command Center", PageBuilder.CommandCenter(DispatcherRef, CommandCenterOutputRef));
-        Pages.put("Logs",           PageBuilder.Logs(LogOutputRef));
-        Pages.put("Payload Gen",    PageBuilder.PayloadGen());
-        Pages.put("Keylogger",      PageBuilder.KeyloggerPage());
-        Pages.put("Network Map",    PageBuilder.NetworkMapPage());
-        Pages.put("File Manager",   PageBuilder.FileManagerPage());
-        Pages.put("Tasks",          PageBuilder.TasksPage());
-        Pages.put("Scheduler",      PageBuilder.SchedulerPage());
-        Pages.put("Sysinfo",        PageBuilder.SysinfoPage());
-        Pages.put("Settings",       PageBuilder.Settings(
-            ServerConfiguration,
-            ServerToggleRef, HostFieldRef, PortFieldRef,
-            ServerStatusLabelRef, ServerInfoLabelRef, ToggleStatusLabelRef,
-            this::InitializeServer,
-            () -> { if (ServerControl != null) ServerControl.Stop(); }
-        ));
+            this::KillSelected,
+            Id -> SelectedId = Id
+        );
+        Pages.put("Sessions", SsResult.Root());
+
+        LoadResult<Node> TmResult = FxmlLoader.Load("Terminal.fxml");
+        TerminalCtrl = TmResult.GetController();
+        TerminalCtrl.SetCallbacks(this::ExecTerminal, this::SysinfoTerminal);
+        Pages.put("Terminal", TmResult.Root());
+
+        LoadResult<Node> LiResult = FxmlLoader.Load("Listener.fxml");
+        ListenerCtrl = LiResult.GetController();
+        ListenerCtrl.SetCallbacks(this::StartServer, this::StopServer);
+        Pages.put("Listener", LiResult.Root());
+
+        LoadResult<Node> CcResult = FxmlLoader.Load("CommandCenter.fxml");
+        CmdCtrl = CcResult.GetController();
+        Pages.put("Command Center", CcResult.Root());
+
+        LoadResult<Node> LgResult = FxmlLoader.Load("Logs.fxml");
+        LogsCtrl = LgResult.GetController();
+        Pages.put("Logs", LgResult.Root());
+
+        LoadResult<Node> StResult = FxmlLoader.Load("Settings.fxml");
+        SettingsCtrl = StResult.GetController();
+        SettingsCtrl.BindConfig(Config);
+        Pages.put("Settings", StResult.Root());
     }
 
-    private void NavigateToPage(String PageName) {
-        ActivePage = PageName;
-        SidebarBuilder.ApplyActiveState(NavItemMap, PageName);
-        Node TargetPage = Pages.get(PageName);
-        if (TargetPage != null) {
-            FadeTransition FadeIn = new FadeTransition(Duration.millis(120), TargetPage);
-            FadeIn.setFromValue(0.4);
-            FadeIn.setToValue(1.0);
-            ContentArea.getChildren().setAll(TargetPage);
-            FadeIn.play();
-        }
+    private void Navigate(String Page) {
+        SidebarBuilder.SetActive(NavItemMap, Page);
+        Node Target = Pages.get(Page);
+        if (Target == null) return;
+        FadeTransition Fade = new FadeTransition(Duration.millis(100), Target);
+        Fade.setFromValue(0.5);
+        Fade.setToValue(1.0);
+        ContentArea.getChildren().setAll(Target);
+        Fade.play();
     }
 
-    private void InitializeServer() {
-        if (HostFieldRef[0] == null || PortFieldRef[0] == null) return;
-        String HostAddress = HostFieldRef[0].getText().trim();
-        int PortNumber;
-        try {
-            PortNumber = Integer.parseInt(PortFieldRef[0].getText().trim());
-        } catch (NumberFormatException Exception) {
-            ShowAlert(Alert.AlertType.WARNING, "Invalid port number");
-            Platform.runLater(() -> {
-                if (ServerToggleRef[0] != null) {
-                    ServerToggleRef[0].setSelected(false);
-                    ServerToggleRef[0].setText("OFF");
-                }
-            });
-            return;
-        }
+    private void StartServer() {
+        String Host = ListenerCtrl.GetHost();
+        int    Port = ListenerCtrl.GetPort();
 
-        ServerControl = new ServerController(
-            ServerConfiguration,
-            StatusIndicatorRef[0],
-            ServerStatusLabelRef[0],
-            ServerInfoLabelRef[0],
-            null, null,
-            this::AddLogEntry,
-            this::HandleServerEvent,
+        SrvCtrl = new ServerController(
+            Config,
+            StatusIndicator[0], null, null, null, null,
+            this::Log,
+            this::HandleEvent,
             () -> {
                 Platform.runLater(() -> {
-                    if (ToggleStatusLabelRef[0] != null) {
-                        ToggleStatusLabelRef[0].setText("Running on " + HostAddress + ":" + PortNumber);
-                        ToggleStatusLabelRef[0].setStyle("-fx-text-fill:" + Palette.AccentGreen + "; -fx-font-size:11px;");
-                    }
+                    ListenerCtrl.SetOnline(true, Host + ":" + Port);
+                    ListenerCtrl.AppendLog("[+] Listener started on " + Host + ":" + Port);
+                    if (OverviewCtrl != null) OverviewCtrl.UpdateServerStatus(
+                        true, Host + ":" + Port, ListenerCtrl.GetMode(), Auth.GetOperatorName()
+                    );
                 });
-                SessionController = new SessionManager(
-                    ServerControl.GetServer(),
-                    Authentication.GetDb(),
-                    SessionRows,
-                    SessionCountLabelRef[0]
+                SessMgr = new SessionManager(
+                    SrvCtrl.GetServer(), Auth.GetDb(), SessionRows, SessionCountLabel[0]
                 );
-                CommandDispatcherInstance = new CommandDispatcher(
-                    ServerControl.GetServer(), Authentication.GetDb(),
-                    SessionController, this::AddLogEntry, Authentication.GetOperatorName()
+                Dispatcher = new CommandDispatcher(
+                    SrvCtrl.GetServer(), Auth.GetDb(), SessMgr, this::Log, Auth.GetOperatorName()
                 );
-                DispatcherRef[0] = CommandDispatcherInstance;
+                CmdCtrl.SetDispatcher(Dispatcher);
             },
             () -> Platform.runLater(() -> {
-                if (ToggleStatusLabelRef[0] != null) {
-                    ToggleStatusLabelRef[0].setText("Server is offline");
-                    ToggleStatusLabelRef[0].setStyle("-fx-font-size:11px; -fx-text-fill:" + Palette.TextTertiary + ";");
-                }
+                ListenerCtrl.SetOffline();
+                ListenerCtrl.AppendLog("[-] Listener stopped");
+                if (OverviewCtrl != null) OverviewCtrl.UpdateServerStatus(
+                    false, "", Config.GetServerMode(), Auth.GetOperatorName()
+                );
                 SessionRows.clear();
-                if (SessionCountLabelRef[0] != null)
-                    SessionCountLabelRef[0].setText("0 sessions");
+                if (SessionCountLabel[0] != null)
+                    SessionCountLabel[0].setText("0 sessions");
             })
         );
-        ServerControl.Start(HostAddress, PortNumber);
+        SrvCtrl.Start(Host, Port);
     }
 
-    private void ExecuteTerminalCommand() {
-        if (SessionIdFieldRef[0] == null || TerminalCommandRef[0] == null) return;
-        String SessionIdText = SessionIdFieldRef[0].getText().trim();
-        String CommandText   = TerminalCommandRef[0].getText().trim();
-        if (SessionIdText.isEmpty() || CommandText.isEmpty()) return;
-        int SessionId;
-        try {
-            SessionId = Integer.parseInt(SessionIdText);
-        } catch (NumberFormatException Exception) {
-            AppendToTerminal("[!] Invalid session ID\n");
+    private void StopServer() {
+        if (SrvCtrl != null) SrvCtrl.Stop();
+    }
+
+    private void RefreshSessions() {
+        if (SessMgr != null) SessMgr.Refresh();
+    }
+
+    private void ExecTerminal(int SessionId, String Cmd) {
+        if (SrvCtrl == null || !SrvCtrl.IsRunning()) {
+            if (TerminalCtrl != null) TerminalCtrl.Append("[!] Server not running");
             return;
         }
-        if (ServerControl == null || !ServerControl.IsRunning()) {
-            AppendToTerminal("[!] Server not running\n");
-            return;
-        }
-        AppendToTerminal("> " + CommandText + "\n");
-        TerminalCommandRef[0].clear();
-        AddLogEntry("> #" + SessionId + ": " + CommandText);
-        final int FinalSessionId = SessionId;
+        Log("> #" + SessionId + ": " + Cmd);
         Executors.newSingleThreadExecutor().submit(() -> {
-            String[] Result = ServerControl.GetServer().ExecuteCommand(FinalSessionId, CommandText);
-            boolean Success = Boolean.parseBoolean(Result[0]);
+            String[] Res = SrvCtrl.GetServer().ExecuteCommand(SessionId, Cmd);
+            boolean  Ok  = Boolean.parseBoolean(Res[0]);
             Platform.runLater(() -> {
-                AppendToTerminal(Result[1] + "\n\n");
-                AddLogEntry(Success ? "[+] OK" : "[!] " + Result[1]);
+                if (TerminalCtrl != null) TerminalCtrl.Append(Res[1]);
+                Log(Ok ? "[+] OK" : "[!] " + Res[1]);
             });
         });
+    }
+
+    private void SysinfoTerminal(int SessionId) {
+        if (Dispatcher != null) Dispatcher.Dispatch("sysinfo " + SessionId, null);
     }
 
     private void OpenExecutePopup() {
-        if (SelectedSessionId < 0) {
-            ShowAlert(Alert.AlertType.WARNING, "Select a session first");
-            return;
-        }
-        if (ServerControl == null || !ServerControl.IsRunning()) {
-            ShowAlert(Alert.AlertType.WARNING, "Server not running");
-            return;
-        }
-        PopupBuilder.ShowExecuteWindow(SelectedSessionId, ServerControl);
+        if (SelectedId < 0) { ShowAlert(Alert.AlertType.WARNING, "Select a session first"); return; }
+        if (SrvCtrl == null || !SrvCtrl.IsRunning()) { ShowAlert(Alert.AlertType.WARNING, "Server not running"); return; }
+        PopupBuilder.ShowExecuteWindow(SelectedId, SrvCtrl);
     }
 
     private void OpenBroadcastPopup() {
-        if (ServerControl == null || !ServerControl.IsRunning()) {
-            ShowAlert(Alert.AlertType.WARNING, "Server not running");
-            return;
-        }
-        PopupBuilder.ShowBroadcastWindow(ServerControl, Authentication);
+        if (SrvCtrl == null || !SrvCtrl.IsRunning()) { ShowAlert(Alert.AlertType.WARNING, "Server not running"); return; }
+        PopupBuilder.ShowBroadcastWindow(SrvCtrl, Auth);
     }
 
-    private void KillSelectedSession() {
-        if (SelectedSessionId < 0) {
-            ShowAlert(Alert.AlertType.WARNING, "Select a session first");
-            return;
-        }
-        Alert ConfirmDialog = new Alert(Alert.AlertType.CONFIRMATION, "Terminate SESSION-" + SelectedSessionId + "?");
-        ConfirmDialog.setHeaderText(null);
-        ConfirmDialog.showAndWait().ifPresent(Response -> {
-            if (Response == ButtonType.OK) {
-                if (SessionController != null) SessionController.Kill(SelectedSessionId);
-                SelectedSessionId = -1;
-                if (SelectedLabelRef[0] != null) SelectedLabelRef[0].setText("No session selected");
+    private void KillSelected() {
+        if (SelectedId < 0) { ShowAlert(Alert.AlertType.WARNING, "Select a session first"); return; }
+        Alert Confirm = new Alert(Alert.AlertType.CONFIRMATION, "Terminate SESSION-" + SelectedId + "?");
+        Confirm.setHeaderText(null);
+        Confirm.showAndWait().ifPresent(R -> {
+            if (R == ButtonType.OK) {
+                if (SessMgr != null) SessMgr.Kill(SelectedId);
+                SelectedId = -1;
             }
         });
     }
 
-    private void HandleServerEvent(EventType EventType, Map<String, Object> EventData) {
-        switch (EventType) {
+    private void HandleEvent(EventType Type, Map<String, Object> Data) {
+        switch (Type) {
             case AgentConnected -> {
-                AddLogEntry("[+] [" + EventData.get("Type") + "] SESSION-" + EventData.get("ID") +
-                    ": " + EventData.get("AgentName") + " (" + EventData.get("OS") + ")");
-                Platform.runLater(() -> { if (SessionController != null) SessionController.Refresh(); });
+                String Msg = "[+] [" + Data.get("Type") + "] SESSION-" + Data.get("ID")
+                    + ": " + Data.get("AgentName") + " (" + Data.get("OS") + ")";
+                Log(Msg);
+                if (OverviewCtrl != null) OverviewCtrl.AddActivity(true, Msg, Ts());
+                Platform.runLater(() -> {
+                    if (SessMgr != null) SessMgr.Refresh();
+                    UpdateOverviewStats();
+                });
             }
             case AgentDisconnected -> {
-                AddLogEntry("[-] SESSION-" + EventData.get("ID") + " disconnected: " + EventData.get("Reason"));
-                Platform.runLater(() -> { if (SessionController != null) SessionController.Refresh(); });
+                String Msg = "[-] SESSION-" + Data.get("ID") + " disconnected: " + Data.get("Reason");
+                Log(Msg);
+                if (OverviewCtrl != null) OverviewCtrl.AddActivity(false, Msg, Ts());
+                Platform.runLater(() -> {
+                    if (SessMgr != null) SessMgr.Refresh();
+                    UpdateOverviewStats();
+                });
             }
-            case Error -> AddLogEntry("[!] " + EventData.get("Message"));
+            case Error -> Log("[!] " + Data.get("Message"));
         }
     }
 
-    private void AddLogEntry(String Message) {
-        String Timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        String LogLine   = "[" + Timestamp + "]  " + Message;
-        LogEntries.add(LogLine);
-        if (LogEntries.size() > ServerConfiguration.GetMaxLogEntries()) LogEntries.remove(0);
-        Platform.runLater(() -> {
-            if (LogOutputRef[0] != null) LogOutputRef[0].appendText(LogLine + "\n");
-        });
+    private void UpdateOverviewStats() {
+        if (SrvCtrl == null || OverviewCtrl == null) return;
+        Map<String, Integer> Stats = SrvCtrl.GetServer().GetSessions().GetStats();
+        OverviewCtrl.UpdateStats(
+            Stats.getOrDefault("Total", 0),
+            Stats.getOrDefault("RAVEN", 0),
+            Stats.getOrDefault("METERPRETER", 0),
+            Stats.getOrDefault("REVERSE_SHELL", 0)
+        );
     }
 
-    private void AppendToTerminal(String Text) {
-        if (TerminalOutputRef[0] != null) TerminalOutputRef[0].appendText(Text);
+    private void Log(String Msg) {
+        if (LogsCtrl != null) {
+            String Level = Msg.startsWith("[+]") ? "OK"
+                : Msg.startsWith("[!]") ? "ERROR"
+                : Msg.startsWith("[-]") ? "WARN" : "INFO";
+            LogsCtrl.AppendEntry(Level, Msg);
+        }
+        if (SessionsCtrl != null) SessionsCtrl.AppendLog(Msg);
+        if (CmdCtrl      != null) CmdCtrl.AppendOutput(Msg);
     }
 
     private void StartUptimeThread() {
-        Thread UptimeThread = new Thread(() -> {
-            while (true) {
-                try { Thread.sleep(1000); } catch (InterruptedException Ignored) {}
-                if (ServerControl != null && ServerControl.GetStartTime() != null) {
-                    long Seconds = java.time.Duration.between(
-                        ServerControl.GetStartTime(), java.time.Instant.now()
-                    ).getSeconds();
-                    String FormattedUptime = SystemHelper.FormatUptime(Seconds);
+        Thread T = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                try { Thread.sleep(1000); } catch (InterruptedException E) { break; }
+                if (SrvCtrl != null && SrvCtrl.GetStartTime() != null) {
+                    long Secs = java.time.Duration.between(
+                        SrvCtrl.GetStartTime(), java.time.Instant.now()).getSeconds();
+                    String Fmt = SystemHelper.FormatUptime(Secs);
                     Platform.runLater(() -> {
-                        if (UptimeLabelRef[0] != null) UptimeLabelRef[0].setText(FormattedUptime);
+                        if (UptimeLabel[0] != null) UptimeLabel[0].setText(Fmt);
+                        if (OverviewCtrl  != null) OverviewCtrl.UpdateUptime(Fmt);
                     });
                 }
             }
         });
-        UptimeThread.setDaemon(true);
-        UptimeThread.start();
+        T.setDaemon(true);
+        T.start();
     }
 
-    private void ShowAlert(Alert.AlertType AlertType, String Message) {
-        Alert AlertDialog = new Alert(AlertType, Message);
-        AlertDialog.setHeaderText(null);
-        AlertDialog.showAndWait();
+    private void LoadFonts() {
+        try {
+            javafx.scene.text.Font.loadFont(
+                getClass().getResourceAsStream("/fonts/MaterialIcons-Regular.ttf"), 16);
+        } catch (Exception Ignored) {}
+    }
+
+    private void ShowAlert(Alert.AlertType Type, String Msg) {
+        Alert A = new Alert(Type, Msg);
+        A.setHeaderText(null);
+        A.showAndWait();
+    }
+
+    private String Ts() {
+        return java.time.LocalTime.now()
+            .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
     }
 }

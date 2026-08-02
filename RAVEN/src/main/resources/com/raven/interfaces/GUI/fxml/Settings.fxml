@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<ScrollPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.raven.interfaces.GUI.module.UI.controller.SettingsController"
+            fitToWidth="true"
+            stylesheets="@../styles/raven.css">
+    <VBox spacing="10" fillWidth="true">
+        <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+
+        <VBox styleClass="panel-card" spacing="0">
+            <HBox styleClass="panel-header"><Label text="GENERAL" styleClass="stat-label"/></HBox>
+            <GridPane hgap="12" vgap="0">
+                <padding><Insets top="4" right="14" bottom="4" left="14"/></padding>
+                <columnConstraints>
+                    <ColumnConstraints minWidth="160" maxWidth="200"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <HBox GridPane.columnIndex="0" GridPane.rowIndex="0" styleClass="activity-row" alignment="CENTER_LEFT">
+                    <Label text="Operator handle" styleClass="text-body"/>
+                </HBox>
+                <HBox GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="activity-row">
+                    <TextField fx:id="HandleField" styleClass="input-field" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox GridPane.columnIndex="0" GridPane.rowIndex="1" styleClass="activity-row" alignment="CENTER_LEFT">
+                    <Label text="Default LHOST" styleClass="text-body"/>
+                </HBox>
+                <HBox GridPane.columnIndex="1" GridPane.rowIndex="1" styleClass="activity-row">
+                    <TextField fx:id="LhostField" styleClass="input-field" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox GridPane.columnIndex="0" GridPane.rowIndex="2" styleClass="activity-row" alignment="CENTER_LEFT">
+                    <Label text="Default LPORT" styleClass="text-body"/>
+                </HBox>
+                <HBox GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="activity-row">
+                    <TextField fx:id="LportField" styleClass="input-field" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox GridPane.columnIndex="0" GridPane.rowIndex="3" styleClass="activity-row" alignment="CENTER_LEFT">
+                    <Label text="Session timeout (sec)" styleClass="text-body"/>
+                </HBox>
+                <HBox GridPane.columnIndex="1" GridPane.rowIndex="3" styleClass="activity-row">
+                    <TextField fx:id="TimeoutField" text="300" styleClass="input-field" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <HBox GridPane.columnIndex="0" GridPane.rowIndex="4" styleClass="activity-row" alignment="CENTER_LEFT">
+                    <Label text="Log retention limit" styleClass="text-body"/>
+                </HBox>
+                <HBox GridPane.columnIndex="1" GridPane.rowIndex="4" styleClass="activity-row">
+                    <TextField fx:id="LogRetField" text="5000" styleClass="input-field" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                </HBox>
+            </GridPane>
+        </VBox>
+
+        <VBox styleClass="panel-card" spacing="0">
+            <HBox styleClass="panel-header"><Label text="NOTIFICATIONS" styleClass="stat-label"/></HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="New session alert" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="NotifSession" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="Session drop alert" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="NotifDrop" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="Transfer complete" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="NotifTransfer" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="Sound alerts" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="NotifSound" source="ToggleSwitch.fxml"/>
+            </HBox>
+        </VBox>
+
+        <VBox styleClass="panel-card" spacing="0">
+            <HBox styleClass="panel-header"><Label text="SECURITY" styleClass="stat-label"/></HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="Encrypt comms" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="SecEncrypt" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="TLS verify certs" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="SecTls" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="Auth required" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="SecAuth" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="14">
+                <padding><Insets right="14" left="14"/></padding>
+                <Label text="OPSEC mode" styleClass="text-body" HBox.hgrow="ALWAYS"/>
+                <fx:include fx:id="SecOpsec" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="toolbar-bar" alignment="CENTER_RIGHT" spacing="8">
+                <Button text="Save settings"    styleClass="btn,btn-success" onAction="#OnSave"/>
+                <Button text="Reset defaults"   styleClass="btn,btn-danger"  onAction="#OnReset"/>
+            </HBox>
+        </VBox>
+    </VBox>
+</ScrollPane>

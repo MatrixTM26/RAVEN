@@ -1,38 +1,59 @@
 package com.raven.interfaces.GUI.module.UI.frame;
 
 import com.raven.interfaces.GUI.module.UI.color.Palette;
-import com.raven.interfaces.GUI.module.UI.component.ComponentFactory;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 public final class SidebarBuilder {
 
-    private static final String IconDns      = "\uE875";
-    private static final String IconMenu     = "\uE5D2";
-    private static final String IconDashboard= "\uE871";
-    private static final String IconDevices  = "\uE32B";
-    private static final String IconTerminal = "\uEB8E";
-    private static final String IconCode     = "\uE86F";
-    private static final String IconList     = "\uE896";
-    private static final String IconSettings = "\uE8B8";
-    private static final String IconCircle   = "\uEF4A";
-    private static final String IconTask     = "\uE8F9";
-    private static final String IconNet      = "\uE80C";
-    private static final String IconFolder   = "\uE2C7";
-    private static final String IconKey      = "\uE886";
-    private static final String IconInfo     = "\uE8FD";
-    private static final String IconBug      = "\uE868";
-    private static final String IconTimer    = "\uE425";
+    private static final double EXPANDED  = 210.0;
+    private static final double COLLAPSED = 48.0;
+
+    private static final Map<String, String> NAV_ICONS = new LinkedHashMap<>() {{
+        put("Overview",       "");
+        put("Sessions",       "");
+        put("Terminal",       "");
+        put("Listener",       "");
+        put("Command Center", "");
+        put("Logs",           "");
+        put("Payload Gen",    "");
+        put("Keylogger",      "");
+        put("Network Map",    "");
+        put("File Manager",   "");
+        put("Tasks",          "");
+        put("Scheduler",      "");
+        put("Sysinfo",        "");
+        put("Settings",       "");
+    }};
+
+    private static final Map<String, String> SECTIONS = new LinkedHashMap<>() {{
+        put("Overview",       "GENERAL");
+        put("Sessions",       null);
+        put("Terminal",       null);
+        put("Listener",       null);
+        put("Command Center", null);
+        put("Logs",           null);
+        put("Payload Gen",    "TOOLS");
+        put("Keylogger",      null);
+        put("Network Map",    null);
+        put("File Manager",   null);
+        put("Tasks",          null);
+        put("Scheduler",      null);
+        put("Sysinfo",        null);
+        put("Settings",       "CONFIGURATION");
+    }};
 
     private SidebarBuilder() {}
 
@@ -41,208 +62,176 @@ public final class SidebarBuilder {
                              Label[] StatusIndicatorOut,
                              String OperatorName) {
         VBox Sidebar = new VBox(0);
-        Sidebar.setPrefWidth(220);
-        Sidebar.setStyle(
-            "-fx-background-color:" + Palette.BackgroundDeep + ";" +
-            "-fx-border-color:transparent " + Palette.BorderSubtle + " transparent transparent;" +
-            "-fx-border-width:0 1 0 0;"
-        );
+        Sidebar.setPrefWidth(EXPANDED);
+        Sidebar.setMinWidth(COLLAPSED);
+        Sidebar.setMaxWidth(EXPANDED);
+        Sidebar.getStyleClass().add("sidebar");
 
-        HBox BrandRow = new HBox(9);
-        BrandRow.setAlignment(Pos.CENTER_LEFT);
-        BrandRow.setPadding(new Insets(0, 12, 0, 12));
-        BrandRow.setMinHeight(56);
-        BrandRow.setStyle(
-            "-fx-background-color:" + Palette.BackgroundVoid + ";" +
-            "-fx-border-color:transparent transparent " + Palette.BorderSubtle + " transparent;" +
-            "-fx-border-width:0 0 1 0;"
-        );
+        HBox Brand = new HBox(9);
+        Brand.setAlignment(Pos.CENTER_LEFT);
+        Brand.setPadding(new Insets(0, 10, 0, 12));
+        Brand.setMinHeight(52);
+        Brand.setMaxHeight(52);
+        Brand.getStyleClass().add("sidebar-brand");
 
-        StackPane LogoChip = ComponentFactory.IconChip(IconDns, Palette.AccentBlue, 30, 15);
+        Label LogoIcon = new Label("☠");
+        LogoIcon.setStyle(
+            "-fx-text-fill:" + Palette.Red + ";" +
+            "-fx-font-size:18px; -fx-min-width:24;"
+        );
 
         VBox BrandText = new VBox(2);
         Label BrandName = new Label("RAVEN");
         BrandName.setStyle(
-            "-fx-text-fill:" + Palette.TextPrimary + ";" +
-            "-fx-font-size:13px; -fx-font-weight:bold;" +
-            "-fx-letter-spacing:0.12em;"
+            "-fx-text-fill:" + Palette.White + ";" +
+            "-fx-font-size:13px; -fx-font-weight:bold; -fx-letter-spacing:0.14em;"
         );
-        Label BrandSub = new Label("Command and Control");
-        BrandSub.setStyle("-fx-text-fill:" + Palette.TextQuaternary + "; -fx-font-size:9px;");
+        Label BrandSub = new Label("C2 Framework");
+        BrandSub.setStyle("-fx-text-fill:" + Palette.WhiteGhost + "; -fx-font-size:9px;");
         BrandText.getChildren().addAll(BrandName, BrandSub);
         HBox.setHgrow(BrandText, Priority.ALWAYS);
 
-        Label VersionTag = new Label("v3.0");
-        VersionTag.setStyle(
-            "-fx-background-color:" + Palette.Background + ";" +
-            "-fx-text-fill:" + Palette.TextTertiary + ";" +
-            "-fx-font-size:9px; -fx-padding:2 6 2 6;" +
-            "-fx-border-color:" + Palette.BorderSubtle + ";" +
-            "-fx-border-width:1; -fx-background-radius:0; -fx-border-radius:0;"
+        Label CollapseBtn = new Label("≡");
+        CollapseBtn.setStyle(
+            "-fx-text-fill:" + Palette.WhiteFaint + ";" +
+            "-fx-font-size:15px; -fx-cursor:hand; -fx-padding:4 4 4 4;"
         );
+        CollapseBtn.setCursor(Cursor.HAND);
+        CollapseBtn.setOnMouseClicked(e -> ToggleCollapse(Sidebar, BrandText, CollapseBtn, NavItemMapOut));
 
-        Label BurgerBtn = new Label(IconMenu);
-        BurgerBtn.setStyle(
-            "-fx-font-family:'Material Icons'; -fx-font-size:17px;" +
-            "-fx-text-fill:" + Palette.TextTertiary + ";" +
-            "-fx-cursor:hand; -fx-padding:4 4 4 4;" +
-            "-fx-background-radius:0;"
-        );
-        BurgerBtn.setOnMouseEntered(e -> BurgerBtn.setStyle(
-            "-fx-font-family:'Material Icons'; -fx-font-size:17px;" +
-            "-fx-text-fill:" + Palette.TextPrimary + ";" +
-            "-fx-cursor:hand; -fx-padding:4 4 4 4;" +
-            "-fx-background-color:" + Palette.BackgroundSurface + ";" +
-            "-fx-background-radius:0;"
-        ));
-        BurgerBtn.setOnMouseExited(e -> BurgerBtn.setStyle(
-            "-fx-font-family:'Material Icons'; -fx-font-size:17px;" +
-            "-fx-text-fill:" + Palette.TextTertiary + ";" +
-            "-fx-cursor:hand; -fx-padding:4 4 4 4;" +
-            "-fx-background-radius:0;"
-        ));
-        BurgerBtn.setOnMouseClicked(e -> AnimateSidebarToggle(Sidebar, NavItemMapOut));
+        Brand.getChildren().addAll(LogoIcon, BrandText, CollapseBtn);
+        Sidebar.getChildren().add(Brand);
 
-        BrandRow.getChildren().addAll(LogoChip, BrandText, VersionTag, BurgerBtn);
-        Sidebar.getChildren().add(BrandRow);
+        SECTIONS.forEach((Page, Section) -> {
+            if (Section != null) {
+                Label SectionLabel = new Label(Section);
+                SectionLabel.getStyleClass().add("sidebar-section");
+                SectionLabel.setMaxWidth(Double.MAX_VALUE);
+                NavItemMapOut.put("__sec__" + Section, new HBox(SectionLabel));
+                Sidebar.getChildren().add(SectionLabel);
+            }
+            Sidebar.getChildren().add(BuildNavItem(Page, NAV_ICONS.getOrDefault(Page, "■"), NavItemMapOut, OnNavigate));
+        });
 
-        Sidebar.getChildren().add(SectionLabel("General"));
-        AddNavItem(Sidebar, "Overview",       IconDashboard, Palette.AccentBlue,   NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Sessions",       IconDevices,   Palette.AccentGreen,  NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Terminal",       IconTerminal,  Palette.AccentPink,   NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Command Center", IconCode,      Palette.AccentTeal,   NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Logs",           IconList,      Palette.TextTertiary, NavItemMapOut, OnNavigate);
-
-        Sidebar.getChildren().add(SectionLabel("Tools"));
-        AddNavItem(Sidebar, "Payload Gen",    IconBug,       Palette.AccentOrange, NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Keylogger",      IconKey,       Palette.AccentPurple, NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Network Map",    IconNet,       Palette.AccentTeal,   NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "File Manager",   IconFolder,    Palette.AccentYellow, NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Tasks",          IconTask,      Palette.AccentBlue,   NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Scheduler",      IconTimer,     Palette.AccentPurple, NavItemMapOut, OnNavigate);
-        AddNavItem(Sidebar, "Sysinfo",        IconInfo,      Palette.AccentGreen,  NavItemMapOut, OnNavigate);
-
-        Sidebar.getChildren().add(SectionLabel("Configuration"));
-        AddNavItem(Sidebar, "Settings", IconSettings, Palette.TextTertiary, NavItemMapOut, OnNavigate);
-
-        Sidebar.getChildren().add(ComponentFactory.FlexSpacer(false));
+        Sidebar.getChildren().add(BuildFlexSpacer());
 
         VBox Footer = new VBox(5);
         Footer.setPadding(new Insets(9, 12, 11, 12));
         Footer.setStyle(
-            "-fx-background-color:" + Palette.BackgroundVoid + ";" +
-            "-fx-border-color:" + Palette.BorderSubtle + " transparent transparent transparent;" +
+            "-fx-background-color:" + Palette.BgVoid + ";" +
+            "-fx-border-color:" + Palette.Border + " transparent transparent transparent;" +
             "-fx-border-width:1 0 0 0;"
         );
 
-        Label StatusIndicator = new Label(IconCircle + "  Offline");
-        StatusIndicator.setStyle(
-            "-fx-text-fill:" + Palette.AccentOrange + ";" +
-            "-fx-font-size:11px;" +
-            "-fx-font-family:'Material Icons','JetBrains Mono',monospace;"
+        Label StatusLabel = new Label("● Offline");
+        StatusLabel.setStyle(
+            "-fx-text-fill:" + Palette.Red + ";" +
+            "-fx-font-size:11px;"
         );
         if (StatusIndicatorOut != null && StatusIndicatorOut.length > 0)
-            StatusIndicatorOut[0] = StatusIndicator;
+            StatusIndicatorOut[0] = StatusLabel;
 
-        HBox AuthorRow = new HBox(7);
-        AuthorRow.setAlignment(Pos.CENTER_LEFT);
         String DisplayName = OperatorName != null ? OperatorName : "MatrixTM26";
-        StackPane AuthorAvatar = ComponentFactory.CircleChip(DisplayName, Palette.AccentBlue, 20);
         Label AuthorLabel = new Label(DisplayName);
-        AuthorLabel.setStyle("-fx-font-size:10px; -fx-text-fill:" + Palette.TextTertiary + ";");
-        AuthorRow.getChildren().addAll(AuthorAvatar, AuthorLabel);
+        AuthorLabel.setStyle("-fx-font-size:10px; -fx-text-fill:" + Palette.WhiteFaint + ";");
 
-        Footer.getChildren().addAll(StatusIndicator, AuthorRow);
+        Footer.getChildren().addAll(StatusLabel, AuthorLabel);
         Sidebar.getChildren().add(Footer);
         return Sidebar;
     }
 
-    private static void AddNavItem(VBox Sidebar, String PageName, String IconCodepoint,
-                                   String IconHex, Map<String, HBox> NavItemMapOut,
-                                   Consumer<String> OnNavigate) {
-        HBox NavItem = new HBox(10);
-        NavItem.setAlignment(Pos.CENTER_LEFT);
-        NavItem.setPadding(new Insets(8, 12, 8, 14));
-        NavItem.setMaxWidth(Double.MAX_VALUE);
-        NavItem.setCursor(javafx.scene.Cursor.HAND);
-        NavItem.setStyle("-fx-background-color:transparent;");
+    private static HBox BuildNavItem(String PageName, String Icon,
+                                     Map<String, HBox> NavItemMapOut,
+                                     Consumer<String> OnNavigate) {
+        HBox Item = new HBox(10);
+        Item.setAlignment(Pos.CENTER_LEFT);
+        Item.setPadding(new Insets(8, 12, 8, 14));
+        Item.setMaxWidth(Double.MAX_VALUE);
+        Item.setCursor(Cursor.HAND);
+        Item.setStyle("-fx-background-color:transparent;");
 
-        StackPane IconWrapper = new StackPane();
-        IconWrapper.setPrefSize(22, 22);
-        IconWrapper.setMinSize(22, 22);
-        IconWrapper.getChildren().add(ComponentFactory.MaterialIcon(IconCodepoint, IconHex, 14));
+        Label IconLabel = new Label(Icon);
+        IconLabel.setStyle(
+            "-fx-text-fill:" + Palette.Red + ";" +
+            "-fx-font-size:13px; -fx-min-width:20; -fx-max-width:20;" +
+            "-fx-alignment:CENTER;"
+        );
 
         Label NameLabel = new Label(PageName);
-        NameLabel.setStyle("-fx-text-fill:" + Palette.TextTertiary + "; -fx-font-size:11px;");
+        NameLabel.setStyle("-fx-text-fill:" + Palette.WhiteFaint + "; -fx-font-size:11px;");
+        NameLabel.setMaxWidth(Double.MAX_VALUE);
 
-        NavItem.getChildren().addAll(IconWrapper, NameLabel);
-        NavItem.setUserData(PageName);
+        Item.getChildren().addAll(IconLabel, NameLabel);
+        Item.setUserData(PageName);
+        NavItemMapOut.put(PageName, Item);
 
-        NavItem.setOnMouseEntered(e -> {
-            if (!IsActive(NavItemMapOut, PageName))
-                NavItem.setStyle("-fx-background-color:" + Palette.BackgroundSurface + ";");
+        Item.setOnMouseEntered(e -> {
+            if (!IsActive(Item))
+                Item.setStyle("-fx-background-color:" + Palette.BgPanel + ";");
         });
-        NavItem.setOnMouseExited(e -> {
-            if (!IsActive(NavItemMapOut, PageName))
-                NavItem.setStyle("-fx-background-color:transparent;");
+        Item.setOnMouseExited(e -> {
+            if (!IsActive(Item))
+                Item.setStyle("-fx-background-color:transparent;");
         });
-        NavItem.setOnMouseClicked(e -> OnNavigate.accept(PageName));
-
-        NavItemMapOut.put(PageName, NavItem);
-        Sidebar.getChildren().add(NavItem);
+        Item.setOnMouseClicked(e -> OnNavigate.accept(PageName));
+        return Item;
     }
 
-    public static void ApplyActiveState(Map<String, HBox> NavItemMap, String ActivePage) {
+    public static void SetActive(Map<String, HBox> NavItemMap, String ActivePage) {
         NavItemMap.forEach((Name, Item) -> {
-            Label NameLabel = (Label) Item.getChildren().get(1);
+            if (Name.startsWith("__sec__")) return;
+            if (!(Item.getChildren().get(1) instanceof Label NameLabel)) return;
             if (Name.equals(ActivePage)) {
                 Item.setStyle(
-                    "-fx-background-color:rgba(61,142,240,0.07);" +
-                    "-fx-border-color:transparent transparent transparent " + Palette.AccentBlue + ";" +
+                    "-fx-background-color:#200808;" +
+                    "-fx-border-color:transparent transparent transparent " + Palette.Red + ";" +
                     "-fx-border-width:0 0 0 2;"
                 );
-                NameLabel.setStyle("-fx-text-fill:" + Palette.AccentBlue + "; -fx-font-size:11px; -fx-font-weight:bold;");
+                NameLabel.setStyle("-fx-text-fill:" + Palette.Red + "; -fx-font-size:11px; -fx-font-weight:bold;");
             } else {
                 Item.setStyle("-fx-background-color:transparent;");
-                NameLabel.setStyle("-fx-text-fill:" + Palette.TextTertiary + "; -fx-font-size:11px;");
+                NameLabel.setStyle("-fx-text-fill:" + Palette.WhiteFaint + "; -fx-font-size:11px;");
             }
         });
     }
 
-    private static void AnimateSidebarToggle(VBox Sidebar, Map<String, HBox> NavItemMap) {
-        boolean WillCollapse = Sidebar.getPrefWidth() > 100;
-        double Target = WillCollapse ? 52 : 220;
-        Timeline Anim = new Timeline(new KeyFrame(
-            Duration.millis(200),
-            new KeyValue(Sidebar.prefWidthProperty(), Target, Interpolator.EASE_BOTH)
-        ));
-        Anim.play();
-        NavItemMap.values().forEach(Item -> {
-            Label NameLabel = (Label) Item.getChildren().get(1);
-            NameLabel.setVisible(!WillCollapse);
-            NameLabel.setManaged(!WillCollapse);
-        });
-        Sidebar.getChildren().forEach(Child -> {
-            if (Child instanceof Label Section && Section.getStyle().contains("9px")) {
-                Section.setVisible(!WillCollapse);
-                Section.setManaged(!WillCollapse);
-            }
-        });
-    }
+    private static void ToggleCollapse(VBox Sidebar, VBox BrandText,
+                                       Label CollapseBtn,
+                                       Map<String, HBox> NavItemMap) {
+        boolean Expanding = Sidebar.getPrefWidth() < EXPANDED - 10;
+        double Target = Expanding ? EXPANDED : COLLAPSED;
 
-    private static boolean IsActive(Map<String, HBox> NavItemMap, String PageName) {
-        HBox Item = NavItemMap.get(PageName);
-        return Item != null && Item.getStyle().contains(Palette.AccentBlue);
-    }
-
-    private static Label SectionLabel(String Text) {
-        Label Section = new Label(Text.toUpperCase());
-        Section.setStyle(
-            "-fx-text-fill:" + Palette.TextQuaternary + ";" +
-            "-fx-font-size:9px; -fx-font-weight:bold;" +
-            "-fx-padding:14 12 4 16;" +
-            "-fx-letter-spacing:0.10em;"
+        Timeline Anim = new Timeline(
+            new KeyFrame(Duration.millis(200),
+                new KeyValue(Sidebar.prefWidthProperty(), Target),
+                new KeyValue(Sidebar.maxWidthProperty(), Target)
+            )
         );
-        return Section;
+        Anim.play();
+
+        BrandText.setVisible(Expanding);
+        BrandText.setManaged(Expanding);
+
+        NavItemMap.forEach((Name, Item) -> {
+            if (Name.startsWith("__sec__")) return;
+            if (Item.getChildren().size() < 2) return;
+            Node NameNode = Item.getChildren().get(1);
+            NameNode.setVisible(Expanding);
+            NameNode.setManaged(Expanding);
+        });
+
+        Sidebar.getChildren().stream()
+            .filter(C -> C instanceof Label L && L.getStyleClass().contains("sidebar-section"))
+            .forEach(C -> { C.setVisible(Expanding); C.setManaged(Expanding); });
+    }
+
+    private static boolean IsActive(HBox Item) {
+        return Item.getStyle().contains("#200808") || Item.getStyle().contains(Palette.Red);
+    }
+
+    private static Region BuildFlexSpacer() {
+        Region S = new Region();
+        VBox.setVgrow(S, Priority.ALWAYS);
+        return S;
     }
 }

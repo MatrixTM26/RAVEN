@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.raven.interfaces.GUI.module.UI.controller.CommandCenterController"
+      styleClass="root"
+      stylesheets="@../styles/raven.css"
+      spacing="0" fillWidth="true">
+
+    <HBox styleClass="toolbar-bar" alignment="CENTER_LEFT" spacing="8">
+        <Label text="COMMAND REFERENCE" styleClass="stat-label"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="CategoryFilter" styleClass="combo-box" prefWidth="160" onAction="#OnFilterCategory"/>
+        <TextField fx:id="CmdSearch" styleClass="search-field" promptText="Search commands..." prefWidth="200"/>
+    </HBox>
+
+    <SplitPane orientation="VERTICAL" dividerPositions="0.50" VBox.vgrow="ALWAYS">
+
+        <TableView fx:id="CmdTable" styleClass="cmd-table" columnResizePolicy="$CONSTRAINED_RESIZE_POLICY">
+            <columns>
+                <TableColumn fx:id="ColCmdName"  text="COMMAND"     prefWidth="150"/>
+                <TableColumn fx:id="ColCmdUsage" text="USAGE"       prefWidth="260"/>
+                <TableColumn fx:id="ColCmdCat"   text="CATEGORY"    prefWidth="100"/>
+                <TableColumn fx:id="ColCmdDesc"  text="DESCRIPTION" prefWidth="340"/>
+            </columns>
+            <placeholder>
+                <Label text="No commands match filter" styleClass="text-muted"/>
+            </placeholder>
+        </TableView>
+
+        <VBox spacing="0">
+            <HBox styleClass="panel-header" alignment="CENTER_LEFT" spacing="7">
+                <Label text="OUTPUT" styleClass="stat-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Clear" styleClass="btn,btn-default" onAction="#OnClearOutput"/>
+            </HBox>
+            <TextArea fx:id="OutputArea" styleClass="terminal-area" editable="false"
+                      wrapText="true" VBox.vgrow="ALWAYS"/>
+            <HBox styleClass="input-bar" alignment="CENTER_LEFT" spacing="6">
+                <Label text="❯" styleClass="cmd-prompt"/>
+                <TextField fx:id="CmdInput" styleClass="input-field"
+                           promptText="Type command..." HBox.hgrow="ALWAYS" onAction="#OnExecute"/>
+                <Button text="Execute" styleClass="btn,btn-primary" onAction="#OnExecute"/>
+                <Button text="Clear"   styleClass="btn,btn-default" onAction="#OnClearOutput"/>
+            </HBox>
+        </VBox>
+    </SplitPane>
+</VBox>

@@ -1,7 +1,6 @@
 package com.raven.interfaces.GUI.module.UI.frame;
 
 import com.raven.interfaces.GUI.module.UI.color.Palette;
-import com.raven.interfaces.GUI.module.UI.component.ComponentFactory;
 import com.raven.interfaces.GUI.module.core.database.AuthService;
 import com.raven.interfaces.GUI.module.core.server.ServerController;
 import javafx.application.Platform;
@@ -12,6 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,209 +19,223 @@ import java.util.concurrent.Executors;
 
 public final class PopupBuilder {
 
-    private static final String IconTerminal  = "\uEB8E";
-    private static final String IconBroadcast = "\uE0C9";
-    private static final String IconSend      = "\uE163";
-    private static final String IconShield    = "\uE9E0";
-
     private PopupBuilder() {}
 
-    public static void ShowExecuteWindow(int SessionId, ServerController ServerControl) {
-        Stage PopupStage = new Stage();
-        PopupStage.setTitle("Execute — SESSION-" + SessionId);
-        PopupStage.setWidth(720);
-        PopupStage.setHeight(540);
-        PopupStage.setMinWidth(520);
-        PopupStage.setMinHeight(400);
+    public static void ShowExecuteWindow(int SessionId, ServerController SrvCtrl) {
+        Stage Win = new Stage();
+        Win.setTitle("SESSION-" + SessionId + " — Shell");
+        Win.setWidth(720);
+        Win.setHeight(520);
+        Win.setMinWidth(480);
+        Win.setMinHeight(360);
 
         VBox Layout = new VBox(0);
-        Layout.setStyle("-fx-background-color:" + Palette.TerminalBackground + ";");
+        Layout.setStyle("-fx-background-color:" + Palette.TermBg + ";");
 
-        HBox Header = new HBox(9);
+        HBox Header = new HBox(10);
         Header.setAlignment(Pos.CENTER_LEFT);
         Header.setPadding(new Insets(7, 12, 7, 12));
         Header.setStyle(
-            "-fx-background-color:" + Palette.BackgroundVoid + ";" +
-            "-fx-border-color:transparent transparent " + Palette.BorderSubtle + " transparent;" +
+            "-fx-background-color:" + Palette.BgVoid + ";" +
+            "-fx-border-color:transparent transparent " + Palette.Border + " transparent;" +
             "-fx-border-width:0 0 1 0;"
         );
-        Header.getChildren().addAll(
-            ComponentFactory.IconChip(IconTerminal, Palette.AccentPink, 26, 13),
-            ComponentFactory.SmallCapsLabel("Session-" + SessionId, Palette.AccentPink),
-            ComponentFactory.FlexSpacer(true),
-            ComponentFactory.SmallCapsLabel("Interactive Shell", Palette.TextQuaternary)
-        );
+        Label Title = new Label("SESSION-" + SessionId + "  ·  Interactive Shell");
+        Title.setStyle("-fx-text-fill:" + Palette.Red + "; -fx-font-size:11px; -fx-font-weight:bold; -fx-letter-spacing:0.06em;");
+        Region Spacer = new Region();
+        HBox.setHgrow(Spacer, Priority.ALWAYS);
+        Button ClearBtn = new Button("Clear");
+        ClearBtn.getStyleClass().addAll("btn", "btn-default");
+        Header.getChildren().addAll(Title, Spacer, ClearBtn);
 
-        TextArea OutputArea = new TextArea();
-        OutputArea.setEditable(false);
-        StyleHelper.ApplyTerminal(OutputArea);
-        VBox.setVgrow(OutputArea, Priority.ALWAYS);
+        TextArea Output = new TextArea();
+        Output.setEditable(false);
+        Output.setWrapText(true);
+        Output.getStyleClass().add("terminal-area");
+        VBox.setVgrow(Output, Priority.ALWAYS);
+        ClearBtn.setOnAction(e -> Output.clear());
 
         HBox InputRow = new HBox(7);
-        InputRow.getStyleClass().add("input-bar");
         InputRow.setAlignment(Pos.CENTER_LEFT);
-        Label Prompt = new Label("❯");
-        Prompt.getStyleClass().add("cmd-prompt");
+        InputRow.setPadding(new Insets(7, 10, 7, 10));
+        InputRow.setStyle(
+            "-fx-background-color:" + Palette.BgVoid + ";" +
+            "-fx-border-color:" + Palette.Border + " transparent transparent transparent;" +
+            "-fx-border-width:1 0 0 0;"
+        );
+        Label Prompt = new Label("[#" + SessionId + "]❯");
+        Prompt.setStyle("-fx-text-fill:" + Palette.Red + "; -fx-font-size:13px; -fx-font-weight:bold;");
         TextField CmdField = new TextField();
         CmdField.setPromptText("Enter command...");
         CmdField.getStyleClass().add("input-field");
         HBox.setHgrow(CmdField, Priority.ALWAYS);
-        Button RunBtn = ComponentFactory.ActionButton(IconSend + " Run", "btn", "btn-accent");
+        Button RunBtn = new Button("Send");
+        RunBtn.getStyleClass().addAll("btn", "btn-primary");
 
-        Runnable ExecuteAction = () -> {
+        Runnable Exec = () -> {
             String Cmd = CmdField.getText().trim();
             if (Cmd.isEmpty()) return;
-            OutputArea.appendText("> " + Cmd + "\n");
+            Output.appendText("[#" + SessionId + "]❯ " + Cmd + "\n");
             CmdField.clear();
             Executors.newSingleThreadExecutor().submit(() -> {
-                String[] Result = ServerControl.GetServer().ExecuteCommand(SessionId, Cmd);
-                Platform.runLater(() -> OutputArea.appendText(Result[1] + "\n\n"));
+                String[] Res = SrvCtrl.GetServer().ExecuteCommand(SessionId, Cmd);
+                Platform.runLater(() -> Output.appendText(Res[1] + "\n\n"));
             });
         };
-        RunBtn.setOnAction(e -> ExecuteAction.run());
-        CmdField.setOnAction(e -> ExecuteAction.run());
+        RunBtn.setOnAction(e -> Exec.run());
+        CmdField.setOnAction(e -> Exec.run());
         InputRow.getChildren().addAll(Prompt, CmdField, RunBtn);
-        Layout.getChildren().addAll(Header, OutputArea, InputRow);
+        Layout.getChildren().addAll(Header, Output, InputRow);
 
-        Scene PopupScene = new Scene(Layout);
-        PopupStage.setScene(PopupScene);
-        PopupStage.show();
+        Scene Sc = new Scene(Layout);
+        URL Css = PopupBuilder.class.getResource("/com/raven/interfaces/GUI/styles/raven.css");
+        if (Css != null) Sc.getStylesheets().add(Css.toExternalForm());
+        Win.setScene(Sc);
+        Win.show();
         CmdField.requestFocus();
     }
 
-    public static void ShowBroadcastWindow(ServerController ServerControl, AuthService Authentication) {
-        Stage PopupStage = new Stage();
-        PopupStage.setTitle("Broadcast Command");
-        PopupStage.setWidth(680);
-        PopupStage.setHeight(540);
-        PopupStage.setMinWidth(480);
-        PopupStage.setMinHeight(380);
+    public static void ShowBroadcastWindow(ServerController SrvCtrl, AuthService Auth) {
+        Stage Win = new Stage();
+        Win.setTitle("Broadcast Command");
+        Win.setWidth(680);
+        Win.setHeight(500);
+        Win.setMinWidth(480);
+        Win.setMinHeight(340);
 
         VBox Layout = new VBox(0);
-        Layout.setStyle("-fx-background-color:" + Palette.TerminalBackground + ";");
+        Layout.setStyle("-fx-background-color:" + Palette.TermBg + ";");
 
-        HBox TargetRow = new HBox(9);
+        HBox TargetRow = new HBox(10);
         TargetRow.setAlignment(Pos.CENTER_LEFT);
-        TargetRow.setPadding(new Insets(7, 10, 7, 10));
+        TargetRow.setPadding(new Insets(7, 12, 7, 12));
         TargetRow.setStyle(
-            "-fx-background-color:" + Palette.BackgroundVoid + ";" +
-            "-fx-border-color:transparent transparent " + Palette.BorderSubtle + " transparent;" +
+            "-fx-background-color:" + Palette.BgVoid + ";" +
+            "-fx-border-color:transparent transparent " + Palette.Border + " transparent;" +
             "-fx-border-width:0 0 1 0;"
         );
-        Label TargetHint = ComponentFactory.MutedLabel("1,2,3  or  all");
+        Label TargetLbl = new Label("TARGET");
+        TargetLbl.setStyle("-fx-text-fill:" + Palette.Red + "; -fx-font-size:10px; -fx-font-weight:bold; -fx-letter-spacing:0.08em;");
         TextField TargetField = new TextField();
-        TargetField.setPromptText("Target sessions...");
+        TargetField.setPromptText("1,2,3  or  all");
         TargetField.getStyleClass().add("input-field");
-        HBox.setHgrow(TargetField, Priority.ALWAYS);
-        TargetRow.getChildren().addAll(
-            ComponentFactory.IconChip(IconBroadcast, Palette.AccentBlue, 26, 13),
-            ComponentFactory.SmallCapsLabel("Target", Palette.TextTertiary),
-            TargetField,
-            TargetHint
-        );
+        TargetField.setPrefWidth(200);
+        Label Hint = new Label("comma-separated IDs or 'all'");
+        Hint.setStyle("-fx-text-fill:" + Palette.WhiteFaint + "; -fx-font-size:10px;");
+        TargetRow.getChildren().addAll(TargetLbl, TargetField, Hint);
 
-        TextArea OutputArea = new TextArea();
-        OutputArea.setEditable(false);
-        StyleHelper.ApplyTerminal(OutputArea);
-        VBox.setVgrow(OutputArea, Priority.ALWAYS);
+        TextArea Output = new TextArea();
+        Output.setEditable(false);
+        Output.setWrapText(true);
+        Output.getStyleClass().add("terminal-area");
+        VBox.setVgrow(Output, Priority.ALWAYS);
 
         HBox CmdRow = new HBox(7);
-        CmdRow.getStyleClass().add("input-bar");
         CmdRow.setAlignment(Pos.CENTER_LEFT);
+        CmdRow.setPadding(new Insets(7, 10, 7, 10));
+        CmdRow.setStyle(
+            "-fx-background-color:" + Palette.BgVoid + ";" +
+            "-fx-border-color:" + Palette.Border + " transparent transparent transparent;" +
+            "-fx-border-width:1 0 0 0;"
+        );
         Label Prompt = new Label("❯");
-        Prompt.getStyleClass().add("cmd-prompt");
+        Prompt.setStyle("-fx-text-fill:" + Palette.Red + "; -fx-font-size:13px; -fx-font-weight:bold;");
         TextField CmdField = new TextField();
-        CmdField.setPromptText("Enter command to broadcast...");
+        CmdField.setPromptText("Command to broadcast...");
         CmdField.getStyleClass().add("input-field");
         HBox.setHgrow(CmdField, Priority.ALWAYS);
-        Button BcastBtn = ComponentFactory.ActionButton(IconBroadcast + " Broadcast", "btn", "btn-accent");
+        Button BcastBtn = new Button("Broadcast");
+        BcastBtn.getStyleClass().addAll("btn", "btn-primary");
 
-        Runnable BroadcastAction = () -> {
-            String TargetText  = TargetField.getText().trim();
-            String CommandText = CmdField.getText().trim();
-            if (TargetText.isEmpty() || CommandText.isEmpty()) return;
-            OutputArea.appendText("[broadcast → " + TargetText + "]  " + CommandText + "\n");
+        Runnable DoBcast = () -> {
+            String Target = TargetField.getText().trim();
+            String Cmd    = CmdField.getText().trim();
+            if (Target.isEmpty() || Cmd.isEmpty()) return;
+            Output.appendText("[broadcast → " + Target + "]  " + Cmd + "\n");
             CmdField.clear();
             Executors.newSingleThreadExecutor().submit(() -> {
                 Map<Integer, String[]> Results;
-                if (TargetText.equalsIgnoreCase("all")) {
-                    Results = ServerControl.GetServer().BroadcastAll(CommandText);
+                if (Target.equalsIgnoreCase("all")) {
+                    Results = SrvCtrl.GetServer().BroadcastAll(Cmd);
                 } else {
-                    List<Integer> IdList = new ArrayList<>();
-                    for (String Part : TargetText.split(",")) {
-                        try { IdList.add(Integer.parseInt(Part.trim())); }
-                        catch (Exception Ignored) {}
+                    List<Integer> Ids = new ArrayList<>();
+                    for (String P : Target.split(",")) {
+                        try { Ids.add(Integer.parseInt(P.trim())); } catch (Exception Ignored) {}
                     }
-                    Results = ServerControl.GetServer().BroadcastCommand(IdList, CommandText);
+                    Results = SrvCtrl.GetServer().BroadcastCommand(Ids, Cmd);
                 }
-                final Map<Integer, String[]> FinalResults = Results;
-                Platform.runLater(() -> FinalResults.forEach((Id, Result) -> {
-                    boolean Success = Boolean.parseBoolean(Result[0]);
-                    OutputArea.appendText(
-                        "  [#" + Id + "]  " + (Success ? "OK" : "ERR") + "\n" +
-                        Result[1] + "\n\n"
-                    );
-                    Authentication.GetDb().SaveCommandLog(Id, "operator", CommandText, Result[1], Success);
+                final Map<Integer, String[]> Final = Results;
+                Platform.runLater(() -> Final.forEach((Id, Res) -> {
+                    boolean Ok = Boolean.parseBoolean(Res[0]);
+                    Output.appendText("  [#" + Id + "]  " + (Ok ? "OK" : "ERR") + "  " + Res[1] + "\n");
+                    Auth.GetDb().SaveCommandLog(Id, Auth.GetOperatorName(), Cmd, Res[1], Ok);
                 }));
             });
         };
-        BcastBtn.setOnAction(e -> BroadcastAction.run());
-        CmdField.setOnAction(e -> BroadcastAction.run());
+        BcastBtn.setOnAction(e -> DoBcast.run());
+        CmdField.setOnAction(e -> DoBcast.run());
         CmdRow.getChildren().addAll(Prompt, CmdField, BcastBtn);
-        Layout.getChildren().addAll(TargetRow, OutputArea, CmdRow);
+        Layout.getChildren().addAll(TargetRow, Output, CmdRow);
 
-        PopupStage.setScene(new Scene(Layout));
-        PopupStage.show();
+        Scene Sc = new Scene(Layout);
+        URL Css = PopupBuilder.class.getResource("/com/raven/interfaces/GUI/styles/raven.css");
+        if (Css != null) Sc.getStylesheets().add(Css.toExternalForm());
+        Win.setScene(Sc);
+        Win.show();
         CmdField.requestFocus();
     }
 
-    public static boolean ShowLoginDialog(Stage OwnerStage, AuthService Authentication) {
-        Dialog<Boolean> LoginDialog = new Dialog<>();
-        LoginDialog.setTitle("RAVEN — Authentication");
-        LoginDialog.setHeaderText("TeamServer Login");
-        LoginDialog.initOwner(OwnerStage);
+    public static boolean ShowLoginDialog(Stage Owner, AuthService Auth) {
+        Dialog<Boolean> Dlg = new Dialog<>();
+        Dlg.setTitle("RAVEN — Authentication");
+        Dlg.setHeaderText("TeamServer Login");
+        Dlg.initOwner(Owner);
 
-        GridPane LoginGrid = new GridPane();
-        LoginGrid.setHgap(10);
-        LoginGrid.setVgap(10);
-        LoginGrid.setPadding(new Insets(16));
-        LoginGrid.setStyle("-fx-background-color:" + Palette.Background + ";");
+        GridPane Grid = new GridPane();
+        Grid.setHgap(10);
+        Grid.setVgap(10);
+        Grid.setPadding(new Insets(14));
+        Grid.setStyle("-fx-background-color:" + Palette.Bg + ";");
 
-        TextField UsernameField = new TextField();
-        UsernameField.setPromptText("Username");
-        UsernameField.getStyleClass().add("input-field");
-        PasswordField PasswordInputField = new PasswordField();
-        PasswordInputField.setPromptText("Password");
-        PasswordInputField.getStyleClass().add("password-field");
-        Label ErrorLabel = new Label("");
-        ErrorLabel.setStyle("-fx-text-fill:" + Palette.AccentRed + "; -fx-font-size:11px;");
+        ColumnConstraints LblCol = new ColumnConstraints();
+        LblCol.setMinWidth(80);
+        ColumnConstraints InpCol = new ColumnConstraints();
+        InpCol.setHgrow(Priority.ALWAYS);
+        Grid.getColumnConstraints().addAll(LblCol, InpCol);
 
-        Label UsernameLbl = ComponentFactory.MutedLabel("Username");
-        Label PasswordLbl = ComponentFactory.MutedLabel("Password");
-        UsernameLbl.setMinWidth(70);
-        PasswordLbl.setMinWidth(70);
+        TextField UserField = new TextField();
+        UserField.setPromptText("Username");
+        UserField.getStyleClass().add("input-field");
+        PasswordField PassField = new PasswordField();
+        PassField.setPromptText("Password");
+        PassField.getStyleClass().add("password-field");
+        Label ErrLabel = new Label("");
+        ErrLabel.setStyle("-fx-text-fill:" + Palette.Red + "; -fx-font-size:11px;");
 
-        LoginGrid.add(UsernameLbl,        0, 0);
-        LoginGrid.add(UsernameField,      1, 0);
-        LoginGrid.add(PasswordLbl,        0, 1);
-        LoginGrid.add(PasswordInputField, 1, 1);
-        LoginGrid.add(ErrorLabel,         1, 2);
+        Label UserLbl = new Label("Username");
+        Label PassLbl = new Label("Password");
+        UserLbl.setStyle("-fx-text-fill:" + Palette.WhiteDim + "; -fx-font-size:11px;");
+        PassLbl.setStyle("-fx-text-fill:" + Palette.WhiteDim + "; -fx-font-size:11px;");
 
-        ButtonType LoginBtnType = new ButtonType("Login", ButtonBar.ButtonData.OK_DONE);
-        LoginDialog.getDialogPane().getButtonTypes().addAll(LoginBtnType, ButtonType.CANCEL);
-        LoginDialog.getDialogPane().setContent(LoginGrid);
-        LoginDialog.getDialogPane().setStyle("-fx-background-color:" + Palette.Background + ";");
-        LoginDialog.setResultConverter(Btn -> {
-            if (Btn == LoginBtnType)
-                return Authentication.Authenticate(UsernameField.getText().trim(), PasswordInputField.getText()) ? true : null;
+        Grid.add(UserLbl,  0, 0); Grid.add(UserField, 1, 0);
+        Grid.add(PassLbl,  0, 1); Grid.add(PassField, 1, 1);
+        Grid.add(ErrLabel, 1, 2);
+
+        ButtonType LoginBtn = new ButtonType("Login", ButtonBar.ButtonData.OK_DONE);
+        Dlg.getDialogPane().getButtonTypes().addAll(LoginBtn, ButtonType.CANCEL);
+        Dlg.getDialogPane().setContent(Grid);
+        Dlg.getDialogPane().setStyle("-fx-background-color:" + Palette.Bg + ";");
+        Dlg.setResultConverter(Btn -> {
+            if (Btn == LoginBtn)
+                return Auth.Authenticate(UserField.getText().trim(), PassField.getText()) ? true : null;
             return false;
         });
 
         for (int Attempt = 0; Attempt < 3; Attempt++) {
-            java.util.Optional<Boolean> Result = LoginDialog.showAndWait();
-            if (Result.isEmpty() || Boolean.FALSE.equals(Result.get())) return false;
-            if (Boolean.TRUE.equals(Result.get())) return true;
-            ErrorLabel.setText("Invalid credentials — " + (2 - Attempt) + " attempt(s) remaining");
+            java.util.Optional<Boolean> Res = Dlg.showAndWait();
+            if (Res.isEmpty() || Boolean.FALSE.equals(Res.get())) return false;
+            if (Boolean.TRUE.equals(Res.get())) return true;
+            ErrLabel.setText("Invalid credentials — " + (2 - Attempt) + " attempt(s) remaining");
         }
         return false;
     }

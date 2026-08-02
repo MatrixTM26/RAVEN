@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.shape.*?>
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.raven.interfaces.GUI.module.UI.controller.ToggleSwitchController"
+           prefWidth="42" prefHeight="20" minWidth="42" minHeight="20"
+           maxWidth="42" maxHeight="20">
+    <Rectangle fx:id="Track" width="42" height="20" arcWidth="0" arcHeight="0"/>
+    <Rectangle fx:id="Thumb" width="14" height="14" arcWidth="0" arcHeight="0" translateX="-13"/>
+</StackPane>

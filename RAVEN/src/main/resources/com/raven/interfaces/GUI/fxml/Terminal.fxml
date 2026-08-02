@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.raven.interfaces.GUI.module.UI.controller.TerminalController"
+      styleClass="root"
+      stylesheets="@../styles/raven.css"
+      spacing="0" fillWidth="true">
+
+    <HBox styleClass="toolbar-bar" alignment="CENTER_LEFT" spacing="8">
+        <Label text="SESSION" styleClass="stat-label"/>
+        <TextField fx:id="SessionIdField" styleClass="input-field" promptText="ID" prefWidth="68"/>
+        <Region>
+            <maxWidth>1</maxWidth>
+            <minWidth>1</minWidth>
+            <style>-fx-background-color:#1f1f1f;</style>
+            <minHeight>14</minHeight>
+        </Region>
+        <Label fx:id="SelectedLabel" text="No session selected" styleClass="text-muted"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="Clear" styleClass="btn,btn-default" onAction="#OnClear"/>
+        <Button text="Sysinfo" styleClass="btn,btn-primary" onAction="#OnSysinfo"/>
+    </HBox>
+
+    <TextArea fx:id="TermOutput" styleClass="terminal-area" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+
+    <HBox styleClass="input-bar" alignment="CENTER_LEFT" spacing="6">
+        <Label fx:id="PromptLabel" text="❯" styleClass="cmd-prompt"/>
+        <TextField fx:id="CmdField" styleClass="input-field" promptText="Enter command..."
+                   HBox.hgrow="ALWAYS" onAction="#OnSend"/>
+        <Button text="Send" styleClass="btn,btn-primary" onAction="#OnSend"/>
+    </HBox>
+</VBox>

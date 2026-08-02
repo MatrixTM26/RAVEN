@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.raven.interfaces.GUI.module.UI.controller.OverviewController"
+      styleClass="root"
+      stylesheets="@../styles/raven.css"
+      spacing="0" fillWidth="true">
+
+    <GridPane hgap="8" vgap="0">
+        <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+        <columnConstraints>
+            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <VBox styleClass="stat-card" GridPane.columnIndex="0" GridPane.rowIndex="0" spacing="4">
+            <Label text="SESSIONS" styleClass="stat-label"/>
+            <Label fx:id="StatSessions" text="0" styleClass="stat-value"/>
+            <Label fx:id="StatSessionsDelta" text="+0 vs last" styleClass="stat-sub"/>
+        </VBox>
+        <VBox styleClass="stat-card" GridPane.columnIndex="1" GridPane.rowIndex="0" spacing="4">
+            <GridPane.margin><Insets left="8"/></GridPane.margin>
+            <Label text="RAVEN AGENTS" styleClass="stat-label"/>
+            <Label fx:id="StatAgents" text="0" styleClass="stat-value"/>
+            <Label fx:id="StatAgentsDelta" text="+0 vs last" styleClass="stat-sub"/>
+        </VBox>
+        <VBox styleClass="stat-card" GridPane.columnIndex="2" GridPane.rowIndex="0" spacing="4">
+            <GridPane.margin><Insets left="8"/></GridPane.margin>
+            <Label text="METERPRETER" styleClass="stat-label"/>
+            <Label fx:id="StatMeterp" text="0" styleClass="stat-value"/>
+            <Label fx:id="StatMeterpDelta" text="+0 vs last" styleClass="stat-sub"/>
+        </VBox>
+        <VBox styleClass="stat-card" GridPane.columnIndex="3" GridPane.rowIndex="0" spacing="4">
+            <GridPane.margin><Insets left="8"/></GridPane.margin>
+            <Label text="REVERSE SHELL" styleClass="stat-label"/>
+            <Label fx:id="StatRevsh" text="0" styleClass="stat-value"/>
+            <Label fx:id="StatRevshDelta" text="+0 vs last" styleClass="stat-sub"/>
+        </VBox>
+    </GridPane>
+
+    <HBox spacing="8" VBox.vgrow="ALWAYS">
+        <padding><Insets top="0" right="10" bottom="10" left="10"/></padding>
+
+        <VBox styleClass="panel-card" HBox.hgrow="ALWAYS" spacing="0">
+            <HBox styleClass="panel-header" alignment="CENTER_LEFT" spacing="7">
+                <Label text="● RECENT ACTIVITY" styleClass="status-accent" style="-fx-font-size:10px;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="live" styleClass="text-muted"/>
+            </HBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+                <VBox fx:id="ActivityFeed" spacing="0" fillWidth="true"/>
+            </ScrollPane>
+        </VBox>
+
+        <VBox styleClass="panel-card" prefWidth="300" spacing="0">
+            <HBox styleClass="panel-header" alignment="CENTER_LEFT" spacing="7">
+                <Label text="SERVER QUICK STATUS" styleClass="stat-label"/>
+            </HBox>
+            <VBox spacing="0" VBox.vgrow="ALWAYS">
+                <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Status" styleClass="text-muted" minWidth="90"/>
+                    <Label fx:id="QuickStatus" text="Offline" styleClass="text-red"/>
+                </HBox>
+                <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Address" styleClass="text-muted" minWidth="90"/>
+                    <Label fx:id="QuickAddress" text="—" styleClass="text-body"/>
+                </HBox>
+                <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Mode" styleClass="text-muted" minWidth="90"/>
+                    <Label fx:id="QuickMode" text="MULTI" styleClass="text-red"/>
+                </HBox>
+                <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Uptime" styleClass="text-muted" minWidth="90"/>
+                    <Label fx:id="QuickUptime" text="00:00:00" styleClass="text-body"/>
+                </HBox>
+                <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Operator" styleClass="text-muted" minWidth="90"/>
+                    <Label fx:id="QuickOperator" text="—" styleClass="text-body"/>
+                </HBox>
+            </VBox>
+        </VBox>
+    </HBox>
+</VBox>
