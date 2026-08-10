@@ -47,8 +47,8 @@
 1. Clone your fork:
 
 ```bash
-    git clone https://github.com/MatrixTM26/RAVEN-C2-Framework.git
-    cd RAVEN-C2-Framework
+    git clone --branch contrib https://github.com/MatrixTM26/RAVEN.git
+    cd RAVEN
 ```
 
 1. Create a branch:
