@@ -1,4 +1,4 @@
-package com.raven.interfaces.CLI.core.command;
+package com.raven.core.command;
 
 import com.raven.core.database.TeamDatabase;
 import com.raven.core.output.Logger;
@@ -61,7 +61,7 @@ public final class CommandDispatcher {
                 return DispatchResult.Exit;
             }
             case "help" -> OperatorCommands.ShowHelp();
-            case "clear" -> {
+            case "clean" -> {
                 TerminalHelper.Clear();
                 return DispatchResult.UpdateLastCount;
             }

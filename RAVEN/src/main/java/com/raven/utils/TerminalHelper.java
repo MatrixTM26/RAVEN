@@ -5,11 +5,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class TerminalHelper {
 
-    private static final int DEFAULT_WIDTH = 80;
-    private static final int MIN_WIDTH = 40;
+    private static final int DefaultWidth = 100;
+    private static final int MinWidth     = 80;
 
     private static final AtomicInteger CachedWidth = new AtomicInteger(-1);
-    private static volatile Thread PollerThread;
+    private static volatile Thread     PollerThread;
 
     private TerminalHelper() {}
 
@@ -20,7 +20,7 @@ public final class TerminalHelper {
                 CachedWidth.set(Detect());
                 try {
                     Thread.sleep(250);
-                } catch (InterruptedException Ex) {
+                } catch (InterruptedException Exception) {
                     Thread.currentThread().interrupt();
                     break;
                 }
@@ -31,10 +31,10 @@ public final class TerminalHelper {
     }
 
     public static int GetWidth() {
-        String Env = System.getenv("COLUMNS");
-        if (Env != null && !Env.isBlank()) {
+        String ColumnsEnv = System.getenv("COLUMNS");
+        if (ColumnsEnv != null && !ColumnsEnv.isBlank()) {
             try {
-                return Math.max(MIN_WIDTH, Integer.parseInt(Env.trim()));
+                return Math.max(MinWidth, Integer.parseInt(ColumnsEnv.trim()));
             } catch (NumberFormatException Ignored) {}
         }
         if (PollerThread == null || !PollerThread.isAlive()) StartPoller();
@@ -48,7 +48,7 @@ public final class TerminalHelper {
     public static void Clear() {
         try {
             if (IsWindows()) new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-            else new ProcessBuilder("clear").inheritIO().start().waitFor();
+            else             new ProcessBuilder("clear").inheritIO().start().waitFor();
         } catch (Exception Ignored) {
             System.out.print("\033[H\033[2J");
             System.out.flush();
@@ -56,46 +56,50 @@ public final class TerminalHelper {
     }
 
     public static String OutputBox(String Output) {
-        int Width = Math.max(34, ContentWidth());
-        int Inner = Math.max(0, Width - 2);
+        int Width     = Math.max(34, ContentWidth());
+        int Inner     = Math.max(0, Width - 2);
         int LineWidth = Math.max(1, Inner - 2);
         int LabelFill = Math.max(0, Inner - 9);
-        String Nl = "\n";
-        String Indent = "  ";
-        String Top = AnsiColor.Green + "┌─ Output " + "─".repeat(LabelFill) + "┐" + AnsiColor.Reset;
+        String Newline = "\n";
+        String Indent  = "  ";
+        String Top    = AnsiColor.Green + "┌─ Output " + "─".repeat(LabelFill) + "┐" + AnsiColor.Reset;
         String Bottom = AnsiColor.Green + "└" + "─".repeat(Inner) + "┘" + AnsiColor.Reset;
-        StringBuilder Sb = new StringBuilder(Indent + Top + Nl);
-        for (String Line : Output.split(Nl, -1)) {
-            String S = Line.replaceAll("\u001B\\[[;\\d?]*[A-Za-z]|\u001B[=>]|\r", "");
-            while (S.length() > LineWidth) {
-                Sb.append(Indent).append(AnsiColor.Green).append("│ ").append(AnsiColor.White).append(S, 0, LineWidth).append(AnsiColor.Green).append(" │").append(AnsiColor.Reset).append(Nl);
-                S = S.substring(LineWidth);
+        StringBuilder Builder = new StringBuilder(Indent + Top + Newline);
+        for (String RawLine : Output.split(Newline, -1)) {
+            String Clean = RawLine.replaceAll("\u001B\\[[;\\d?]*[A-Za-z]|\u001B[=>]|\r", "");
+            while (Clean.length() > LineWidth) {
+                Builder.append(Indent).append(AnsiColor.Green).append("│ ")
+                       .append(AnsiColor.White).append(Clean, 0, LineWidth)
+                       .append(AnsiColor.Green).append(" │").append(AnsiColor.Reset).append(Newline);
+                Clean = Clean.substring(LineWidth);
             }
-            int Pad = Math.max(0, LineWidth - S.length());
-            Sb.append(Indent).append(AnsiColor.Green).append("│ ").append(AnsiColor.White).append(S).append(" ".repeat(Pad)).append(AnsiColor.Green).append(" │").append(AnsiColor.Reset).append(Nl);
+            int Padding = Math.max(0, LineWidth - Clean.length());
+            Builder.append(Indent).append(AnsiColor.Green).append("│ ")
+                   .append(AnsiColor.White).append(Clean).append(" ".repeat(Padding))
+                   .append(AnsiColor.Green).append(" │").append(AnsiColor.Reset).append(Newline);
         }
-        return Sb.append(Indent).append(Bottom).toString();
+        return Builder.append(Indent).append(Bottom).toString();
     }
 
     public static String Box(String Title) {
-        int Width = ContentWidth();
-        int Inner = Math.max(0, Width - 2);
-        int PaddingLeft = Math.max(0, (Inner - Title.length()) / 2);
+        int Width        = ContentWidth();
+        int Inner        = Math.max(0, Width - 2);
+        int PaddingLeft  = Math.max(0, (Inner - Title.length()) / 2);
         int PaddingRight = Math.max(0, Inner - PaddingLeft - Title.length());
-        String NL = "\n";
-        String Indent = "  ";
-        String Top = AnsiColor.White + "┌" + "─".repeat(Inner) + "┐" + AnsiColor.Reset;
+        String Newline = "\n";
+        String Indent  = "  ";
+        String Top    = AnsiColor.White + "┌" + "─".repeat(Inner) + "┐" + AnsiColor.Reset;
         String Middle = AnsiColor.White + "│" + " ".repeat(PaddingLeft) + AnsiColor.Green + Title + " ".repeat(PaddingRight) + AnsiColor.White + "│" + AnsiColor.Reset;
         String Bottom = AnsiColor.White + "└" + "─".repeat(Inner) + "┘" + AnsiColor.Reset;
-        return NL + Indent + Top + NL + Indent + Middle + NL + Indent + Bottom;
+        return Newline + Indent + Top + Newline + Indent + Middle + Newline + Indent + Bottom;
     }
 
     public static String Divider() {
         return "  " + AnsiColor.White + "─".repeat(ContentWidth()) + AnsiColor.Reset;
     }
 
-    public static String Truncate(String S, int N) {
-        return S != null && S.length() > N ? S.substring(0, N - 1) + "…" : S != null ? S : "";
+    public static String Truncate(String Text, int MaxLength) {
+        return Text != null && Text.length() > MaxLength ? Text.substring(0, MaxLength - 1) + "…" : Text != null ? Text : "";
     }
 
     public static int ContentWidth() {
@@ -111,56 +115,79 @@ public final class TerminalHelper {
     }
 
     private static int Detect() {
-        Integer W = IsWindows() ? DetectWindows() : DetectUnix();
-        return W != null ? W : DEFAULT_WIDTH;
+        if (IsWindows()) {
+            Integer Width = DetectWindowsViaPowerShell();
+            if (Width != null) return Width;
+            Width = DetectWindowsViaModeCon();
+            return Width != null ? Width : DefaultWidth;
+        }
+        Integer Width = DetectUnixViaStty();
+        if (Width != null) return Width;
+        Width = DetectUnixViaTput();
+        return Width != null ? Width : DefaultWidth;
     }
 
-    private static Integer DetectUnix() {
+    private static Integer DetectUnixViaStty() {
         try {
-            Process P = new ProcessBuilder("sh", "-c", "stty size < /dev/tty").redirectErrorStream(true).start();
-            String Out = new String(P.getInputStream().readAllBytes()).trim();
-            P.waitFor();
-            String[] Parts = Out.split("\\s+");
-            if (Parts.length >= 2) return Math.max(MIN_WIDTH, Integer.parseInt(Parts[1]));
-        } catch (Exception Ignored) {}
-        try {
-            Process P = new ProcessBuilder("sh", "-c", "tput cols < /dev/tty").redirectErrorStream(true).start();
-            String Out = new String(P.getInputStream().readAllBytes()).trim();
-            P.waitFor();
-            if (!Out.isBlank()) return Math.max(MIN_WIDTH, Integer.parseInt(Out));
+            ProcessBuilder ProcessSetup = new ProcessBuilder("sh", "-c", "stty size < /dev/tty");
+            ProcessSetup.redirectErrorStream(true);
+            Process DetectionProcess = ProcessSetup.start();
+            String Output = new String(DetectionProcess.getInputStream().readAllBytes()).trim();
+            DetectionProcess.waitFor();
+            String[] Parts = Output.split("\\s+");
+            if (Parts.length >= 2) return Math.max(MinWidth, Integer.parseInt(Parts[1]));
         } catch (Exception Ignored) {}
         return null;
     }
 
-    private static Integer DetectWindows() {
+    private static Integer DetectUnixViaTput() {
         try {
-            ProcessBuilder Pb = new ProcessBuilder("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", "[Console]::WindowWidth");
-            Pb.redirectErrorStream(true);
-            Pb.redirectInput(ProcessBuilder.Redirect.INHERIT);
-            Process P = Pb.start();
-            String Out = new String(P.getInputStream().readAllBytes()).trim();
-            boolean Timeout = P.waitFor(1500, TimeUnit.MILLISECONDS);
-            if (!Timeout) {
-                P.destroyForcibly();
-            } else if (!Out.isBlank()) {
-                String Digits = Out.replaceAll("\\D+", "");
+            ProcessBuilder ProcessSetup = new ProcessBuilder("sh", "-c", "tput cols < /dev/tty");
+            ProcessSetup.redirectErrorStream(true);
+            Process DetectionProcess = ProcessSetup.start();
+            String Output = new String(DetectionProcess.getInputStream().readAllBytes()).trim();
+            DetectionProcess.waitFor();
+            if (!Output.isBlank()) return Math.max(MinWidth, Integer.parseInt(Output));
+        } catch (Exception Ignored) {}
+        return null;
+    }
+
+    private static Integer DetectWindowsViaPowerShell() {
+        try {
+            ProcessBuilder ProcessSetup = new ProcessBuilder(
+                "powershell.exe", "-NoProfile", "-NonInteractive", "-Command", "[Console]::WindowWidth"
+            );
+            ProcessSetup.redirectErrorStream(true);
+            ProcessSetup.redirectInput(ProcessBuilder.Redirect.INHERIT);
+            Process DetectionProcess = ProcessSetup.start();
+            String Output = new String(DetectionProcess.getInputStream().readAllBytes()).trim();
+            boolean Finished = DetectionProcess.waitFor(1500, TimeUnit.MILLISECONDS);
+            if (!Finished) { DetectionProcess.destroyForcibly(); return null; }
+            if (!Output.isBlank()) {
+                String Digits = Output.replaceAll("\\D+", "");
                 if (!Digits.isBlank()) {
-                    int V = Integer.parseInt(Digits);
-                    if (V >= 20 && V <= 1000) return Math.max(MIN_WIDTH, V);
+                    int Width = Integer.parseInt(Digits);
+                    if (Width >= 20 && Width <= 1000) return Math.max(MinWidth, Width);
                 }
             }
         } catch (Exception Ignored) {}
+        return null;
+    }
+
+    private static Integer DetectWindowsViaModeCon() {
         try {
-            Process P = new ProcessBuilder("cmd.exe", "/c", "mode con").redirectErrorStream(true).start();
-            String Out = new String(P.getInputStream().readAllBytes());
-            P.waitFor(1500, TimeUnit.MILLISECONDS);
-            for (String L : Out.split("\\r?\\n")) {
-                String Lower = L.toLowerCase();
+            ProcessBuilder ProcessSetup = new ProcessBuilder("cmd.exe", "/c", "mode con");
+            ProcessSetup.redirectErrorStream(true);
+            Process DetectionProcess = ProcessSetup.start();
+            String Output = new String(DetectionProcess.getInputStream().readAllBytes());
+            DetectionProcess.waitFor(1500, TimeUnit.MILLISECONDS);
+            for (String Line : Output.split("\\r?\\n")) {
+                String Lower = Line.toLowerCase();
                 if (Lower.contains("column") || Lower.contains("kolom")) {
-                    String Digits = L.replaceAll("[^0-9]", "");
+                    String Digits = Line.replaceAll("[^0-9]", "");
                     if (!Digits.isBlank()) {
-                        int V = Integer.parseInt(Digits);
-                        if (V >= 20 && V <= 1000) return Math.max(MIN_WIDTH, V);
+                        int Width = Integer.parseInt(Digits);
+                        if (Width >= 20 && Width <= 1000) return Math.max(MinWidth, Width);
                     }
                 }
             }

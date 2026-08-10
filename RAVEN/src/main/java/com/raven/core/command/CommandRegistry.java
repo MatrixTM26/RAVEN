@@ -29,7 +29,7 @@ public final class CommandRegistry {
 
     static {
         Register("help", "help", "Show this command reference", Category.SYSTEM, false);
-        Register("clear", "clear", "Clear operator terminal (local only — does NOT send to agent)", Category.SYSTEM, false);
+        Register("clean", "clean", "Clear operator terminal screen (local only — does NOT send to agent)", Category.SYSTEM, false);
         Register("exit", "exit", "Shutdown server and exit", Category.SYSTEM, false);
         Register("quit", "quit", "Alias for exit", Category.SYSTEM, false);
 

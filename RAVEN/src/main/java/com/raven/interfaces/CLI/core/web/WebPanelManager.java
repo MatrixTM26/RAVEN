@@ -23,13 +23,16 @@ public final class WebPanelManager {
         this.ActiveMode = ActiveMode;
     }
 
-    public void Start(String Host, int Port, RavenServer Server, Instant ServerStartTime) {
+    public void Start(String Host, int Port, RavenServer ExistingServer, Instant ServerStartTime) {
         if (WebPanel != null) {
             Logger.Custom("  %sWeb panel already running%s%n", AnsiColor.Red, AnsiColor.Reset);
             return;
         }
         try {
             WebPanel = new WebApp(Config, ActiveMode);
+            if (ExistingServer != null) {
+                WebPanel.AttachServer(ExistingServer, ServerStartTime);
+            }
             WebPanel.Run(Host, Port);
             Logger.Custom("  %sWeb panel started > http://%s:%d/%s%n",
                 AnsiColor.Green, Host, Port, AnsiColor.Reset);

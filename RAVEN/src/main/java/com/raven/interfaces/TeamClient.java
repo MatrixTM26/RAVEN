@@ -83,7 +83,7 @@ public final class TeamClient {
                 Logger.Ok("Disconnected from TeamServer");
             }
             case "help" -> ShowHelp();
-            case "clear" -> TerminalHelper.Clear();
+            case "clean" -> TerminalHelper.Clear();
             case "sessions", "agents" -> ShowSessions();
             case "status" -> ShowStatus();
             case "logs" -> ShowLogs();

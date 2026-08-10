@@ -88,6 +88,9 @@ public final class CLI {
         BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
         if (!Login(Reader)) return;
         if (!StartListener(Host, Port, Mode)) return;
+        int TeamPort = Config.GetTeamServerPort();
+        WebPanelManager.Start(Config.GetWebHost(), TeamPort, Server, ServerStartTime);
+        Logger.Info("TeamServer web endpoint ready on http://" + Config.GetWebHost() + ":" + TeamPort + " — TeamClient can connect with: -TC -ts " + Host + " -tp " + TeamPort);
         RunLoop();
     }
 
@@ -842,6 +845,7 @@ public final class CLI {
                 String Input = Reader.readLine();
                 if (Input == null || Input.equalsIgnoreCase("back") || Input.equalsIgnoreCase("exit")) break;
                 if (Input.isBlank()) continue;
+                if (Input.trim().equalsIgnoreCase("clean")) { TerminalHelper.Clear(); continue; }
                 Execute(Id, Input);
             } catch (IOException Ex) {
                 break;
