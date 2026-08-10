@@ -16,7 +16,7 @@ public final class CLIBanner {
 
         Logger.Custom("");
 
-        Logger.Custom(Indent + White + "SESSION COMMANDS" + X);
+        Logger.Custom(Indent + White + "SESSION COMMANDS" + Reset);
         Logger.Custom(Indent + "  " + Red + "sessions / agents               " + Reset + "List active sessions");
         Logger.Custom(Indent + "  " + Red + "use <id>                        " + Reset + "Enter interactive session");
         Logger.Custom(Indent + "  " + Red + "exec <id> <cmd>                 " + Reset + "Execute command on session");
@@ -36,19 +36,19 @@ public final class CLIBanner {
 
         Logger.Custom("");
 
-        Logger.Custom(Indent + White + "SERVER / WEB" + X);
+        Logger.Custom(Indent + White + "SERVER / WEB" + Reset);
         Logger.Custom(Indent + "  " + Red + "status                          " + Reset + "Server status");
         Logger.Custom(Indent + "  " + Red + "stats                           " + Reset + "Session statistics");
         Logger.Custom(Indent + "  " + Red + "logs                            " + Reset + "Recent log entries");
         Logger.Custom(Indent + "  " + Red + "webstart [host] [port]          " + Reset + "Start web panel");
         Logger.Custom(Indent + "  " + Red + "webstop                         " + Reset + "Stop web panel");
         Logger.Custom(Indent + "  " + Red + "webstatus                       " + Reset + "Web panel status");
-        Logger.Custom(Indent + "  " + Red + "clear                           " + Reset + "Clear screen");
+        Logger.Custom(Indent + "  " + Red + "clean                           " + Reset + "Clear operator terminal screen");
         Logger.Custom(Indent + "  " + Red + "exit / quit                     " + Reset + "Shutdown & exit");
 
         Logger.Custom("");
 
-        Logger.Custom(Indent + White + "TEAM OPERATOR MANAGEMENT" + X);
+        Logger.Custom(Indent + White + "TEAM OPERATOR MANAGEMENT" + Reset);
         Logger.Custom(Indent + "  " + Red + "listopt                         " + Reset + "List operators & roles");
         Logger.Custom(Indent + "  " + Red + "addopt <user> <pass> [ROLE]     " + Reset + "Add operator        [ADMIN+]");
         Logger.Custom(Indent + "  " + Red + "delopt <user>                   " + Reset + "Delete operator     [ADMIN+]");
@@ -62,7 +62,7 @@ public final class CLIBanner {
 
         Logger.Custom("");
 
-        Logger.Custom(Indent + White + "EXAMPLES" + X);
+        Logger.Custom(Indent + White + "EXAMPLES" + Reset);
         Logger.Custom(Indent + "  " + Red + "use 1                           " + Reset + "Enter session 1");
         Logger.Custom(Indent + "  " + Red + "exec 2 whoami                   " + Reset + "Run whoami on session 2");
         Logger.Custom(Indent + "  " + Red + "broadcast 1,2,3 id              " + Reset + "Run id on sessions 1,2,3");
@@ -75,7 +75,7 @@ public final class CLIBanner {
 
         Logger.Custom("");
 
-        Logger.Custom(Indent + White + "ROLES" + X);
+        Logger.Custom(Indent + White + "ROLES" + Reset);
         Logger.Custom(Indent + "  " + Red + "SUPER                           " + Reset + "[RWXK] read, write, execute, kick/delete operator");
         Logger.Custom(Indent + "  " + Red + "ADMIN                           " + Reset + "[RWX]  read, write, execute");
         Logger.Custom(Indent + "  " + Red + "OPERATOR                        " + Reset + "[RX]   read, execute");
