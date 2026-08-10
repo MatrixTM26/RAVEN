@@ -4,10 +4,7 @@
 
 # RAVEN
 
-![AGPL](https://img.shields.io/badge/AGPL-v3-000000?style=for-the-badge&logo=gnu&logoColor=ffffff&labelColor=000000&color=03001a)
-![OpenJDK](https://img.shields.io/badge/OpenJDK-21.0.1-000000?style=for-the-badge&logo=openjdk&logoColor=ffee1a&labelColor=000000&color=03001a)
-![Maven](https://img.shields.io/badge/Maven-3.6.0-000000?style=for-the-badge&logo=apachemaven&logoColor=ee6a2a&labelColor=000000&color=03001a)
-![Red Teaming](https://img.shields.io/badge/RED-TEAMING-000000?style=for-the-badge&logo=keepassxc&logoColor=ff0000&labelColor=000000&color=03001a)
+A multi-platform adversary emulation framework.
 
 > **_Author:_** _MatrixTM26_ **_GitHub:_** _[MatrixTM26](https://github.com/MatrixTM26)_
 
@@ -108,11 +105,11 @@ cd RAVEN
 <details>
     <summary>Other</summary>
 
-- DEV
+- CONTRIB
     > For contribution commit, pull request and development, push to branch dev
 
 ```bash
-git clone --branch dev https://github.com/MatrixTM26/RAVEN.git
+git clone --branch contrib https://github.com/MatrixTM26/RAVEN.git
 cd RAVEN
 ```
 
@@ -247,8 +244,8 @@ java -jar target/raven-3.0.0.jar -F -TSW -tp 5001         # fmTLS + TeamServer W
 | `broadcast <id,id,...> [command]` | Broadcast to specific sessions      | all         |
 | `exit`                            | Exit and shutdown server            | all         |
 | `listopt`                         | List all operators                  | all         |
-| `addopt <user> <pass> <ROLE>`      | Add new operator                    | ADMIN+      |
-| `delopt <user>`                    | Delete operator permanently         | ADMIN+      |
+| `addopt <user> <pass> <ROLE>`     | Add new operator                    | ADMIN+      |
+| `delopt <user>`                   | Delete operator permanently         | ADMIN+      |
 | `kick <user>`                     | Kick operator                       | SUPER ADMIN |
 | `setrole <user> <ROLE>`           | Change operator role/permission     | SUPER ADMIN |
 | `passwd <user> <new pass>`        | Change operator password            | ADMIN+      |
