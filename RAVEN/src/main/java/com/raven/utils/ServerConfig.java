@@ -347,7 +347,8 @@ public final class ServerConfig {
     }
 
     public String GetTeamServerApiPrefix() {
-        return Str("teamserver.api.prefix", "/api");
+        String Value = StrObject("teamserver.api.prefix");
+        return Value.isEmpty() ? "/api" : Value;
     }
 
     public String GetAdminUsername() { return OperatorCfg.GetAdminUsername(); }
