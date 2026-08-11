@@ -6,6 +6,7 @@ import com.raven.core.event.EventManager;
 import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
 import com.raven.core.session.Session;
+import com.raven.utils.ConnectorConfig;
 import com.raven.utils.ServerConfig;
 import java.io.*;
 import java.net.*;
@@ -22,6 +23,8 @@ public final class RavenServer extends BaseServer {
     private Thread AcceptTcpThread;
     private Thread AcceptBeaconThread;
     private final ExecutorService Pool;
+    private final ConnectorConfig HttpConnector  = new ConnectorConfig("config/connector/http.properties");
+    private final ConnectorConfig HttpsConnector = new ConnectorConfig("config/connector/https.properties");
 
     private final ConcurrentHashMap<Integer, String> PendingCommands = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, String> PendingOutputs = new ConcurrentHashMap<>();
@@ -29,10 +32,10 @@ public final class RavenServer extends BaseServer {
 
     public RavenServer(String Host, int Port, ListenerMode Mode, ServerConfig Config) {
         super(Host, Port, Mode, Config);
-        this.Pool = Executors.newCachedThreadPool(R -> {
-            Thread T = new Thread(R, "AgentWorker");
-            T.setDaemon(true);
-            return T;
+        this.Pool = Executors.newCachedThreadPool(Task -> {
+            Thread Worker = new Thread(Task, "AgentWorker");
+            Worker.setDaemon(true);
+            return Worker;
         });
     }
 
@@ -177,7 +180,7 @@ public final class RavenServer extends BaseServer {
             }
 
             DetectionResult Det = Detect(Client);
-            Logger.Info("connection [" + Det.Type + "] from " + RemoteAddr);
+            Logger.Verbose("probe [" + Det.Type + "] from " + RemoteAddr);
 
             switch (Det.Type) {
                 case RAVEN -> {
@@ -239,9 +242,9 @@ public final class RavenServer extends BaseServer {
         SessionCryptos.put(Id, Crypto);
         CommandLocks.put(Id, new Object());
         SocketLocks.put(Id, new Object());
+        Logger.Info("agent connected [RAVEN] from " + RemoteAddr);
         FireConnected(S, Id);
         MonitorSession(Id, Client, false);
-        Logger.Debug("RAVEN session-" + Id + " registered — " + RemoteAddr);
         return Id;
     }
 
@@ -256,9 +259,9 @@ public final class RavenServer extends BaseServer {
         int Id = Sessions.Add(S);
         CommandLocks.put(Id, new Object());
         SocketLocks.put(Id, new Object());
+        Logger.Info("agent connected [RAW] from " + RemoteAddr);
         FireConnected(S, Id);
         MonitorSession(Id, Client, true);
-        Logger.Debug("raw session-" + Id + " registered — " + RemoteAddr);
         return Id;
     }
 
@@ -290,10 +293,17 @@ public final class RavenServer extends BaseServer {
             String Path = Full.contains("?") ? Full.substring(0, Full.indexOf('?')) : Full;
             Map<String, String> Query = ParseQuery(Full.contains("?") ? Full.substring(Full.indexOf('?') + 1) : "");
 
-            if (Path.equals("/register") && Method.equals("POST")) SessionId = BeaconRegister(Client, Out, Body, IsTls);
-            else if (Path.equals("/beacon") && Method.equals("GET")) BeaconGet(Out, Query);
-            else if (Path.equals("/beacon") && Method.equals("POST")) BeaconPost(Out, Query, Body);
-            else HttpReply(Out, 404, "Not Found", new byte[0]);
+            ConnectorConfig Connector = IsTls ? HttpsConnector : HttpConnector;
+            String RegisterPath = Connector.Get("beacon.register.path", "/register");
+            String PollPath     = Connector.Get("beacon.poll.path", "/beacon");
+
+            if (Path.equals(RegisterPath) && Method.equals("POST")) SessionId = BeaconRegister(Client, Out, Body, IsTls);
+            else if (Path.equals(PollPath) && Method.equals("GET"))  BeaconGet(Out, Query);
+            else if (Path.equals(PollPath) && Method.equals("POST")) BeaconPost(Out, Query, Body);
+            else {
+                Logger.Verbose("non-beacon HTTP request on agent port — path=" + Path + " from " + Client.getRemoteSocketAddress());
+                HttpReply(Out, 404, "Not Found", new byte[0]);
+            }
         } catch (Exception E) {
             Logger.Error("Beacon handler: " + E.getMessage());
             if (SessionId > 0) RemoveSession(SessionId);
@@ -336,6 +346,7 @@ public final class RavenServer extends BaseServer {
         CommandLocks.put(Id, new Object());
         SocketLocks.put(Id, new Object());
         TokenMap.put(Token, Id);
+        Logger.Info("agent connected [HTTP" + (IsTls ? "S" : "") + "] from " + Client.getRemoteSocketAddress());
         FireConnected(S, Id);
 
         String Reply = Gson.toJson(Map.of("token", Token, "key", Crypto.GetKeyAsBase64Url(), "id", Id));
@@ -432,10 +443,9 @@ public final class RavenServer extends BaseServer {
         return S;
     }
 
-    private void FireConnected(Session S, int Id) {
-        Logger.Info(String.format("session-%d [%s] %s@%s %s key=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.GetSessionKey()));
-        Events.Trigger(EventType.AgentConnected, EventManager.BuildData("ID", Id, "Hostname", S.GetHostname(), "OS", S.GetOs(), "User", S.GetUser(), "Arch", S.GetArch(), "AgentIP", S.GetAgentIp(), "AgentName", S.GetAgentName(), "AgentId", S.GetAgentId(), "SessionKey", S.GetSessionKey(), "Address", S.GetRemoteAddress(), "Type", S.GetSessionType().name(), "ShellMode", S.GetShellMode(), "Encrypted", S.IsEncrypted(), "MtlsEnabled", S.IsMtlsEnabled(), "CertCN", S.GetCertCn()));
-        Logger.Info(String.format("session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s", Id, S.GetSessionType().name(), S.GetUser(), S.GetHostname(), S.GetOs(), S.IsEncrypted(), S.IsMtlsEnabled()));
+    private void FireConnected(Session AgentSession, int SessionId) {
+        Logger.Info(String.format("session-%d | %-12s | %s@%s | %s | enc=%s mtls=%s", SessionId, AgentSession.GetSessionType().name(), AgentSession.GetUser(), AgentSession.GetHostname(), AgentSession.GetOs(), AgentSession.IsEncrypted(), AgentSession.IsMtlsEnabled()));
+        Events.Trigger(EventType.AgentConnected, EventManager.BuildData("ID", SessionId, "Hostname", AgentSession.GetHostname(), "OS", AgentSession.GetOs(), "User", AgentSession.GetUser(), "Arch", AgentSession.GetArch(), "AgentIP", AgentSession.GetAgentIp(), "AgentName", AgentSession.GetAgentName(), "AgentId", AgentSession.GetAgentId(), "SessionKey", AgentSession.GetSessionKey(), "Address", AgentSession.GetRemoteAddress(), "Type", AgentSession.GetSessionType().name(), "ShellMode", AgentSession.GetShellMode(), "Encrypted", AgentSession.IsEncrypted(), "MtlsEnabled", AgentSession.IsMtlsEnabled(), "CertCN", AgentSession.GetCertCn()));
     }
 
     private String ValidateMtlsCert(Socket Sock) {
@@ -474,17 +484,17 @@ public final class RavenServer extends BaseServer {
         return Sb.toString();
     }
 
-    private static Map<String, String> ParseQuery(String Q) {
-        Map<String, String> M = new LinkedHashMap<>();
-        if (Q == null || Q.isBlank()) return M;
-        for (String Pair : Q.split("&")) {
+    private static Map<String, String> ParseQuery(String QueryString) {
+        Map<String, String> Result = new LinkedHashMap<>();
+        if (QueryString == null || QueryString.isBlank()) return Result;
+        for (String Pair : QueryString.split("&")) {
             if (Pair.isEmpty()) continue;
-            int Eq = Pair.indexOf('=');
-            String Key = Eq >= 0 ? Pair.substring(0, Eq) : Pair;
-            String Value = Eq >= 0 ? Pair.substring(Eq + 1) : "";
-            M.put(UrlDecode(Key), UrlDecode(Value));
+            int EqualIndex = Pair.indexOf('=');
+            String Key   = EqualIndex >= 0 ? Pair.substring(0, EqualIndex) : Pair;
+            String Value = EqualIndex >= 0 ? Pair.substring(EqualIndex + 1) : "";
+            Result.put(UrlDecode(Key), UrlDecode(Value));
         }
-        return M;
+        return Result;
     }
 
     private static String UrlDecode(String Value) {
@@ -502,27 +512,27 @@ public final class RavenServer extends BaseServer {
         Out.flush();
     }
 
-    private static void CloseQuietly(Closeable C) {
-        if (C == null) return;
+    private static void CloseQuietly(Closeable Resource) {
+        if (Resource == null) return;
         try {
-            C.close();
+            Resource.close();
         } catch (Exception Ignored) {}
     }
 
-    private static String Str(Map<String, Object> M, String K) {
-        return Str(M, K, "unknown");
+    private static String Str(Map<String, Object> DataMap, String Key) {
+        return Str(DataMap, Key, "unknown");
     }
 
-    private static String Str(Map<String, Object> M, String K, String Def) {
-        Object V = M.get(K);
-        return V != null ? V.toString() : Def;
+    private static String Str(Map<String, Object> DataMap, String Key, String Default) {
+        Object Value = DataMap.get(Key);
+        return Value != null ? Value.toString() : Default;
     }
 
-    private static int ParseInt(String S, int Def) {
+    private static int ParseInt(String Value, int Default) {
         try {
-            return Integer.parseInt(S.trim());
-        } catch (Exception E) {
-            return Def;
+            return Integer.parseInt(Value.trim());
+        } catch (Exception Ignored) {
+            return Default;
         }
     }
 }

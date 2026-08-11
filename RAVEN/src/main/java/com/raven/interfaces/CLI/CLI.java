@@ -88,6 +88,18 @@ public final class CLI {
         BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
         if (!Login(Reader)) return;
         if (!StartListener(Host, Port, Mode)) return;
+        int ApiPort = Config.GetTeamServerPort();
+        String ApiHost = Config.GetWebHost();
+        new Thread(() -> {
+            try {
+                com.raven.interfaces.APP.WebApp TcApi = new com.raven.interfaces.APP.WebApp(Config, Mode);
+                TcApi.SetApiOnly(true);
+                TcApi.AttachServer(Server, ServerStartTime);
+                TcApi.Run(ApiHost, ApiPort);
+            } catch (Exception Exception) {
+                Logger.Error("TeamClient API failed to start on port " + ApiPort + ": " + Exception.getMessage());
+            }
+        }, "TeamClientApiThread").start();
         RunLoop();
     }
 
@@ -554,24 +566,24 @@ public final class CLI {
             case "chat" -> ShowChat();
             case "chathistory", "chatlog" -> ShowChatHistory(50);
             case "ch" -> {
-                if (!IsTeamMode) {
-                    Logger.Warn("team mode required");
-                    break;
-                }
                 if (P.length < 3) {
                     Logger.Info(Usage("ch"));
+                    break;
+                }
+                if (Db == null) {
+                    Logger.Warn("ch requires a database — start with a DB or team mode");
                     break;
                 }
                 Db.SaveChatLog(OperatorName, P[1], BuildArgs(P, 2));
                 Logger.Custom("  %s→ %s%s %s%n", AnsiColor.Green, P[1], AnsiColor.Reset, BuildArgs(P, 2));
             }
             case "gc" -> {
-                if (!IsTeamMode) {
-                    Logger.Warn("team mode required");
-                    break;
-                }
                 if (P.length < 3) {
                     Logger.Info(Usage("gc"));
+                    break;
+                }
+                if (Db == null) {
+                    Logger.Warn("gc requires a database — start with a DB or team mode");
                     break;
                 }
                 String GcTarget = P[1].toLowerCase();
