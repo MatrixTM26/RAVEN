@@ -30,6 +30,7 @@ public final class WebApp {
     private final ServerConfig Config;
     private final ListenerMode ActiveMode;
     private final TeamDatabase Database;
+    private boolean ApiOnly = false;
 
     private final WebLogger WebLogger;
     private final WebServerManager ServerManager;
@@ -71,6 +72,11 @@ public final class WebApp {
         ServerManager.AttachServer(Server, ServerStartTime);
     }
 
+    public WebApp SetApiOnly(boolean Value) {
+        this.ApiOnly = Value;
+        return this;
+    }
+
     public void Run(String Host, int Port) throws Exception {
         HttpSrv = HttpServer.create(new InetSocketAddress(Host, Port), 100);
         HttpRouter Router = new HttpRouter(HttpSrv, Config, PathResolver);
@@ -104,16 +110,22 @@ public final class WebApp {
         Router.Register("/api/chat/history", ChatApiHandler::History);
         Router.Register("/api/agent/generate", AgentGenApiHandler::Generate);
         Router.Register("/api/agent/list", AgentGenApiHandler::ListAgents);
-        Router.RegisterStatic();
+        if (!ApiOnly) {
+            Router.RegisterStatic();
+        }
 
         HttpSrv.setExecutor(Executors.newFixedThreadPool(20));
         HttpSrv.start();
 
-        Logger.Info("Web Panel Started On http://" + Host + ":" + Port);
-        Logger.Info("Static Dir : " + PathResolver.ResolvePath(Config.GetStaticDir()));
-        Logger.Info("Template Dir: " + PathResolver.ResolvePath(Config.GetTemplateDir()));
+        if (ApiOnly) {
+            Logger.Info("TeamClient API listening on http://" + Host + ":" + Port + " — operators connect with: -TC -ts " + Host + " -tp " + Port);
+        } else {
+            Logger.Info("Web panel started on http://" + Host + ":" + Port);
+            Logger.Verbose("Static Dir : " + PathResolver.ResolvePath(Config.GetStaticDir()));
+            Logger.Verbose("Template Dir: " + PathResolver.ResolvePath(Config.GetTemplateDir()));
+        }
         WebLogger.Add("=".repeat(70));
-        WebLogger.Add("RAVEN WEB PANEL INITIALIZED — MODE: " + ActiveMode.name());
+        WebLogger.Add((ApiOnly ? "RAVEN TEAMCLIENT API" : "RAVEN WEB PANEL") + " INITIALIZED — MODE: " + ActiveMode.name());
         WebLogger.Add("=".repeat(70));
 
         ServerManager.StartIfNeeded(this::OnEvent);

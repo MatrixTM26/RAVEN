@@ -80,6 +80,7 @@ public final class ServerConfig {
         SetPropertyValue("db.mongo.name", "raven");
         SetPropertyValue("mode.interface", "cli");
         SetPropertyValue("teamserver.port", "5001");
+        SetPropertyValue("teamserver.api.prefix", "/api");
     }
 
     private void SetPropertyValue(String Key, String Value) {
@@ -343,6 +344,11 @@ public final class ServerConfig {
 
     public int GetTeamServerPort() {
         return Number("teamserver.port");
+    }
+
+    public String GetTeamServerApiPrefix() {
+        String Value = StrObject("teamserver.api.prefix");
+        return Value.isEmpty() ? "/api" : Value;
     }
 
     public String GetAdminUsername() { return OperatorCfg.GetAdminUsername(); }
