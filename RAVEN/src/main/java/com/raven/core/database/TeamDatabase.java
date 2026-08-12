@@ -82,22 +82,29 @@ public abstract class TeamDatabase {
         }
     }
 
+    private static volatile TeamDatabase MemoryInstance;
+
     public static TeamDatabase Connect(ServerConfig Config) {
         String Type = Config.GetDatabaseType().toLowerCase();
         try {
             return switch (Type) {
                 case "postgresql", "postgres" -> new PostgresDatabase(Config);
-                case "mongodb", "mongo" -> new MongoDatabase(Config);
-                case "sqlite" -> new SqliteDatabase(Config);
-                default -> {
-                    Logger.Info("DB disabled — using in-memory store");
-                    yield new MemoryDatabase(Config);
-                }
+                case "mongodb", "mongo"       -> new MongoDatabase(Config);
+                case "sqlite"                 -> new SqliteDatabase(Config);
+                default                       -> GetSharedMemoryInstance(Config);
             };
-        } catch (Exception E) {
-            Logger.Warn("DB connection failed (" + Type + "): " + E.getMessage() + " — fallback to memory");
-            return new MemoryDatabase(Config);
+        } catch (Exception Exception) {
+            Logger.Warn("DB connection failed (" + Type + "): " + Exception.getMessage() + " — fallback to memory");
+            return GetSharedMemoryInstance(Config);
         }
+    }
+
+    private static synchronized TeamDatabase GetSharedMemoryInstance(ServerConfig Config) {
+        if (MemoryInstance == null) {
+            Logger.Info("DB disabled — using in-memory store");
+            MemoryInstance = new MemoryDatabase(Config);
+        }
+        return MemoryInstance;
     }
 
     public abstract boolean IsConnected();
