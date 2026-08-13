@@ -11,14 +11,22 @@ const QuickCmds = [
 ];
 
 function Esc(s) {
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
 }
 
 function GoTo(sec) {
-    document.querySelectorAll(".section").forEach((el) => el.classList.remove("active"));
+    document
+        .querySelectorAll(".section")
+        .forEach(el => el.classList.remove("active"));
     let target = document.getElementById("section-" + sec);
     if (target) target.classList.add("active");
-    document.querySelectorAll("[data-nav]").forEach((el) => el.classList.toggle("active", el.dataset.nav === sec));
+    document
+        .querySelectorAll("[data-nav]")
+        .forEach(el => el.classList.toggle("active", el.dataset.nav === sec));
     let titles = {
         dashboard: "Dashboard",
         server: "Server",
@@ -28,7 +36,7 @@ function GoTo(sec) {
         team: "Team",
         about: "About"
     };
-    ["mobile-title", "topbar-title"].forEach((id) => {
+    ["mobile-title", "topbar-title"].forEach(id => {
         let el = document.getElementById(id);
         if (el) el.textContent = titles[sec] || sec;
     });
@@ -39,7 +47,7 @@ function GoTo(sec) {
 
 function TickClock() {
     let t = new Date().toLocaleTimeString("en-US", { hour12: false });
-    ["topnav-clock", "mobile-clock"].forEach((id) => {
+    ["topnav-clock", "mobile-clock"].forEach(id => {
         let el = document.getElementById(id);
         if (el) el.textContent = t;
     });
@@ -57,34 +65,50 @@ function UpdateSphere() {
         val.classList.toggle("online", up);
     }
     let detail = document.getElementById("sphere-detail");
-    if (detail) detail.textContent = up ? "Listening on " + State.serverAddress : "Server not running";
+    if (detail)
+        detail.textContent = up
+            ? "Listening on " + State.serverAddress
+            : "Server not running";
 }
 
 function UpdateStats() {
     let sv = document.getElementById("stat-server-status");
     if (sv) {
-        sv.className = "stat-val " + (State.serverRunning ? "online" : "offline");
-        sv.innerHTML = '<span class="status-dot' + (State.serverRunning ? " online" : "") + '"></span>' + (State.serverRunning ? "Online" : "Offline");
+        sv.className =
+            "stat-val " + (State.serverRunning ? "online" : "offline");
+        sv.innerHTML =
+            '<span class="status-dot' +
+            (State.serverRunning ? " online" : "") +
+            '"></span>' +
+            (State.serverRunning ? "Online" : "Offline");
     }
     let agents = document.getElementById("stat-agents");
     if (agents) agents.textContent = State.agentList.length;
     let conns = document.getElementById("stat-connections");
     if (conns) conns.textContent = State.agentList.length;
-    ["server-address-val", "server-address-val2"].forEach((id) => {
+    ["server-address-val", "server-address-val2"].forEach(id => {
         let el = document.getElementById(id);
         if (el) el.textContent = State.serverAddress || "—";
     });
-    ["session-key-val", "session-key-val2"].forEach((id) => {
+    ["session-key-val", "session-key-val2"].forEach(id => {
         let el = document.getElementById(id);
-        if (el) el.textContent = State.sessionKey ? State.sessionKey.substring(0, 32) + "…" : "—";
+        if (el)
+            el.textContent = State.sessionKey
+                ? State.sessionKey.substring(0, 32) + "…"
+                : "—";
     });
 }
 
 function UpdateToggleBtns() {
     let up = State.serverRunning;
-    document.querySelectorAll(".server-toggle-btn").forEach((b) => b.classList.toggle("online", up));
+    document
+        .querySelectorAll(".server-toggle-btn")
+        .forEach(b => b.classList.toggle("online", up));
     let cb = document.getElementById("server-toggle-btn");
-    if (cb) cb.innerHTML = up ? '<i class="fas fa-stop"></i> Stop Server' : '<i class="fas fa-play"></i> Start Server';
+    if (cb)
+        cb.innerHTML = up
+            ? '<i class="fas fa-stop"></i> Stop Server'
+            : '<i class="fas fa-play"></i> Start Server';
 }
 
 function UpdateAgentBadges() {
@@ -106,7 +130,8 @@ function UpdateBadge() {
     if (badge) {
         if (State.operator) {
             badge.style.display = "";
-            badge.textContent = State.operator + " [" + (State.role || "?") + "]";
+            badge.textContent =
+                State.operator + " [" + (State.role || "?") + "]";
         } else {
             badge.style.display = "none";
         }
@@ -118,11 +143,14 @@ function RenderAgents() {
     let c = document.getElementById("agent-cards");
     if (!c) return;
     if (!State.agentList.length) {
-        c.innerHTML = '<div class="empty-state"><i class="fas fa-satellite-dish"></i>' + '<div class="empty-title">NO ACTIVE AGENTS</div>' + '<div class="empty-sub">Waiting for agents to connect...</div></div>';
+        c.innerHTML =
+            '<div class="empty-state"><i class="fas fa-satellite-dish"></i>' +
+            '<div class="empty-title">NO ACTIVE AGENTS</div>' +
+            '<div class="empty-sub">Waiting for agents to connect...</div></div>';
         return;
     }
     c.innerHTML = State.agentList
-        .map((a) => {
+        .map(a => {
             let name = Esc(a.DisplayName || a.AgentName || "AGENT-" + a.ID);
             let sel = State.selectedId === a.ID;
             return `<div class="agent-card${sel ? " selected" : ""}" data-id="${a.ID}">
@@ -143,8 +171,8 @@ function RenderAgents() {
     </div>`;
         })
         .join("");
-    c.querySelectorAll(".agent-card").forEach((card) => {
-        card.addEventListener("click", (e) => {
+    c.querySelectorAll(".agent-card").forEach(card => {
+        card.addEventListener("click", e => {
             if (e.target.closest("button")) return;
             SelectAgent(parseInt(card.dataset.id));
         });
@@ -155,10 +183,16 @@ function UpdateTargetBadge() {
     let b = document.getElementById("target-badge");
     if (!b) return;
     if (State.selectedId != null) {
-        let a = State.agentList.find((x) => x.ID === State.selectedId);
-        let name = a ? a.DisplayName || a.AgentName || "AGENT-" + State.selectedId : "AGENT-" + State.selectedId;
+        let a = State.agentList.find(x => x.ID === State.selectedId);
+        let name = a
+            ? a.DisplayName || a.AgentName || "AGENT-" + State.selectedId
+            : "AGENT-" + State.selectedId;
         b.className = "target-badge";
-        b.innerHTML = '<i class="fas fa-circle-dot"></i> ' + Esc(name) + " #" + State.selectedId;
+        b.innerHTML =
+            '<i class="fas fa-circle-dot"></i> ' +
+            Esc(name) +
+            " #" +
+            State.selectedId;
     } else {
         b.className = "target-badge none";
         b.innerHTML = '<i class="fas fa-circle-dot"></i> NONE SELECTED';
@@ -169,17 +203,25 @@ function RenderLogs() {
     let el = document.getElementById("log-container");
     if (!el) return;
     if (!State.logs.length) {
-        el.innerHTML = '<div class="empty-state" style="min-height:80px"><i class="fas fa-clipboard-list"></i>' + '<div class="empty-sub">No logs yet</div></div>';
+        el.innerHTML =
+            '<div class="empty-state" style="min-height:80px"><i class="fas fa-clipboard-list"></i>' +
+            '<div class="empty-sub">No logs yet</div></div>';
         return;
     }
-    el.innerHTML = State.logs.map((e) => `<div class="log-entry ${Esc(e.level)}"><span class="log-time">[${Esc(e.ts)}] [${Esc(e.level.toUpperCase())}]</span>` + `<span class="log-msg">${Esc(e.msg)}</span></div>`).join("");
+    el.innerHTML = State.logs
+        .map(
+            e =>
+                `<div class="log-entry ${Esc(e.level)}"><span class="log-time">[${Esc(e.ts)}] [${Esc(e.level.toUpperCase())}]</span>` +
+                `<span class="log-msg">${Esc(e.msg)}</span></div>`
+        )
+        .join("");
     el.scrollTop = el.scrollHeight;
 }
 
 function AppendOutput(text, type) {
     let el = document.getElementById("terminal-output");
     if (!el) return;
-    (text || "").split("\n").forEach((line) => {
+    (text || "").split("\n").forEach(line => {
         let d = document.createElement("div");
         d.className = "term-line " + (type || "out");
         d.textContent = line;
@@ -191,7 +233,10 @@ function AppendOutput(text, type) {
 function RenderQuickCmds() {
     let g = document.getElementById("quick-grid");
     if (!g) return;
-    g.innerHTML = QuickCmds.map((q) => `<button class="quick-btn" onclick="QuickCmd('${q.cmd}')"><i class="${q.icon}"></i>${q.label}</button>`).join("");
+    g.innerHTML = QuickCmds.map(
+        q =>
+            `<button class="quick-btn" onclick="QuickCmd('${q.cmd}')"><i class="${q.icon}"></i>${q.label}</button>`
+    ).join("");
 }
 
 function RenderTeamTable(ops, roles) {
@@ -202,7 +247,7 @@ function RenderTeamTable(ops, roles) {
       <table style="width:100%;border-collapse:collapse;font-size:11px;">
         ${roles
             .map(
-                (r) => `<tr>
+                r => `<tr>
           <td style="padding:5px 8px;color:var(--text);font-weight:700;width:120px;">${Esc(r.Name)}</td>
           <td style="padding:5px 8px;color:var(--text-dim);">${Esc(r.Permissions)}</td>
         </tr>`
@@ -222,7 +267,7 @@ function RenderTeamTable(ops, roles) {
       </tr></thead>
       <tbody>
         ${ops
-            .map((op) => {
+            .map(op => {
                 let isSelf = op.Username === State.operator;
                 let isAdmin = op.Username === "admin";
                 return `<tr style="border-bottom:1px solid var(--border);">
@@ -260,14 +305,34 @@ function DrawTopology() {
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
 
     let defs = SvgEl("defs");
-    let pat = SvgEl("pattern", { id: "tg", width: 28, height: 28, patternUnits: "userSpaceOnUse" });
-    pat.appendChild(SvgEl("path", { d: "M 28 0 L 0 0 0 28", fill: "none", stroke: "rgba(0,255,0,0.04)", "stroke-width": "1" }));
+    let pat = SvgEl("pattern", {
+        id: "tg",
+        width: 28,
+        height: 28,
+        patternUnits: "userSpaceOnUse"
+    });
+    pat.appendChild(
+        SvgEl("path", {
+            d: "M 28 0 L 0 0 0 28",
+            fill: "none",
+            stroke: "rgba(0,255,0,0.04)",
+            "stroke-width": "1"
+        })
+    );
     defs.appendChild(pat);
     svg.appendChild(defs);
     svg.appendChild(SvgEl("rect", { width: W, height: H, fill: "url(#tg)" }));
 
     if (!State.serverRunning && !State.agentList.length) {
-        let t = SvgEl("text", { x: W / 2, y: H / 2, "text-anchor": "middle", fill: "rgba(0,255,0,0.15)", "font-family": "monospace", "font-size": "11", "letter-spacing": "4" });
+        let t = SvgEl("text", {
+            x: W / 2,
+            y: H / 2,
+            "text-anchor": "middle",
+            fill: "rgba(0,255,0,0.15)",
+            "font-family": "monospace",
+            "font-size": "11",
+            "letter-spacing": "4"
+        });
         t.textContent = "NO CONNECTIONS";
         svg.appendChild(t);
         return;
@@ -278,16 +343,37 @@ function DrawTopology() {
         rad = Math.min(W, H) * 0.3;
 
     State.agentList.forEach((a, i) => {
-        let angle = (2 * Math.PI * i) / Math.max(State.agentList.length, 1) - Math.PI / 2;
+        let angle =
+            (2 * Math.PI * i) / Math.max(State.agentList.length, 1) -
+            Math.PI / 2;
         let ax = cx + rad * Math.cos(angle),
             ay = cy + rad * Math.sin(angle);
         let pid = "tp" + i;
 
-        svg.appendChild(SvgEl("line", { x1: cx, y1: cy, x2: ax, y2: ay, stroke: "rgba(0,255,0,0.1)", "stroke-width": "1", "stroke-dasharray": "5 5" }));
-        svg.appendChild(SvgEl("path", { id: pid, d: `M${cx},${cy} L${ax},${ay}`, fill: "none" }));
+        svg.appendChild(
+            SvgEl("line", {
+                x1: cx,
+                y1: cy,
+                x2: ax,
+                y2: ay,
+                stroke: "rgba(0,255,0,0.1)",
+                "stroke-width": "1",
+                "stroke-dasharray": "5 5"
+            })
+        );
+        svg.appendChild(
+            SvgEl("path", {
+                id: pid,
+                d: `M${cx},${cy} L${ax},${ay}`,
+                fill: "none"
+            })
+        );
 
         let pkt = SvgEl("circle", { r: "3", fill: "#00ff00", opacity: "0.7" });
-        let anim = SvgEl("animateMotion", { dur: 1.8 + i * 0.4 + "s", repeatCount: "indefinite" });
+        let anim = SvgEl("animateMotion", {
+            dur: 1.8 + i * 0.4 + "s",
+            repeatCount: "indefinite"
+        });
         let mp = SvgEl("mpath");
         mp.setAttribute("href", "#" + pid);
         anim.appendChild(mp);
@@ -295,10 +381,26 @@ function DrawTopology() {
         svg.appendChild(pkt);
 
         let name = a.DisplayName || a.AgentName || "AGENT-" + a.ID;
-        DrawTopoNode(svg, ax, ay, name, a.AgentIP || "", false, () => SelectAndGo(a.ID), State.selectedId === a.ID);
+        DrawTopoNode(
+            svg,
+            ax,
+            ay,
+            name,
+            a.AgentIP || "",
+            false,
+            () => SelectAndGo(a.ID),
+            State.selectedId === a.ID
+        );
     });
 
-    DrawTopoNode(svg, cx, cy, "C2 SERVER", State.serverHost + ":" + State.serverPort, true);
+    DrawTopoNode(
+        svg,
+        cx,
+        cy,
+        "C2 SERVER",
+        State.serverHost + ":" + State.serverPort,
+        true
+    );
 }
 
 function DrawTopoNode(svg, x, y, label, sub, isServer, onClick, sel) {
@@ -309,24 +411,80 @@ function DrawTopoNode(svg, x, y, label, sub, isServer, onClick, sel) {
     }
 
     let r = isServer ? 28 : 20;
-    let stroke = isServer ? "#00ff00" : sel ? "#00ff00" : "rgba(255,255,255,0.2)";
-    let fill = isServer ? "rgba(0,255,0,0.1)" : sel ? "rgba(0,255,0,0.08)" : "#0a0a0a";
+    let stroke = isServer
+        ? "#00ff00"
+        : sel
+          ? "#00ff00"
+          : "rgba(255,255,255,0.2)";
+    let fill = isServer
+        ? "rgba(0,255,0,0.1)"
+        : sel
+          ? "rgba(0,255,0,0.08)"
+          : "#0a0a0a";
 
-    g.appendChild(SvgEl("circle", { cx: x, cy: y, r: r + 6, fill: "none", stroke: isServer ? "rgba(0,255,0,0.18)" : sel ? "rgba(0,255,0,0.25)" : "rgba(255,255,255,0.06)", "stroke-width": "1", "stroke-dasharray": isServer ? "0" : "3 3" }));
-    g.appendChild(SvgEl("circle", { cx: x, cy: y, r: r, fill, stroke, "stroke-width": "1.5" }));
+    g.appendChild(
+        SvgEl("circle", {
+            cx: x,
+            cy: y,
+            r: r + 6,
+            fill: "none",
+            stroke: isServer
+                ? "rgba(0,255,0,0.18)"
+                : sel
+                  ? "rgba(0,255,0,0.25)"
+                  : "rgba(255,255,255,0.06)",
+            "stroke-width": "1",
+            "stroke-dasharray": isServer ? "0" : "3 3"
+        })
+    );
+    g.appendChild(
+        SvgEl("circle", {
+            cx: x,
+            cy: y,
+            r: r,
+            fill,
+            stroke,
+            "stroke-width": "1.5"
+        })
+    );
 
-    let fo = SvgEl("foreignObject", { x: x - 11, y: y - 11, width: 22, height: 22 });
+    let fo = SvgEl("foreignObject", {
+        x: x - 11,
+        y: y - 11,
+        width: 22,
+        height: 22
+    });
     let div = document.createElement("div");
-    div.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;color:" + (isServer ? "#00ff00" : sel ? "#00ff00" : "#888888") + ";";
-    div.innerHTML = '<i class="fas ' + (isServer ? "fa-server" : "fa-laptop") + '"></i>';
+    div.style.cssText =
+        "width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;color:" +
+        (isServer ? "#00ff00" : sel ? "#00ff00" : "#888888") +
+        ";";
+    div.innerHTML =
+        '<i class="fas ' + (isServer ? "fa-server" : "fa-laptop") + '"></i>';
     fo.appendChild(div);
     g.appendChild(fo);
 
-    let lbl = SvgEl("text", { x, y: y + r + 12, "text-anchor": "middle", fill: isServer ? "#00ff00" : sel ? "#00ff00" : "#aaaaaa", "font-family": "monospace", "font-size": "8", "font-weight": "700", "letter-spacing": "1" });
+    let lbl = SvgEl("text", {
+        x,
+        y: y + r + 12,
+        "text-anchor": "middle",
+        fill: isServer ? "#00ff00" : sel ? "#00ff00" : "#aaaaaa",
+        "font-family": "monospace",
+        "font-size": "8",
+        "font-weight": "700",
+        "letter-spacing": "1"
+    });
     lbl.textContent = label.length > 10 ? label.substring(0, 9) + "…" : label;
     g.appendChild(lbl);
 
-    let sub2 = SvgEl("text", { x, y: y + r + 22, "text-anchor": "middle", fill: "#555555", "font-family": "monospace", "font-size": "7.5" });
+    let sub2 = SvgEl("text", {
+        x,
+        y: y + r + 22,
+        "text-anchor": "middle",
+        fill: "#555555",
+        "font-family": "monospace",
+        "font-size": "7.5"
+    });
     sub2.textContent = sub;
     g.appendChild(sub2);
 
@@ -338,7 +496,8 @@ function ShowLogin(msg) {
     if (old) old.remove();
     let ov = document.createElement("div");
     ov.id = "login-overlay";
-    ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.97);display:flex;align-items:center;justify-content:center;z-index:9999;";
+    ov.style.cssText =
+        "position:fixed;inset:0;background:rgba(0,0,0,0.97);display:flex;align-items:center;justify-content:center;z-index:9999;";
     ov.innerHTML = `
     <div style="background:#0a0a0a;border:1px solid rgba(0,255,0,0.25);padding:40px 36px;width:340px;max-width:94vw;text-align:center;">
       <div style="font-family:'Tourney',monospace;font-size:22px;color:#00ff00;letter-spacing:4px;margin-bottom:4px;">RAVEN C2</div>
@@ -358,12 +517,12 @@ function ShowLogin(msg) {
     let p = document.getElementById("li-pass");
     if (u) {
         u.focus();
-        u.onkeydown = (e) => {
+        u.onkeydown = e => {
             if (e.key === "Enter" && p) p.focus();
         };
     }
     if (p)
-        p.onkeydown = (e) => {
+        p.onkeydown = e => {
             if (e.key === "Enter") DoLogin();
         };
 }
@@ -373,7 +532,7 @@ function InitBottomNavScroll() {
     if (!cont) return;
     cont.addEventListener(
         "scroll",
-        (e) => {
+        e => {
             let el = e.target;
             let st = el.scrollTop;
             let atBot = el.scrollHeight - st - el.clientHeight < 32;
