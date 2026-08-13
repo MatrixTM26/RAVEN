@@ -1,7 +1,8 @@
 "use strict";
 
 let sidebarOpen = false;
-let sidebarCollapsed = localStorage.getItem("raven-sidebar-collapsed") === "true";
+let sidebarCollapsed =
+    localStorage.getItem("raven-sidebar-collapsed") === "true";
 
 let tooltipEl = null;
 let tooltipTimer = null;
@@ -24,7 +25,9 @@ function toggleSidebar() {
 
 function collapseDesktopSidebar() {
     sidebarCollapsed = !sidebarCollapsed;
-    document.getElementById("sidebar").classList.toggle("collapsed", sidebarCollapsed);
+    document
+        .getElementById("sidebar")
+        .classList.toggle("collapsed", sidebarCollapsed);
     localStorage.setItem("raven-sidebar-collapsed", sidebarCollapsed);
     hideTooltip();
 }
@@ -38,7 +41,12 @@ function showTooltip(label, targetEl) {
     }
     tooltipEl.textContent = label;
     let rect = targetEl.getBoundingClientRect();
-    let sbW = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sidebar-w-collapsed")) || 56;
+    let sbW =
+        parseInt(
+            getComputedStyle(document.documentElement).getPropertyValue(
+                "--sidebar-w-collapsed"
+            )
+        ) || 56;
     tooltipEl.style.top = rect.top + rect.height / 2 - 13 + "px";
     tooltipEl.style.left = sbW + 10 + "px";
     tooltipEl.classList.add("visible");
@@ -49,14 +57,16 @@ function hideTooltip() {
 }
 
 function applyCollapsedState() {
-    if (sidebarCollapsed) document.getElementById("sidebar").classList.add("collapsed");
+    if (sidebarCollapsed)
+        document.getElementById("sidebar").classList.add("collapsed");
 }
 
 document.addEventListener("DOMContentLoaded", function () {
     applyCollapsedState();
 
     let collapseBtn = document.getElementById("sidebar-collapse-btn");
-    if (collapseBtn) collapseBtn.addEventListener("click", collapseDesktopSidebar);
+    if (collapseBtn)
+        collapseBtn.addEventListener("click", collapseDesktopSidebar);
 
     let logoSvg = document.querySelector(".logo-svg");
     if (logoSvg) {
