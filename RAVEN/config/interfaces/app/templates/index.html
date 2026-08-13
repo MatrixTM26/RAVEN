@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Tourney:wght@400;600;700;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link rel="stylesheet" href="/static/css/style.css" />
@@ -221,11 +221,22 @@
                     <div class="card">
                         <div class="card-head">
                             <div class="card-title">
-                                <i class="fas fa-project-diagram"></i>NETWORK TOPOLOGY
+                                <i class="fas fa-project-diagram"></i>Network Topology
                             </div>
                         </div>
                         <div class="topology-wrap">
-                            <svg id="topologySvg" height="320"></svg>
+                            <svg id="topologySvg" height="300"></svg>
+                        </div>
+                        <div class="topo-legend">
+                            <div class="topo-legend-item">
+                                <div class="topo-dot server"></div>C2 Server
+                            </div>
+                            <div class="topo-legend-item">
+                                <div class="topo-dot agent"></div>Agent
+                            </div>
+                            <div class="topo-legend-item">
+                                <div class="topo-dot selected"></div>Selected
+                            </div>
                         </div>
                     </div>
                 </div>
