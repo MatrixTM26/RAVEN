@@ -243,13 +243,13 @@ function RenderTeamTable(ops, roles) {
     let roleTable = roles.length
         ? `
     <div style="margin-bottom:16px;">
-      <div style="font-family:var(--mono);font-size:8px;color:var(--lime);letter-spacing:2px;margin-bottom:8px;">ROLE PERMISSIONS</div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">Role Permissions</div>
       <table style="width:100%;border-collapse:collapse;font-size:11px;">
         ${roles
             .map(
-                r => `<tr>
-          <td style="padding:5px 8px;color:var(--text);font-weight:700;width:120px;">${Esc(r.Name)}</td>
-          <td style="padding:5px 8px;color:var(--text-dim);">${Esc(r.Permissions)}</td>
+                r => `<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:6px 8px;color:var(--text);font-weight:600;font-family:var(--mono);width:120px;">${Esc(r.Name)}</td>
+          <td style="padding:6px 8px;color:var(--text-dim);font-family:var(--mono);">${Esc(r.Permissions)}</td>
         </tr>`
             )
             .join("")}
@@ -259,11 +259,11 @@ function RenderTeamTable(ops, roles) {
 
     let opTable = `
     <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
-      <thead><tr>
-        <th style="text-align:left;padding:6px 8px;color:var(--lime);border-bottom:1px solid var(--lime-border);font-family:var(--mono);font-size:9px;letter-spacing:1px;">USERNAME</th>
-        <th style="text-align:left;padding:6px 8px;color:var(--lime);border-bottom:1px solid var(--lime-border);font-family:var(--mono);font-size:9px;letter-spacing:1px;">ROLE</th>
-        <th style="text-align:left;padding:6px 8px;color:var(--lime);border-bottom:1px solid var(--lime-border);font-family:var(--mono);font-size:9px;letter-spacing:1px;">LAST SEEN</th>
-        <th style="text-align:right;padding:6px 8px;color:var(--lime);border-bottom:1px solid var(--lime-border);font-family:var(--mono);font-size:9px;letter-spacing:1px;">ACTIONS</th>
+      <thead><tr style="border-bottom:1px solid var(--border-strong);">
+        <th style="text-align:left;padding:7px 8px;color:var(--text-muted);font-family:var(--mono);font-size:9px;letter-spacing:1px;font-weight:500;text-transform:uppercase;">Username</th>
+        <th style="text-align:left;padding:7px 8px;color:var(--text-muted);font-family:var(--mono);font-size:9px;letter-spacing:1px;font-weight:500;text-transform:uppercase;">Role</th>
+        <th style="text-align:left;padding:7px 8px;color:var(--text-muted);font-family:var(--mono);font-size:9px;letter-spacing:1px;font-weight:500;text-transform:uppercase;">Last Seen</th>
+        <th style="text-align:right;padding:7px 8px;color:var(--text-muted);font-family:var(--mono);font-size:9px;letter-spacing:1px;font-weight:500;text-transform:uppercase;">Actions</th>
       </tr></thead>
       <tbody>
         ${ops
@@ -272,14 +272,14 @@ function RenderTeamTable(ops, roles) {
                 let isAdmin = op.Username === "admin";
                 return `<tr style="border-bottom:1px solid var(--border);">
             <td style="padding:8px;color:var(--text);font-family:var(--mono);font-size:11px;">
-              ${Esc(op.Username)}${isSelf ? ' <span style="color:var(--lime);font-size:9px;">[YOU]</span>' : ""}
+              ${Esc(op.Username)}${isSelf ? ' <span style="color:var(--accent,#2563eb);font-size:9px;margin-left:4px;">[you]</span>' : ""}
             </td>
             <td style="padding:8px;">
-              <span style="background:var(--lime-faint);color:var(--lime);padding:2px 8px;border:1px solid var(--lime-border);font-family:var(--mono);font-size:9px;">${Esc(op.Role)}</span>
+              <span style="background:var(--accent-pale);color:var(--accent,#2563eb);padding:2px 8px;border:1px solid var(--accent-border);border-radius:3px;font-family:var(--mono);font-size:9px;font-weight:600;">${Esc(op.Role)}</span>
             </td>
             <td style="padding:8px;color:var(--text-muted);font-family:var(--mono);font-size:10px;">${Esc(op.LastSeen || "Never")}</td>
             <td style="padding:8px;text-align:right;">
-              ${!isAdmin && !isSelf ? `<button class="btn btn-danger btn-sm" onclick="KickOp('${Esc(op.Username)}')" title="Kick operator"><i class="fas fa-user-times"></i></button>` : ""}
+              ${!isAdmin && !isSelf ? `<button class="btn btn-danger btn-sm" onclick="KickOp('${Esc(op.Username)}')" title="Remove operator"><i class="fas fa-user-times"></i></button>` : ""}
             </td>
           </tr>`;
             })
@@ -296,6 +296,12 @@ function SvgEl(tag, attrs) {
     return el;
 }
 
+function getThemeColor(varName) {
+    return getComputedStyle(document.documentElement)
+        .getPropertyValue(varName)
+        .trim();
+}
+
 function DrawTopology() {
     let svg = document.getElementById("topologySvg");
     if (!svg) return;
@@ -304,51 +310,132 @@ function DrawTopology() {
     let H = parseInt(svg.getAttribute("height")) || 300;
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
 
+    let isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    let clrBg = isDark ? "#0d0f14" : "#f4f6fa";
+    let clrGrid = isDark ? "rgba(255,255,255,0.035)" : "rgba(0,0,0,0.04)";
+    let clrAccent = "#2563eb";
+    let clrOk = "#16a34a";
+    let clrWarn = "#d97706";
+    let clrMuted = isDark ? "#4a4f65" : "#9096b0";
+    let clrText = isDark ? "#8b90a4" : "#4a5068";
+    let clrBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.09)";
+
     let defs = SvgEl("defs");
+
     let pat = SvgEl("pattern", {
         id: "tg",
-        width: 28,
-        height: 28,
+        width: "24",
+        height: "24",
         patternUnits: "userSpaceOnUse"
     });
     pat.appendChild(
         SvgEl("path", {
-            d: "M 28 0 L 0 0 0 28",
+            d: "M 24 0 L 0 0 0 24",
             fill: "none",
-            stroke: "rgba(0,255,0,0.04)",
-            "stroke-width": "1"
+            stroke: clrGrid,
+            "stroke-width": "0.5"
         })
     );
     defs.appendChild(pat);
+
+    let gradS = SvgEl("radialGradient", {
+        id: "gsrv",
+        cx: "50%",
+        cy: "50%",
+        r: "50%"
+    });
+    let s1 = SvgEl("stop");
+    s1.setAttribute("offset", "0%");
+    s1.setAttribute("stop-color", clrAccent);
+    s1.setAttribute("stop-opacity", "0.18");
+    gradS.appendChild(s1);
+    let s2 = SvgEl("stop");
+    s2.setAttribute("offset", "100%");
+    s2.setAttribute("stop-color", clrAccent);
+    s2.setAttribute("stop-opacity", "0.04");
+    gradS.appendChild(s2);
+    defs.appendChild(gradS);
+
+    let gradA = SvgEl("radialGradient", {
+        id: "gagt",
+        cx: "50%",
+        cy: "50%",
+        r: "50%"
+    });
+    let a1 = SvgEl("stop");
+    a1.setAttribute("offset", "0%");
+    a1.setAttribute("stop-color", clrOk);
+    a1.setAttribute("stop-opacity", "0.14");
+    gradA.appendChild(a1);
+    let a2 = SvgEl("stop");
+    a2.setAttribute("offset", "100%");
+    a2.setAttribute("stop-color", clrOk);
+    a2.setAttribute("stop-opacity", "0.03");
+    gradA.appendChild(a2);
+    defs.appendChild(gradA);
+
+    let gradW = SvgEl("radialGradient", {
+        id: "gsel",
+        cx: "50%",
+        cy: "50%",
+        r: "50%"
+    });
+    let w1 = SvgEl("stop");
+    w1.setAttribute("offset", "0%");
+    w1.setAttribute("stop-color", clrWarn);
+    w1.setAttribute("stop-opacity", "0.14");
+    gradW.appendChild(w1);
+    let w2 = SvgEl("stop");
+    w2.setAttribute("offset", "100%");
+    w2.setAttribute("stop-color", clrWarn);
+    w2.setAttribute("stop-opacity", "0.03");
+    gradW.appendChild(w2);
+    defs.appendChild(gradW);
+
     svg.appendChild(defs);
+    svg.appendChild(SvgEl("rect", { width: W, height: H, fill: clrBg }));
     svg.appendChild(SvgEl("rect", { width: W, height: H, fill: "url(#tg)" }));
 
     if (!State.serverRunning && !State.agentList.length) {
-        let t = SvgEl("text", {
+        let emptyG = SvgEl("g");
+        emptyG.appendChild(
+            SvgEl("circle", {
+                cx: W / 2,
+                cy: H / 2,
+                r: "40",
+                fill: "none",
+                stroke: clrBorder,
+                "stroke-width": "1",
+                "stroke-dasharray": "4 4"
+            })
+        );
+        let et = SvgEl("text", {
             x: W / 2,
-            y: H / 2,
+            y: H / 2 + 4,
             "text-anchor": "middle",
-            fill: "rgba(0,255,0,0.15)",
+            fill: clrMuted,
             "font-family": "monospace",
-            "font-size": "11",
-            "letter-spacing": "4"
+            "font-size": "9",
+            "letter-spacing": "2"
         });
-        t.textContent = "NO CONNECTIONS";
-        svg.appendChild(t);
+        et.textContent = "NO CONNECTIONS";
+        emptyG.appendChild(et);
+        svg.appendChild(emptyG);
         return;
     }
 
     let cx = W / 2,
-        cy = H / 2,
-        rad = Math.min(W, H) * 0.3;
+        cy = H / 2;
+    let rad = Math.min(W, H) * 0.32;
+    let n = State.agentList.length;
 
     State.agentList.forEach((a, i) => {
-        let angle =
-            (2 * Math.PI * i) / Math.max(State.agentList.length, 1) -
-            Math.PI / 2;
-        let ax = cx + rad * Math.cos(angle),
-            ay = cy + rad * Math.sin(angle);
+        let angle = (2 * Math.PI * i) / Math.max(n, 1) - Math.PI / 2;
+        let ax = cx + rad * Math.cos(angle);
+        let ay = cy + rad * Math.sin(angle);
+        let sel = State.selectedId === a.ID;
         let pid = "tp" + i;
+        let lineColor = sel ? clrWarn : clrAccent;
 
         svg.appendChild(
             SvgEl("line", {
@@ -356,22 +443,26 @@ function DrawTopology() {
                 y1: cy,
                 x2: ax,
                 y2: ay,
-                stroke: "rgba(0,255,0,0.1)",
-                "stroke-width": "1",
-                "stroke-dasharray": "5 5"
-            })
-        );
-        svg.appendChild(
-            SvgEl("path", {
-                id: pid,
-                d: `M${cx},${cy} L${ax},${ay}`,
-                fill: "none"
+                stroke: sel ? "rgba(217,119,6,0.3)" : "rgba(37,99,235,0.18)",
+                "stroke-width": sel ? "1.5" : "1",
+                "stroke-dasharray": "4 4"
             })
         );
 
-        let pkt = SvgEl("circle", { r: "3", fill: "#00ff00", opacity: "0.7" });
+        let pathEl = SvgEl("path", {
+            id: pid,
+            d: "M" + cx + "," + cy + " L" + ax + "," + ay,
+            fill: "none"
+        });
+        svg.appendChild(pathEl);
+
+        let pkt = SvgEl("circle", {
+            r: "2.5",
+            fill: sel ? clrWarn : clrAccent,
+            opacity: "0.8"
+        });
         let anim = SvgEl("animateMotion", {
-            dur: 1.8 + i * 0.4 + "s",
+            dur: 2.2 + i * 0.5 + "s",
             repeatCount: "indefinite"
         });
         let mp = SvgEl("mpath");
@@ -389,7 +480,8 @@ function DrawTopology() {
             a.AgentIP || "",
             false,
             () => SelectAndGo(a.ID),
-            State.selectedId === a.ID
+            sel,
+            { clrAccent, clrOk, clrWarn, clrMuted, clrText, clrBorder, isDark }
         );
     });
 
@@ -399,42 +491,37 @@ function DrawTopology() {
         cy,
         "C2 SERVER",
         State.serverHost + ":" + State.serverPort,
-        true
+        true,
+        null,
+        false,
+        { clrAccent, clrOk, clrWarn, clrMuted, clrText, clrBorder, isDark }
     );
 }
 
-function DrawTopoNode(svg, x, y, label, sub, isServer, onClick, sel) {
+function DrawTopoNode(svg, x, y, label, sub, isServer, onClick, sel, colors) {
+    let { clrAccent, clrOk, clrWarn, clrMuted, clrText, clrBorder, isDark } =
+        colors;
     let g = SvgEl("g");
     if (onClick) {
         g.style.cursor = "pointer";
         g.addEventListener("click", onClick);
     }
 
-    let r = isServer ? 28 : 20;
-    let stroke = isServer
-        ? "#00ff00"
-        : sel
-          ? "#00ff00"
-          : "rgba(255,255,255,0.2)";
-    let fill = isServer
-        ? "rgba(0,255,0,0.1)"
-        : sel
-          ? "rgba(0,255,0,0.08)"
-          : "#0a0a0a";
+    let r = isServer ? 26 : 18;
+    let nodeColor = isServer ? clrAccent : sel ? clrWarn : clrOk;
+    let fillGrad = isServer ? "url(#gsrv)" : sel ? "url(#gsel)" : "url(#gagt)";
+    let bgFill = isDark ? "#141720" : "#ffffff";
 
     g.appendChild(
         SvgEl("circle", {
             cx: x,
             cy: y,
-            r: r + 6,
+            r: r + 8,
             fill: "none",
-            stroke: isServer
-                ? "rgba(0,255,0,0.18)"
-                : sel
-                  ? "rgba(0,255,0,0.25)"
-                  : "rgba(255,255,255,0.06)",
-            "stroke-width": "1",
-            "stroke-dasharray": isServer ? "0" : "3 3"
+            stroke: nodeColor,
+            "stroke-width": "0.5",
+            "stroke-dasharray": isServer ? "0" : "3 3",
+            opacity: "0.3"
         })
     );
     g.appendChild(
@@ -442,51 +529,60 @@ function DrawTopoNode(svg, x, y, label, sub, isServer, onClick, sel) {
             cx: x,
             cy: y,
             r: r,
-            fill,
-            stroke,
+            fill: bgFill,
+            stroke: nodeColor,
             "stroke-width": "1.5"
         })
     );
+    g.appendChild(SvgEl("circle", { cx: x, cy: y, r: r, fill: fillGrad }));
 
-    let fo = SvgEl("foreignObject", {
-        x: x - 11,
-        y: y - 11,
-        width: 22,
-        height: 22
+    let iconPath;
+    if (isServer) {
+        iconPath =
+            "M-7,-6 L7,-6 L7,6 L-7,6 Z M-5,-4 L5,-4 M-5,-1 L5,-1 M-5,2 L3,2";
+    } else {
+        iconPath =
+            "M-7,-5 L7,-5 L7,3 L-7,3 Z M-4,3 L4,3 L4,5 L-4,5 Z M-5,-3 L5,-3 M-5,-1 L3,-1";
+    }
+
+    let iconG = SvgEl("g");
+    iconG.setAttribute("transform", "translate(" + x + "," + y + ")");
+    let iconRect = SvgEl("path", {
+        d: iconPath,
+        fill: "none",
+        stroke: nodeColor,
+        "stroke-width": "1.2",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
     });
-    let div = document.createElement("div");
-    div.style.cssText =
-        "width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;color:" +
-        (isServer ? "#00ff00" : sel ? "#00ff00" : "#888888") +
-        ";";
-    div.innerHTML =
-        '<i class="fas ' + (isServer ? "fa-server" : "fa-laptop") + '"></i>';
-    fo.appendChild(div);
-    g.appendChild(fo);
+    iconG.appendChild(iconRect);
+    g.appendChild(iconG);
 
     let lbl = SvgEl("text", {
         x,
-        y: y + r + 12,
+        y: y + r + 13,
         "text-anchor": "middle",
-        fill: isServer ? "#00ff00" : sel ? "#00ff00" : "#aaaaaa",
+        fill: nodeColor,
         "font-family": "monospace",
-        "font-size": "8",
+        "font-size": "8.5",
         "font-weight": "700",
-        "letter-spacing": "1"
+        "letter-spacing": "0.8"
     });
-    lbl.textContent = label.length > 10 ? label.substring(0, 9) + "…" : label;
+    lbl.textContent = label.length > 11 ? label.substring(0, 10) + "…" : label;
     g.appendChild(lbl);
 
-    let sub2 = SvgEl("text", {
-        x,
-        y: y + r + 22,
-        "text-anchor": "middle",
-        fill: "#555555",
-        "font-family": "monospace",
-        "font-size": "7.5"
-    });
-    sub2.textContent = sub;
-    g.appendChild(sub2);
+    if (sub) {
+        let sub2 = SvgEl("text", {
+            x,
+            y: y + r + 24,
+            "text-anchor": "middle",
+            fill: clrMuted,
+            "font-family": "monospace",
+            "font-size": "7.5"
+        });
+        sub2.textContent = sub;
+        g.appendChild(sub2);
+    }
 
     svg.appendChild(g);
 }
@@ -497,34 +593,45 @@ function ShowLogin(msg) {
     let ov = document.createElement("div");
     ov.id = "login-overlay";
     ov.style.cssText =
-        "position:fixed;inset:0;background:rgba(0,0,0,0.97);display:flex;align-items:center;justify-content:center;z-index:9999;";
+        "position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px);";
     ov.innerHTML = `
-    <div style="background:#0a0a0a;border:1px solid rgba(0,255,0,0.25);padding:40px 36px;width:340px;max-width:94vw;text-align:center;">
-      <div style="font-family:'Tourney',monospace;font-size:22px;color:#00ff00;letter-spacing:4px;margin-bottom:4px;">RAVEN C2</div>
-      <div style="font-family:'Courier New',monospace;font-size:9px;color:#444444;letter-spacing:2px;margin-bottom:26px;">TEAMSERVER — OPERATOR AUTHENTICATION</div>
-      ${msg ? `<div style="color:#ff4444;font-family:'Courier New',monospace;font-size:11px;margin-bottom:14px;">${Esc(msg)}</div>` : ""}
-      <input id="li-user" type="text" placeholder="Username" autocomplete="off"
-        style="width:100%;box-sizing:border-box;background:#000;border:1px solid rgba(0,255,0,0.2);padding:10px 12px;color:#f0f0f0;font-family:'Courier New',monospace;font-size:12px;margin-bottom:10px;outline:none;border-radius:0;">
-      <input id="li-pass" type="password" placeholder="Password"
-        style="width:100%;box-sizing:border-box;background:#000;border:1px solid rgba(0,255,0,0.2);padding:10px 12px;color:#f0f0f0;font-family:'Courier New',monospace;font-size:12px;margin-bottom:18px;outline:none;border-radius:0;">
+    <div style="background:var(--bg1);border:1px solid var(--border-strong);border-radius:6px;padding:36px 32px;width:340px;max-width:94vw;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--text);letter-spacing:2px;margin-bottom:3px;">RAVEN</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1.5px;margin-bottom:28px;">TEAMSERVER · OPERATOR AUTH</div>
+      ${msg ? `<div style="color:var(--err,#dc2626);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:14px;padding:8px 10px;background:rgba(220,38,38,0.07);border:1px solid rgba(220,38,38,0.2);border-radius:4px;">${Esc(msg)}</div>` : ""}
+      <div style="text-align:left;margin-bottom:10px;">
+        <label style="display:block;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:var(--text-dim);margin-bottom:4px;">Username</label>
+        <input id="li-user" type="text" placeholder="username" autocomplete="off"
+          style="width:100%;box-sizing:border-box;background:var(--bg0);border:1px solid var(--border-strong);border-radius:4px;padding:9px 11px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color 0.12s;">
+      </div>
+      <div style="text-align:left;margin-bottom:20px;">
+        <label style="display:block;font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:var(--text-dim);margin-bottom:4px;">Password</label>
+        <input id="li-pass" type="password" placeholder="••••••••"
+          style="width:100%;box-sizing:border-box;background:var(--bg0);border:1px solid var(--border-strong);border-radius:4px;padding:9px 11px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color 0.12s;">
+      </div>
       <button id="li-btn" onclick="DoLogin()"
-        style="width:100%;background:#00ff00;color:#000;border:none;padding:11px;font-weight:700;font-family:'Space Grotesk',sans-serif;font-size:13px;cursor:pointer;letter-spacing:1px;">
-        AUTHENTICATE</button>
-      <div id="li-err" style="color:#ff4444;font-family:'Courier New',monospace;font-size:11px;margin-top:12px;min-height:16px;"></div>
+        style="width:100%;background:#2563eb;color:#fff;border:none;border-radius:4px;padding:10px;font-weight:600;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;letter-spacing:0.3px;transition:background 0.12s;">
+        Sign In</button>
+      <div id="li-err" style="color:#dc2626;font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:12px;min-height:16px;"></div>
     </div>`;
     document.body.appendChild(ov);
     let u = document.getElementById("li-user");
     let p = document.getElementById("li-pass");
     if (u) {
         u.focus();
+        u.addEventListener("focus", () => (u.style.borderColor = "#2563eb"));
+        u.addEventListener("blur", () => (u.style.borderColor = ""));
         u.onkeydown = e => {
             if (e.key === "Enter" && p) p.focus();
         };
     }
-    if (p)
+    if (p) {
+        p.addEventListener("focus", () => (p.style.borderColor = "#2563eb"));
+        p.addEventListener("blur", () => (p.style.borderColor = ""));
         p.onkeydown = e => {
             if (e.key === "Enter") DoLogin();
         };
+    }
 }
 
 function InitBottomNavScroll() {
