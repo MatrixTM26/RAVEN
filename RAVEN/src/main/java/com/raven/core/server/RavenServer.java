@@ -250,6 +250,22 @@ public final class RavenServer extends BaseServer {
 
     private int RegisterRaw(Socket Client, DetectionResult Det, String RemoteAddr) throws Exception {
         Map<String, Object> Info = RawHandshake(Client, Det.Stream, RemoteAddr);
+        String SourceIp = RemoteAddr.contains("/") ? RemoteAddr.split("/")[1].split(":")[0] : RemoteAddr.split(":")[0];
+        boolean ProbeOk = !"Unknown".equalsIgnoreCase(Info.getOrDefault("os", "Unknown").toString());
+        if (ProbeOk) {
+            Sessions.GetAll().stream()
+                .filter(Existing -> {
+                    String ExistIp = Existing.GetAgentIp();
+                    return SourceIp.equals(ExistIp)
+                        && "Unknown".equalsIgnoreCase(Existing.GetOs())
+                        && "Unknown".equalsIgnoreCase(Existing.GetHostname());
+                })
+                .map(Existing -> Existing.GetId())
+                .forEach(StaleId -> {
+                    Logger.Verbose("removing stale Unknown session-" + StaleId + " (probe succeeded on reconnect from " + SourceIp + ")");
+                    RemoveSession(StaleId);
+                });
+        }
         Session S = BuildSession(Client, RemoteAddr, Info, true);
         S.SetSessionType(Session.Type.ReverseShell);
         S.SetEncrypted(false);
