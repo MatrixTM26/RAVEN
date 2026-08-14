@@ -28,6 +28,10 @@ public final class ServerApi {
         Response.put("Uptime", ServerManager.GetUptime());
         Response.put("Agents", Up ? ServerManager.GetServer().GetSessions().Count() : 0);
         if (Up) Response.put("Key", ServerManager.GetServer().GetKeyBase64());
+        String DbType   = Config.GetDatabaseType();
+        boolean DbOnline = !DbType.isBlank() && !DbType.equals("none");
+        Response.put("DbOnline", DbOnline);
+        Response.put("DbType",   DbOnline ? DbType : "none");
         return HttpHelper.Json(Response);
     }
 
