@@ -7,16 +7,27 @@ let sidebarCollapsed =
 let tooltipEl = null;
 let tooltipTimer = null;
 
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
 function openSidebar() {
     sidebarOpen = true;
-    document.getElementById("sidebar").classList.add("open");
-    document.getElementById("mobile-overlay").classList.add("active");
+    let sb = document.getElementById("sidebar");
+    let ov = document.getElementById("mobile-overlay");
+    if (sb) {
+        sb.classList.remove("collapsed");
+        sb.classList.add("open");
+    }
+    if (ov) ov.classList.add("active");
 }
 
 function closeSidebar() {
     sidebarOpen = false;
-    document.getElementById("sidebar").classList.remove("open");
-    document.getElementById("mobile-overlay").classList.remove("active");
+    let sb = document.getElementById("sidebar");
+    let ov = document.getElementById("mobile-overlay");
+    if (sb) sb.classList.remove("open");
+    if (ov) ov.classList.remove("active");
 }
 
 function toggleSidebar() {
@@ -24,6 +35,7 @@ function toggleSidebar() {
 }
 
 function collapseDesktopSidebar() {
+    if (isMobile()) return;
     sidebarCollapsed = !sidebarCollapsed;
     document
         .getElementById("sidebar")
@@ -33,7 +45,7 @@ function collapseDesktopSidebar() {
 }
 
 function showTooltip(label, targetEl) {
-    if (!sidebarCollapsed) return;
+    if (!sidebarCollapsed || isMobile()) return;
     if (!tooltipEl) {
         tooltipEl = document.createElement("div");
         tooltipEl.className = "sidebar-tooltip";
@@ -46,7 +58,7 @@ function showTooltip(label, targetEl) {
             getComputedStyle(document.documentElement).getPropertyValue(
                 "--sidebar-w-collapsed"
             )
-        ) || 56;
+        ) || 52;
     tooltipEl.style.top = rect.top + rect.height / 2 - 13 + "px";
     tooltipEl.style.left = sbW + 10 + "px";
     tooltipEl.classList.add("visible");
@@ -57,8 +69,10 @@ function hideTooltip() {
 }
 
 function applyCollapsedState() {
-    if (sidebarCollapsed)
+    if (isMobile()) return;
+    if (sidebarCollapsed) {
         document.getElementById("sidebar").classList.add("collapsed");
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -71,7 +85,7 @@ document.addEventListener("DOMContentLoaded", function () {
     let logoSvg = document.querySelector(".logo-svg");
     if (logoSvg) {
         logoSvg.addEventListener("click", function () {
-            if (sidebarCollapsed) collapseDesktopSidebar();
+            if (sidebarCollapsed && !isMobile()) collapseDesktopSidebar();
         });
     }
 
@@ -89,4 +103,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let overlay = document.getElementById("mobile-overlay");
     if (overlay) overlay.addEventListener("click", closeSidebar);
+
+    window.addEventListener("resize", function () {
+        if (!isMobile()) {
+            closeSidebar();
+            if (sidebarCollapsed) {
+                document.getElementById("sidebar").classList.add("collapsed");
+            } else {
+                document
+                    .getElementById("sidebar")
+                    .classList.remove("collapsed");
+            }
+        } else {
+            document.getElementById("sidebar").classList.remove("collapsed");
+        }
+    });
 });
