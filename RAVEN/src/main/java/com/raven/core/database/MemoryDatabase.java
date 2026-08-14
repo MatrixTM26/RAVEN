@@ -180,10 +180,10 @@ public final class MemoryDatabase extends TeamDatabase {
     @Override
     public void SaveChatLog(String FromOperator, String ToOperators, String Message) {
         Map<String, Object> Entry = new LinkedHashMap<>();
-        Entry.put("from_operator", FromOperator);
-        Entry.put("to_operators", ToOperators);
-        Entry.put("message", Message);
-        Entry.put("timestamp", LocalDateTime.now().format(RavenConstants.TimestampFmt));
+        Entry.put("From",      FromOperator);
+        Entry.put("To",        ToOperators);
+        Entry.put("Message",   Message);
+        Entry.put("Timestamp", LocalDateTime.now().format(RavenConstants.TimestampFmt));
         ChatLogs.add(Entry);
         if (ChatLogs.size() > 500) ChatLogs.remove(0);
     }

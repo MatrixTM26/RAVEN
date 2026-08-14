@@ -38,7 +38,7 @@ public abstract class BaseServer {
 
     private static final int PeekWindow = 16;
     private static final long PeekTimeoutMs = 2000;
-    private static final int ProbeTimeoutMs = 5000;
+    private static final int ProbeTimeoutMs = 2500;
     private static final int DrainTimeoutMs = 500;
     private static final int RawIdleMs = 800;
     private static final int RawMaxWaitMs = 30_000;
