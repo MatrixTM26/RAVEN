@@ -1,221 +1,163 @@
-const navbar = document.getElementById("navbar");
-const burgerBtn = document.getElementById("burgerBtn");
-const burgerIcon = document.getElementById("burgerIcon");
-const mobileDrawer = document.getElementById("mobileDrawer");
-const drawerOverlay = document.getElementById("drawerOverlay");
-const drawerClose = document.getElementById("drawerClose");
-const toTopBtn = document.getElementById("toTop");
-const navItems = document.querySelectorAll(".nav-item");
-const drawerItems = document.querySelectorAll(".drawer-item");
-const tabs = document.querySelectorAll(".tab");
-const tabPanels = document.querySelectorAll(".tab-panel");
-const copyBtns = document.querySelectorAll(".cb-copy");
-const reveals = document.querySelectorAll(".reveal");
+(function () {
+  var burgerBtn = document.getElementById('burgerBtn');
+  var burgerIcon = document.getElementById('burgerIcon');
+  var mobileDrawer = document.getElementById('mobileDrawer');
+  var drawerOverlay = document.getElementById('drawerOverlay');
+  var drawerCollapse = document.getElementById('drawerCollapse');
+  var isOpen = false;
 
-let drawerOpen = false;
+  function openDrawer() {
+    isOpen = true;
+    mobileDrawer.classList.add('open');
+    drawerOverlay.classList.add('open');
+    if (burgerIcon) { burgerIcon.classList.remove('fa-bars'); burgerIcon.classList.add('fa-xmark'); }
+    document.body.style.overflow = 'hidden';
+  }
 
-function openDrawer() {
-  drawerOpen = true;
-  mobileDrawer.classList.add("open");
-  drawerOverlay.classList.add("open");
-  burgerIcon.className = "fas fa-bars";
-  document.body.style.overflow = "hidden";
-}
+  function closeDrawer() {
+    isOpen = false;
+    mobileDrawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    if (burgerIcon) { burgerIcon.classList.remove('fa-xmark'); burgerIcon.classList.add('fa-bars'); }
+    document.body.style.overflow = '';
+  }
 
-function closeDrawer() {
-  drawerOpen = false;
-  mobileDrawer.classList.remove("open");
-  drawerOverlay.classList.remove("open");
-  document.body.style.overflow = "";
-}
+  function toggleDrawer() {
+    if (isOpen) closeDrawer();
+    else openDrawer();
+  }
 
-burgerBtn.addEventListener("click", function () {
-  if (drawerOpen) closeDrawer();
-  else openDrawer();
-});
+  if (burgerBtn) burgerBtn.addEventListener('click', toggleDrawer);
+  if (drawerCollapse) drawerCollapse.addEventListener('click', closeDrawer);
+  if (drawerOverlay) drawerOverlay.addEventListener('click', closeDrawer);
 
-if (drawerClose) drawerClose.addEventListener("click", closeDrawer);
-if (drawerOverlay) drawerOverlay.addEventListener("click", closeDrawer);
+  document.querySelectorAll('.drawer-item, .drawer-gh').forEach(function (item) {
+    item.addEventListener('click', closeDrawer);
+  });
 
-drawerItems.forEach(function (item) {
-  item.addEventListener("click", closeDrawer);
-});
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isOpen) closeDrawer();
+  });
 
-function getActiveSection() {
-  const ids = [
-    "home",
-    "overview",
-    "features",
-    "installation",
-    "commands",
-    "architecture",
-    "config",
+  var track = document.getElementById('screenshotTrack');
+  var dots = document.querySelectorAll('.screenshot-dot');
+  var titleEl = document.getElementById('screenshotTitle');
+  var titles = [
+    'RAVEN-C2 — web panel',
+    'RAVEN-C2 — sessions',
+    'RAVEN-C2 — terminal',
+    'RAVEN-C2 — cli mode',
+    'RAVEN-C2 — javafx gui',
+    'RAVEN-C2 — dashboard'
   ];
-  let active = "home";
-  ids.forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el && el.getBoundingClientRect().top <= 90) active = id;
-  });
-  return active;
-}
+  var currentSlide = 0;
+  var totalSlides = 6;
+  var autoTimer;
 
-function updateNav() {
-  const active = getActiveSection();
-  navItems.forEach(function (item) {
-    item.classList.toggle("active", item.dataset.section === active);
-  });
-}
-
-window.addEventListener(
-  "scroll",
-  function () {
-    navbar.classList.toggle("scrolled", window.scrollY > 30);
-    toTopBtn.classList.toggle("visible", window.scrollY > 320);
-    updateNav();
-    checkReveals();
-  },
-  { passive: true },
-);
-
-toTopBtn.addEventListener("click", function () {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-});
-
-document.querySelectorAll("a[href^='#']").forEach(function (link) {
-  link.addEventListener("click", function (e) {
-    const id = link.getAttribute("href").slice(1);
-    const target = document.getElementById(id);
-    if (!target) return;
-    e.preventDefault();
-    const offset = target.getBoundingClientRect().top + window.scrollY - 72;
-    window.scrollTo({ top: offset, behavior: "smooth" });
-    closeDrawer();
-  });
-});
-
-function activateTab(name) {
-  tabs.forEach(function (t) {
-    t.classList.toggle("active", t.dataset.tab === name);
-  });
-  tabPanels.forEach(function (p) {
-    p.classList.toggle("active", p.id === "tab-" + name);
-  });
-}
-
-tabs.forEach(function (t) {
-  t.addEventListener("click", function () {
-    activateTab(t.dataset.tab);
-  });
-});
-
-function copyText(text, btn) {
-  navigator.clipboard
-    .writeText(text)
-    .then(function () {
-      showCopied(btn);
-    })
-    .catch(function () {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.cssText = "position:fixed;opacity:0";
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      showCopied(btn);
-    });
-}
-
-function showCopied(btn) {
-  btn.classList.add("copied");
-  btn.innerHTML = '<i class="fas fa-check"></i>';
-  setTimeout(function () {
-    btn.classList.remove("copied");
-    btn.innerHTML = '<i class="fas fa-copy"></i>';
-  }, 1800);
-}
-
-copyBtns.forEach(function (btn) {
-  btn.addEventListener("click", function () {
-    const text = btn.dataset.copy;
-    if (text) copyText(text, btn);
-  });
-});
-
-function checkReveals() {
-  reveals.forEach(function (el) {
-    if (el.classList.contains("visible")) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.top < window.innerHeight - 60) {
-      el.classList.add("visible");
-    }
-  });
-}
-
-(function initScreenshotSlider() {
-  const track = document.getElementById("screenshotTrack");
-  const prevBtn = document.getElementById("ssPrev");
-  const nextBtn = document.getElementById("ssNext");
-  const dots = document.querySelectorAll(".screenshot-dot");
-  const titleEl = document.getElementById("screenshotTitle");
-
-  if (!track || !prevBtn || !nextBtn) return;
-
-  const titles = [
-    "tomcat-c2 — server config",
-    "tomcat-c2 — main dashboard",
-    "tomcat-c2 — command logs",
-    "tomcat-c2 — agent dashboard",
-    "tomcat-c2 — about developer",
-    "tomcat-c2 — documentation pages view",
-  ];
-
-  const total = dots.length;
-  let current = 0;
-
-  function goTo(idx) {
-    current = (idx + total) % total;
-    track.style.transform = "translateX(-" + current * 100 + "%)";
+  function goToSlide(n) {
+    currentSlide = (n + totalSlides) % totalSlides;
+    if (track) track.style.transform = 'translateX(-' + (currentSlide * 100) + '%)';
     dots.forEach(function (d, i) {
-      d.classList.toggle("active", i === current);
+      d.classList.toggle('active', i === currentSlide);
     });
-    if (titleEl && titles[current]) titleEl.textContent = titles[current];
+    if (titleEl) titleEl.textContent = titles[currentSlide];
   }
 
-  prevBtn.addEventListener("click", function () {
-    goTo(current - 1);
-  });
-  nextBtn.addEventListener("click", function () {
-    goTo(current + 1);
-  });
-
-  dots.forEach(function (dot) {
-    dot.addEventListener("click", function () {
-      goTo(parseInt(dot.dataset.idx, 10));
-    });
-  });
-
-  var autoTimer = setInterval(function () {
-    goTo(current + 1);
-  }, 4000);
-
-  var sliderEl = document.getElementById("heroScreenshot");
-  if (sliderEl) {
-    sliderEl.addEventListener("mouseenter", function () {
-      clearInterval(autoTimer);
-    });
-    sliderEl.addEventListener("mouseleave", function () {
-      clearInterval(autoTimer);
-      autoTimer = setInterval(function () {
-        goTo(current + 1);
-      }, 4000);
-    });
+  function startAuto() {
+    autoTimer = setInterval(function () { goToSlide(currentSlide + 1); }, 4000);
   }
+
+  function resetAuto() {
+    clearInterval(autoTimer);
+    startAuto();
+  }
+
+  var ssPrev = document.getElementById('ssPrev');
+  var ssNext = document.getElementById('ssNext');
+
+  if (ssPrev) ssPrev.addEventListener('click', function () { goToSlide(currentSlide - 1); resetAuto(); });
+  if (ssNext) ssNext.addEventListener('click', function () { goToSlide(currentSlide + 1); resetAuto(); });
+
+  dots.forEach(function (d) {
+    d.addEventListener('click', function () {
+      goToSlide(parseInt(d.dataset.idx));
+      resetAuto();
+    });
+  });
+
+  if (track) startAuto();
+
+  document.querySelectorAll('.tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      var panel = document.getElementById('tab-' + tab.dataset.tab);
+      if (panel) panel.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.cb-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.dataset.copy.replace(/&#10;/g, '\n');
+      navigator.clipboard.writeText(text).then(function () {
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(function () { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1500);
+      });
+    });
+  });
+
+  var toTop = document.getElementById('toTop');
+
+  window.addEventListener('scroll', function () {
+    if (toTop) toTop.classList.toggle('visible', window.scrollY > 400);
+  });
+
+  if (toTop) toTop.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  var navItems = document.querySelectorAll('.nav-item[data-section]');
+  var drawerItems = document.querySelectorAll('.drawer-item[data-section]');
+  var sections = document.querySelectorAll('section[id]');
+
+  window.addEventListener('scroll', function () {
+    var current = '';
+    sections.forEach(function (sec) {
+      if (window.scrollY >= sec.offsetTop - 80) current = sec.id;
+    });
+    navItems.forEach(function (item) {
+      item.classList.toggle('active', item.dataset.section === current);
+    });
+    drawerItems.forEach(function (item) {
+      item.classList.toggle('active', item.dataset.section === current);
+    });
+  });
+
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+
+  revealEls.forEach(function (el) { observer.observe(el); });
 })();
 
-document.addEventListener("DOMContentLoaded", function () {
-  activateTab("cli");
-  updateNav();
-  checkReveals();
-  setTimeout(checkReveals, 100);
-});
+;(function () {
+  var dsItems = document.querySelectorAll('.dsb-item[data-section]');
+  var sections = document.querySelectorAll('section[id]');
+
+  window.addEventListener('scroll', function () {
+    var current = '';
+    sections.forEach(function (sec) {
+      if (window.scrollY >= sec.offsetTop - 80) current = sec.id;
+    });
+    dsItems.forEach(function (item) {
+      item.classList.toggle('active', item.dataset.section === current);
+    });
+  });
+})();

@@ -1,1706 +1,374 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>RAVEN C2 — Command and Control Framework</title>
-        <meta name="description" content="RAVEN C2 is a modular, enterprise-grade Java C2 framework supporting Web Panel, CLI, and JavaFX GUI with mTLS, AES-256-GCM, and multi-protocol session handling." />
-        <link rel="icon" href="public/favicon.svg" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Tourney:wght@400;600;700;900&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-        <style>
-            :root {
-                --black: #000000;
-                --grey-950: #0a0a0a;
-                --grey-900: #111111;
-                --grey-800: #1a1a1a;
-                --grey-700: #2a2a2a;
-                --grey-600: #3a3a3a;
-                --grey-500: #555555;
-                --grey-400: #777777;
-                --grey-300: #999999;
-                --grey-200: #bbbbbb;
-                --grey-100: #dddddd;
-                --white: #ffffff;
-                --font: "Space Grotesk", sans-serif;
-                --mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
-                --display: "Tourney", sans-serif;
-                --nav: 56px;
-            }
-
-            *,
-            *::before,
-            *::after {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
-
-            html {
-                scroll-behavior: smooth;
-                overflow-x: hidden;
-            }
-
-            body {
-                background: var(--black);
-                color: var(--grey-200);
-                font-family: var(--font);
-                font-size: 14px;
-                line-height: 1.6;
-                overflow-x: hidden;
-                -webkit-font-smoothing: antialiased;
-            }
-
-            a {
-                color: var(--white);
-                text-decoration: none;
-                transition: color 0.15s;
-            }
-            a:hover {
-                color: var(--grey-300);
-            }
-
-            code {
-                font-family: var(--mono);
-                font-size: 0.8em;
-                background: var(--grey-900);
-                color: var(--grey-100);
-                padding: 2px 6px;
-                border: 1px solid var(--grey-700);
-            }
-
-            pre code {
-                background: none;
-                border: none;
-                padding: 0;
-                font-size: 0.85rem;
-                color: var(--grey-200);
-            }
-
-            .container {
-                max-width: 1152px;
-                margin: 0 auto;
-                padding: 0 24px;
-                width: 100%;
-            }
-
-            .navbar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: var(--nav);
-                background: var(--black);
-                border-bottom: 1px solid var(--grey-800);
-                z-index: 100;
-            }
-
-            .nav-inner {
-                max-width: 1152px;
-                margin: 0 auto;
-                padding: 0 24px;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-            }
-
-            .nav-brand {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                color: var(--white);
-            }
-
-            .nav-brand:hover {
-                color: var(--grey-300);
-            }
-
-            .nav-logo {
-                height: 26px;
-                width: auto;
-                filter: brightness(0) invert(1);
-            }
-
-            .nav-wordmark {
-                font-family: var(--display);
-                font-size: 1.1rem;
-                font-weight: 700;
-                letter-spacing: 2px;
-                color: var(--white);
-            }
-
-            .nav-wordmark em {
-                font-style: normal;
-                color: var(--grey-400);
-            }
-
-            .nav-menu {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                list-style: none;
-            }
-
-            .nav-item {
-                font-size: 0.8rem;
-                font-weight: 500;
-                color: var(--grey-300);
-                padding: 6px 10px;
-                letter-spacing: 0.5px;
-                border: 1px solid transparent;
-                transition: all 0.15s;
-            }
-
-            .nav-item:hover,
-            .nav-item.active {
-                color: var(--white);
-                border-color: var(--grey-700);
-            }
-
-            .nav-gh {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                font-size: 0.8rem;
-                font-weight: 500;
-                color: var(--grey-300);
-                padding: 6px 12px;
-                border: 1px solid var(--grey-700);
-                margin-left: 8px;
-                transition: all 0.15s;
-            }
-
-            .nav-gh:hover {
-                color: var(--white);
-                border-color: var(--grey-500);
-            }
-
-            .nav-burger {
-                display: none;
-                background: none;
-                border: 1px solid var(--grey-700);
-                color: var(--grey-300);
-                padding: 8px 10px;
-                cursor: pointer;
-                font-size: 1rem;
-            }
-
-            .drawer-overlay {
-                display: none;
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.7);
-                z-index: 150;
-            }
-
-            .drawer-overlay.open {
-                display: block;
-            }
-
-            .mobile-drawer {
-                position: fixed;
-                top: 0;
-                right: -280px;
-                width: 280px;
-                height: 100%;
-                background: var(--grey-900);
-                border-left: 1px solid var(--grey-700);
-                z-index: 200;
-                transition: right 0.25s;
-                display: flex;
-                flex-direction: column;
-            }
-
-            .mobile-drawer.open {
-                right: 0;
-            }
-
-            .drawer-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 16px 20px;
-                border-bottom: 1px solid var(--grey-700);
-            }
-
-            .drawer-brand {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                color: var(--white);
-                font-family: var(--display);
-                font-weight: 700;
-                letter-spacing: 2px;
-            }
-
-            .drawer-brand img {
-                height: 22px;
-                filter: brightness(0) invert(1);
-            }
-            .drawer-brand em {
-                font-style: normal;
-                color: var(--grey-400);
-            }
-
-            .drawer-close {
-                background: none;
-                border: 1px solid var(--grey-700);
-                color: var(--grey-300);
-                padding: 6px 8px;
-                cursor: pointer;
-                font-size: 0.9rem;
-            }
-
-            .drawer-menu {
-                list-style: none;
-                padding: 12px 0;
-            }
-
-            .drawer-item {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px 20px;
-                color: var(--grey-300);
-                font-size: 0.875rem;
-                font-weight: 500;
-                border-bottom: 1px solid var(--grey-800);
-                transition: color 0.15s;
-            }
-
-            .drawer-item:hover {
-                color: var(--white);
-            }
-            .drawer-item i {
-                width: 16px;
-                color: var(--grey-500);
-            }
-            .drawer-gh {
-                color: var(--grey-200);
-            }
-
-            .hero {
-                min-height: 100vh;
-                padding-top: var(--nav);
-                display: flex;
-                align-items: center;
-                background: var(--black);
-                border-bottom: 1px solid var(--grey-800);
-            }
-
-            .hero-body {
-                width: 100%;
-                max-width: 1152px;
-                margin: 0 auto;
-                padding: 80px 24px;
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 64px;
-                align-items: center;
-            }
-
-            .hero-eyebrow {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                font-size: 0.7rem;
-                font-weight: 600;
-                letter-spacing: 2px;
-                color: var(--grey-400);
-                text-transform: uppercase;
-                border: 1px solid var(--grey-700);
-                padding: 4px 10px;
-                margin-bottom: 24px;
-            }
-
-            .hero-heading {
-                font-family: var(--display);
-                font-size: clamp(3rem, 6vw, 5.5rem);
-                font-weight: 900;
-                line-height: 0.95;
-                letter-spacing: -1px;
-                color: var(--white);
-                margin-bottom: 24px;
-            }
-
-            .hero-heading .h-sub {
-                display: block;
-                font-size: 0.38em;
-                font-weight: 400;
-                letter-spacing: 4px;
-                color: var(--grey-500);
-                margin-top: 8px;
-            }
-
-            .hero-lead {
-                font-size: 0.95rem;
-                color: var(--grey-300);
-                line-height: 1.7;
-                margin-bottom: 32px;
-                max-width: 480px;
-            }
-
-            .hero-meta {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0;
-                margin-bottom: 32px;
-                border: 1px solid var(--grey-800);
-            }
-
-            .meta-item {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                padding: 8px 14px;
-                font-size: 0.75rem;
-                font-weight: 500;
-                color: var(--grey-400);
-                border-right: 1px solid var(--grey-800);
-            }
-
-            .meta-item:last-child {
-                border-right: none;
-            }
-            .meta-item i {
-                color: var(--grey-600);
-                font-size: 0.8rem;
-            }
-
-            .hero-cta {
-                display: flex;
-                gap: 12px;
-                flex-wrap: wrap;
-            }
-
-            .cta-primary {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 12px 20px;
-                background: var(--white);
-                color: var(--black);
-                font-size: 0.8rem;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                border: 1px solid var(--white);
-                transition: all 0.15s;
-            }
-
-            .cta-primary:hover {
-                background: var(--grey-100);
-                color: var(--black);
-                border-color: var(--grey-100);
-            }
-
-            .cta-outline {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 12px 20px;
-                background: transparent;
-                color: var(--grey-200);
-                font-size: 0.8rem;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                border: 1px solid var(--grey-700);
-                transition: all 0.15s;
-            }
-
-            .cta-outline:hover {
-                color: var(--white);
-                border-color: var(--grey-500);
-            }
-
-            .hero-screenshot {
-                background: var(--grey-900);
-                border: 1px solid var(--grey-700);
-            }
-
-            .screenshot-bar {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                padding: 10px 14px;
-                background: var(--grey-800);
-                border-bottom: 1px solid var(--grey-700);
-            }
-
-            .term-dot {
-                width: 10px;
-                height: 10px;
-                border-radius: 50%;
-            }
-            .term-dot.red {
-                background: var(--grey-600);
-            }
-            .term-dot.yellow {
-                background: var(--grey-500);
-            }
-            .term-dot.green {
-                background: var(--grey-400);
-            }
-
-            .term-title {
-                margin-left: 8px;
-                font-family: var(--mono);
-                font-size: 0.72rem;
-                color: var(--grey-500);
-            }
-
-            .screenshot-body {
-                position: relative;
-                overflow: hidden;
-                aspect-ratio: 16/9;
-            }
-
-            .screenshot-track {
-                display: flex;
-                transition: transform 0.4s;
-            }
-
-            .screenshot-slide {
-                min-width: 100%;
-            }
-            .screenshot-slide img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                display: block;
-            }
-
-            .screenshot-nav {
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                background: rgba(0, 0, 0, 0.6);
-                border: 1px solid var(--grey-700);
-                color: var(--grey-300);
-                padding: 8px 10px;
-                cursor: pointer;
-                font-size: 0.8rem;
-                transition: all 0.15s;
-            }
-
-            .screenshot-nav:hover {
-                color: var(--white);
-                border-color: var(--grey-500);
-            }
-            .screenshot-nav.prev {
-                left: 10px;
-            }
-            .screenshot-nav.next {
-                right: 10px;
-            }
-
-            .screenshot-dots {
-                display: flex;
-                justify-content: center;
-                gap: 6px;
-                padding: 10px;
-                background: var(--grey-800);
-                border-top: 1px solid var(--grey-700);
-            }
-
-            .screenshot-dot {
-                width: 6px;
-                height: 6px;
-                background: var(--grey-600);
-                border: none;
-                cursor: pointer;
-                transition: background 0.15s;
-                padding: 0;
-            }
-
-            .screenshot-dot.active {
-                background: var(--white);
-            }
-
-            .section {
-                padding: 96px 0;
-                border-bottom: 1px solid var(--grey-800);
-            }
-
-            .section-alt {
-                background: var(--grey-950);
-            }
-
-            .sec-label {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                font-size: 0.7rem;
-                font-weight: 600;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                color: var(--grey-500);
-                margin-bottom: 16px;
-            }
-
-            .sec-label i {
-                font-size: 0.75rem;
-            }
-
-            .sec-title {
-                font-family: var(--display);
-                font-size: clamp(1.8rem, 3vw, 2.8rem);
-                font-weight: 700;
-                letter-spacing: -0.5px;
-                color: var(--white);
-                margin-bottom: 16px;
-            }
-
-            .sec-sub {
-                font-size: 0.9rem;
-                color: var(--grey-400);
-                margin-bottom: 48px;
-                max-width: 560px;
-            }
-
-            .overview-layout {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 64px;
-                align-items: start;
-            }
-
-            .overview-text p {
-                font-size: 0.9rem;
-                color: var(--grey-300);
-                line-height: 1.75;
-                margin-bottom: 20px;
-            }
-
-            .badge-row {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                margin-top: 28px;
-            }
-
-            .badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                font-size: 0.72rem;
-                font-weight: 500;
-                color: var(--grey-400);
-                padding: 4px 10px;
-                border: 1px solid var(--grey-700);
-            }
-
-            .badge i {
-                font-size: 0.75rem;
-            }
-            .badge.active {
-                color: var(--grey-200);
-                border-color: var(--grey-500);
-            }
-
-            .overview-cards {
-                display: flex;
-                flex-direction: column;
-                gap: 12px;
-            }
-
-            .stat-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-                margin-bottom: 12px;
-            }
-
-            .stat-card {
-                padding: 20px;
-                border: 1px solid var(--grey-700);
-                background: var(--grey-950);
-            }
-
-            .stat-val {
-                display: block;
-                font-family: var(--display);
-                font-size: 1.6rem;
-                font-weight: 700;
-                color: var(--white);
-                letter-spacing: 1px;
-            }
-
-            .stat-key {
-                display: block;
-                font-size: 0.72rem;
-                color: var(--grey-500);
-                margin-top: 4px;
-                font-weight: 500;
-                letter-spacing: 0.5px;
-            }
-
-            .alert-card {
-                display: flex;
-                gap: 14px;
-                align-items: flex-start;
-                padding: 16px;
-                border: 1px solid var(--grey-600);
-                background: var(--grey-950);
-            }
-
-            .alert-icon {
-                color: var(--grey-400);
-                font-size: 1rem;
-                padding-top: 2px;
-                flex-shrink: 0;
-            }
-
-            .alert-text strong {
-                display: block;
-                font-size: 0.8rem;
-                font-weight: 600;
-                color: var(--grey-200);
-                margin-bottom: 4px;
-            }
-
-            .alert-text p {
-                font-size: 0.78rem;
-                color: var(--grey-400);
-                line-height: 1.6;
-            }
-
-            .feat-grid {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 1px;
-                background: var(--grey-800);
-                border: 1px solid var(--grey-800);
-            }
-
-            .feat-card {
-                padding: 32px 28px;
-                background: var(--grey-950);
-                position: relative;
-                transition: background 0.15s;
-            }
-
-            .feat-card:hover {
-                background: var(--grey-900);
-            }
-
-            .feat-num {
-                font-family: var(--mono);
-                font-size: 0.7rem;
-                color: var(--grey-700);
-                font-weight: 600;
-                letter-spacing: 1px;
-                margin-bottom: 16px;
-            }
-
-            .feat-ico {
-                font-size: 1.1rem;
-                color: var(--grey-500);
-                margin-bottom: 14px;
-            }
-
-            .feat-card h3 {
-                font-size: 0.9rem;
-                font-weight: 600;
-                color: var(--white);
-                margin-bottom: 10px;
-                letter-spacing: 0.3px;
-            }
-
-            .feat-card p {
-                font-size: 0.8rem;
-                color: var(--grey-400);
-                line-height: 1.65;
-            }
-
-            .steps {
-                display: flex;
-                flex-direction: column;
-                gap: 0;
-            }
-
-            .step {
-                display: grid;
-                grid-template-columns: 56px 1fr;
-                gap: 28px;
-                padding: 32px 0;
-                border-bottom: 1px solid var(--grey-800);
-            }
-
-            .step:last-child {
-                border-bottom: none;
-            }
-
-            .step-aside {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                padding-top: 2px;
-            }
-
-            .step-idx {
-                font-family: var(--mono);
-                font-size: 0.72rem;
-                font-weight: 600;
-                color: var(--grey-600);
-                border: 1px solid var(--grey-700);
-                padding: 4px 8px;
-                letter-spacing: 1px;
-            }
-
-            .step-line {
-                flex: 1;
-                width: 1px;
-                background: var(--grey-800);
-                margin-top: 12px;
-            }
-
-            .step-main h3 {
-                font-size: 1rem;
-                font-weight: 600;
-                color: var(--white);
-                margin-bottom: 8px;
-            }
-
-            .step-main > p {
-                font-size: 0.85rem;
-                color: var(--grey-400);
-                margin-bottom: 20px;
-                line-height: 1.65;
-            }
-
-            .req-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 0;
-                border: 1px solid var(--grey-800);
-            }
-
-            .req-row {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 10px 16px;
-                border-bottom: 1px solid var(--grey-800);
-                font-size: 0.82rem;
-                color: var(--grey-300);
-            }
-
-            .req-row:last-child {
-                border-bottom: none;
-            }
-            .req-row i {
-                color: var(--grey-600);
-                width: 16px;
-                text-align: center;
-            }
-            .req-row .pill {
-                margin-left: auto;
-                font-size: 0.68rem;
-                font-weight: 600;
-                color: var(--grey-500);
-                letter-spacing: 0.5px;
-                border: 1px solid var(--grey-700);
-                padding: 2px 8px;
-            }
-            .req-row .pill.muted {
-                color: var(--grey-600);
-                border-color: var(--grey-800);
-            }
-
-            .codeblock {
-                background: var(--grey-950);
-                border: 1px solid var(--grey-700);
-                margin-top: 16px;
-            }
-
-            .cb-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 8px 14px;
-                background: var(--grey-900);
-                border-bottom: 1px solid var(--grey-700);
-            }
-
-            .cb-lang {
-                font-family: var(--mono);
-                font-size: 0.7rem;
-                color: var(--grey-600);
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-            }
-
-            .cb-copy {
-                background: none;
-                border: 1px solid var(--grey-700);
-                color: var(--grey-500);
-                padding: 3px 8px;
-                cursor: pointer;
-                font-size: 0.75rem;
-                transition: all 0.15s;
-            }
-
-            .cb-copy:hover {
-                color: var(--grey-200);
-                border-color: var(--grey-500);
-            }
-
-            .codeblock pre {
-                padding: 16px;
-                overflow-x: auto;
-                font-family: var(--mono);
-                font-size: 0.82rem;
-                line-height: 1.7;
-                color: var(--grey-200);
-                white-space: pre;
-            }
-
-            .cm {
-                color: var(--grey-600);
-            }
-
-            .ok-box {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-top: 14px;
-                padding: 10px 14px;
-                border: 1px solid var(--grey-700);
-                font-size: 0.8rem;
-                color: var(--grey-300);
-                background: var(--grey-950);
-            }
-
-            .ok-box i {
-                color: var(--grey-500);
-            }
-
-            .tab-row {
-                display: flex;
-                gap: 0;
-                margin-bottom: 0;
-                border-bottom: 1px solid var(--grey-700);
-            }
-
-            .tab {
-                padding: 10px 18px;
-                background: none;
-                border: none;
-                border-bottom: 2px solid transparent;
-                color: var(--grey-500);
-                font-size: 0.8rem;
-                font-weight: 500;
-                font-family: var(--font);
-                cursor: pointer;
-                letter-spacing: 0.5px;
-                margin-bottom: -1px;
-                transition: all 0.15s;
-            }
-
-            .tab:hover {
-                color: var(--grey-200);
-            }
-            .tab.active {
-                color: var(--white);
-                border-bottom-color: var(--white);
-            }
-
-            .tab-panel {
-                display: none;
-            }
-            .tab-panel.active {
-                display: block;
-            }
-
-            .cmd-scroll {
-                overflow-x: auto;
-            }
-
-            .cmd-grid {
-                display: flex;
-                flex-direction: column;
-                border: 1px solid var(--grey-800);
-                border-top: none;
-            }
-
-            .cmd-head {
-                display: grid;
-                grid-template-columns: 180px 200px 1fr;
-                padding: 8px 16px;
-                background: var(--grey-900);
-                border-bottom: 1px solid var(--grey-700);
-                font-size: 0.7rem;
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                color: var(--grey-600);
-            }
-
-            .cmd-row {
-                display: grid;
-                grid-template-columns: 180px 200px 1fr;
-                padding: 10px 16px;
-                border-bottom: 1px solid var(--grey-800);
-                align-items: center;
-                font-size: 0.82rem;
-                transition: background 0.1s;
-            }
-
-            .cmd-row:last-child {
-                border-bottom: none;
-            }
-            .cmd-row:hover {
-                background: var(--grey-900);
-            }
-            .cmd-row code {
-                font-size: 0.78rem;
-            }
-            .cmd-row span {
-                color: var(--grey-400);
-            }
-
-            .arch-wrap {
-                display: grid;
-                grid-template-columns: 1fr 340px;
-                gap: 48px;
-                align-items: start;
-            }
-
-            .arch-diagram {
-                border: 1px solid var(--grey-700);
-                background: var(--grey-950);
-                padding: 24px;
-            }
-
-            .arch-diagram svg {
-                width: 100%;
-                height: auto;
-                display: block;
-            }
-
-            .arch-notes {
-                display: flex;
-                flex-direction: column;
-                gap: 0;
-            }
-
-            .arch-note {
-                display: flex;
-                gap: 16px;
-                padding: 20px 0;
-                border-bottom: 1px solid var(--grey-800);
-                align-items: flex-start;
-            }
-
-            .arch-note:last-child {
-                border-bottom: none;
-            }
-
-            .an-dot {
-                width: 6px;
-                height: 6px;
-                background: var(--grey-500);
-                flex-shrink: 0;
-                margin-top: 6px;
-            }
-
-            .arch-note h4 {
-                font-size: 0.85rem;
-                font-weight: 600;
-                color: var(--white);
-                margin-bottom: 6px;
-            }
-
-            .arch-note p {
-                font-size: 0.8rem;
-                color: var(--grey-400);
-                line-height: 1.65;
-            }
-
-            .cfg-groups {
-                display: flex;
-                flex-direction: column;
-                gap: 24px;
-            }
-
-            .cfg-group {
-                border: 1px solid var(--grey-800);
-            }
-
-            .cfg-group-label {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 10px 16px;
-                background: var(--grey-900);
-                border-bottom: 1px solid var(--grey-700);
-                font-size: 0.75rem;
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                color: var(--grey-500);
-            }
-
-            .cfg-group-label i {
-                font-size: 0.8rem;
-            }
-
-            .cfg-scroll {
-                overflow-x: auto;
-            }
-
-            .cfg-table {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .cfg-head {
-                display: grid;
-                grid-template-columns: 220px 200px 1fr;
-                padding: 8px 16px;
-                background: var(--grey-950);
-                border-bottom: 1px solid var(--grey-800);
-                font-size: 0.7rem;
-                font-weight: 600;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                color: var(--grey-600);
-            }
-
-            .cfg-row {
-                display: grid;
-                grid-template-columns: 220px 200px 1fr;
-                padding: 10px 16px;
-                border-bottom: 1px solid var(--grey-800);
-                align-items: center;
-                font-size: 0.82rem;
-                transition: background 0.1s;
-            }
-
-            .cfg-row:last-child {
-                border-bottom: none;
-            }
-            .cfg-row:hover {
-                background: var(--grey-900);
-            }
-            .cfg-row code {
-                font-size: 0.78rem;
-            }
-            .cfg-row span {
-                color: var(--grey-400);
-            }
-
-            .disclaimer-section {
-                padding: 64px 0;
-                border-bottom: 1px solid var(--grey-800);
-                background: var(--grey-950);
-            }
-
-            .disclaimer-box {
-                border: 1px solid var(--grey-700);
-                padding: 32px;
-            }
-
-            .disclaimer-header {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                margin-bottom: 20px;
-            }
-
-            .disclaimer-header i {
-                font-size: 1rem;
-                color: var(--grey-400);
-            }
-
-            .disclaimer-header h3 {
-                font-family: var(--display);
-                font-size: 1rem;
-                font-weight: 700;
-                letter-spacing: 1px;
-                color: var(--white);
-            }
-
-            .disclaimer-text {
-                font-size: 0.82rem;
-                color: var(--grey-400);
-                line-height: 1.75;
-                margin-bottom: 20px;
-            }
-
-            .legal-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 16px;
-            }
-
-            .legal-table th {
-                text-align: left;
-                padding: 8px 12px;
-                background: var(--grey-900);
-                border: 1px solid var(--grey-700);
-                font-size: 0.72rem;
-                font-weight: 600;
-                letter-spacing: 0.5px;
-                color: var(--grey-500);
-            }
-
-            .legal-table td {
-                padding: 8px 12px;
-                border: 1px solid var(--grey-800);
-                font-size: 0.78rem;
-                color: var(--grey-400);
-            }
-
-            .legal-table tr:hover td {
-                background: var(--grey-900);
-            }
-
-            .cta-final {
-                padding: 96px 0;
-                border-bottom: 1px solid var(--grey-800);
-            }
-
-            .cta-inner {
-                border: 1px solid var(--grey-700);
-                padding: 48px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: 32px;
-            }
-
-            .cta-inner h2 {
-                font-family: var(--display);
-                font-size: 2rem;
-                font-weight: 700;
-                color: var(--white);
-                letter-spacing: -0.5px;
-            }
-
-            .cta-inner p {
-                font-size: 0.875rem;
-                color: var(--grey-400);
-                margin-top: 8px;
-            }
-
-            .cta-btns {
-                display: flex;
-                gap: 12px;
-                flex-shrink: 0;
-            }
-
-            .footer {
-                padding: 48px 0 32px;
-                background: var(--black);
-            }
-
-            .footer-top {
-                display: grid;
-                grid-template-columns: 240px 1fr;
-                gap: 64px;
-                margin-bottom: 40px;
-                padding-bottom: 40px;
-                border-bottom: 1px solid var(--grey-800);
-            }
-
-            .footer-brand {
-                display: flex;
-                align-items: flex-start;
-                gap: 12px;
-            }
-            .footer-logo {
-                height: 28px;
-                filter: brightness(0) invert(0.5);
-            }
-
-            .footer-name {
-                font-family: var(--display);
-                font-size: 0.95rem;
-                font-weight: 700;
-                color: var(--grey-300);
-                letter-spacing: 2px;
-            }
-
-            .footer-sub {
-                font-size: 0.72rem;
-                color: var(--grey-600);
-                margin-top: 3px;
-            }
-
-            .footer-cols {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 32px;
-            }
-
-            .footer-col {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .fcol-label {
-                font-size: 0.7rem;
-                font-weight: 600;
-                letter-spacing: 1.5px;
-                text-transform: uppercase;
-                color: var(--grey-600);
-                margin-bottom: 4px;
-            }
-
-            .footer-col a {
-                font-size: 0.8rem;
-                color: var(--grey-500);
-                transition: color 0.15s;
-            }
-            .footer-col a:hover {
-                color: var(--grey-200);
-            }
-
-            .footer-bottom {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-size: 0.75rem;
-                color: var(--grey-700);
-            }
-
-            .to-top {
-                position: fixed;
-                bottom: 24px;
-                right: 24px;
-                width: 36px;
-                height: 36px;
-                background: var(--grey-900);
-                border: 1px solid var(--grey-700);
-                color: var(--grey-400);
-                cursor: pointer;
-                font-size: 0.8rem;
-                display: none;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.15s;
-            }
-
-            .to-top:hover {
-                color: var(--white);
-                border-color: var(--grey-500);
-            }
-            .to-top.visible {
-                display: flex;
-            }
-
-            .reveal {
-                opacity: 0;
-                transform: translateY(16px);
-                transition:
-                    opacity 0.4s,
-                    transform 0.4s;
-            }
-            .reveal.in {
-                opacity: 1;
-                transform: none;
-            }
-
-            @media (max-width: 900px) {
-                .nav-menu {
-                    display: none;
-                }
-                .nav-burger {
-                    display: flex;
-                }
-
-                .hero-body {
-                    grid-template-columns: 1fr;
-                    gap: 40px;
-                    padding: 60px 24px;
-                }
-
-                .overview-layout {
-                    grid-template-columns: 1fr;
-                    gap: 40px;
-                }
-
-                .feat-grid {
-                    grid-template-columns: 1fr 1fr;
-                }
-
-                .arch-wrap {
-                    grid-template-columns: 1fr;
-                }
-
-                .footer-top {
-                    grid-template-columns: 1fr;
-                    gap: 32px;
-                }
-                .footer-cols {
-                    grid-template-columns: repeat(2, 1fr);
-                }
-                .footer-bottom {
-                    flex-direction: column;
-                    gap: 8px;
-                    text-align: center;
-                }
-
-                .cta-inner {
-                    flex-direction: column;
-                    padding: 32px;
-                }
-
-                .cmd-head,
-                .cmd-row {
-                    grid-template-columns: 140px 160px 1fr;
-                }
-                .cfg-head,
-                .cfg-row {
-                    grid-template-columns: 180px 160px 1fr;
-                }
-            }
-
-            @media (max-width: 600px) {
-                .feat-grid {
-                    grid-template-columns: 1fr;
-                }
-                .stat-grid {
-                    grid-template-columns: 1fr 1fr;
-                }
-                .footer-cols {
-                    grid-template-columns: 1fr 1fr;
-                }
-            }
-        </style>
-    </head>
-
-    <body>
-        <nav class="navbar" id="navbar">
-            <div class="nav-inner">
-                <a href="#home" class="nav-brand">
-                    <img src="public/logo.svg" alt="RAVEN C2" class="nav-logo" />
-                    <span class="nav-wordmark">RAVEN<em>C2</em></span>
-                </a>
-                <ul class="nav-menu" id="navMenu">
-                    <li><a href="#overview" class="nav-item" data-section="overview">Overview</a></li>
-                    <li><a href="#features" class="nav-item" data-section="features">Features</a></li>
-                    <li><a href="#installation" class="nav-item" data-section="installation">Install</a></li>
-                    <li><a href="#commands" class="nav-item" data-section="commands">Commands</a></li>
-                    <li><a href="#architecture" class="nav-item" data-section="architecture">Architecture</a></li>
-                    <li><a href="#config" class="nav-item" data-section="config">Config</a></li>
-                    <li>
-                        <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="nav-gh"> <i class="fab fa-github"></i><span>GitHub</span> </a>
-                    </li>
-                </ul>
-                <button class="nav-burger" id="burgerBtn" aria-label="Menu">
-                    <i class="fas fa-bars" id="burgerIcon"></i>
-                </button>
-            </div>
-        </nav>
-
-        <div class="drawer-overlay" id="drawerOverlay"></div>
-
-        <div class="mobile-drawer" id="mobileDrawer">
-            <div class="drawer-header">
-                <a href="#home" class="drawer-brand">
-                    <img src="public/logo.svg" alt="logo" />
-                    <span>RAVEN<em>C2</em></span>
-                </a>
-                <button class="drawer-close" id="drawerClose" aria-label="Close menu">
-                    <i class="fas fa-xmark"></i>
-                </button>
-            </div>
-            <ul class="drawer-menu">
-                <li>
-                    <a href="#overview" class="drawer-item"><i class="fas fa-circle-info"></i>Overview</a>
-                </li>
-                <li>
-                    <a href="#features" class="drawer-item"><i class="fas fa-layer-group"></i>Features</a>
-                </li>
-                <li>
-                    <a href="#installation" class="drawer-item"><i class="fas fa-terminal"></i>Installation</a>
-                </li>
-                <li>
-                    <a href="#commands" class="drawer-item"><i class="fas fa-code"></i>Commands</a>
-                </li>
-                <li>
-                    <a href="#architecture" class="drawer-item"><i class="fas fa-diagram-project"></i>Architecture</a>
-                </li>
-                <li>
-                    <a href="#config" class="drawer-item"><i class="fas fa-gear"></i>Config</a>
-                </li>
-                <li>
-                    <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="drawer-item drawer-gh"><i class="fab fa-github"></i>GitHub Repository</a>
-                </li>
-            </ul>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAVEN C2 — Command and Control Framework</title>
+  <meta name="description" content="RAVEN C2 is a modular, enterprise-grade Java C2 framework supporting Web Panel, CLI, and JavaFX GUI with mTLS, AES-256-GCM, and multi-protocol session handling." />
+  <link rel="icon" href="public/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Tourney:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="static/styles/style.css" />
+</head>
+
+<body>
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#home" class="nav-brand">
+        <img src="public/logo.svg" alt="RAVEN C2" class="nav-logo" />
+        <span class="nav-wordmark">RAVEN<em>C2</em></span>
+      </a>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="#overview" class="nav-item" data-section="overview">Overview</a></li>
+        <li><a href="#features" class="nav-item" data-section="features">Features</a></li>
+        <li><a href="#installation" class="nav-item" data-section="installation">Install</a></li>
+        <li><a href="#commands" class="nav-item" data-section="commands">Commands</a></li>
+        <li><a href="#architecture" class="nav-item" data-section="architecture">Architecture</a></li>
+        <li><a href="#config" class="nav-item" data-section="config">Config</a></li>
+        <li>
+          <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="nav-gh">
+            <i class="fab fa-github"></i><span>GitHub</span>
+          </a>
+        </li>
+      </ul>
+      <button class="nav-burger" id="burgerBtn" aria-label="Open navigation">
+        <i class="fas fa-bars" id="burgerIcon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+
+  <div class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-header">
+      <a href="#home" class="drawer-brand">
+        <img src="public/logo.svg" alt="logo" />
+        <span>RAVEN<em>C2</em></span>
+      </a>
+      <button class="drawer-collapse" id="drawerCollapse" aria-label="Collapse navigation"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="drawer-section-label">Navigation</div>
+    <ul class="drawer-menu">
+      <li><a href="#overview" class="drawer-item" data-section="overview"><i class="fas fa-circle-info"></i>Overview</a></li>
+      <li><a href="#features" class="drawer-item" data-section="features"><i class="fas fa-layer-group"></i>Features</a></li>
+      <li><a href="#installation" class="drawer-item" data-section="installation"><i class="fas fa-terminal"></i>Installation</a></li>
+      <li><a href="#commands" class="drawer-item" data-section="commands"><i class="fas fa-code"></i>Commands</a></li>
+      <li><a href="#architecture" class="drawer-item" data-section="architecture"><i class="fas fa-diagram-project"></i>Architecture</a></li>
+      <li><a href="#config" class="drawer-item" data-section="config"><i class="fas fa-gear"></i>Configuration</a></li>
+    </ul>
+    <div class="drawer-divider"></div>
+    <div class="drawer-section-label">Links</div>
+    <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="drawer-gh">
+      <i class="fab fa-github"></i>GitHub Repository
+    </a>
+    <a href="https://github.com/MatrixTM26/RAVEN/wiki" target="_blank" class="drawer-gh">
+      <i class="fas fa-book"></i>Wiki / Docs
+    </a>
+    <a href="https://github.com/MatrixTM26/RAVEN/issues" target="_blank" class="drawer-gh">
+      <i class="fas fa-circle-exclamation"></i>Open an Issue
+    </a>
+  </div>
+
+  <section id="home" class="hero">
+    <div class="hero-body">
+      <div class="hero-left">
+        <div class="hero-eyebrow reveal">
+          <i class="fas fa-crow"></i>
+          ADVERSARY EMULATION FRAMEWORK
+        </div>
+        <h1 class="hero-heading reveal">
+          RAVEN
+          <span class="h-sub">C2 FRAMEWORK v3.0</span>
+        </h1>
+        <p class="hero-lead reveal">
+          Modular, enterprise-grade Command &amp; Control framework built in Java.
+          Supports Web Panel, CLI, and JavaFX GUI with mutual TLS,
+          AES-256-GCM encryption, and multi-protocol session handling.
+        </p>
+        <div class="hero-meta reveal">
+          <div class="meta-item"><i class="fab fa-java"></i><span>OpenJDK 17+</span></div>
+          <div class="meta-item"><i class="fas fa-cube"></i><span>Maven 3.8+</span></div>
+          <div class="meta-item"><i class="fas fa-lock"></i><span>AES-256-GCM</span></div>
+          <div class="meta-item"><i class="fas fa-shield-halved"></i><span>mTLS</span></div>
+          <div class="meta-item"><i class="fas fa-scale-balanced"></i><span>AGPL v3</span></div>
+        </div>
+        <div class="hero-cta reveal">
+          <a href="#installation" class="cta-primary"><i class="fas fa-terminal"></i>Get Started</a>
+          <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="cta-outline"><i class="fab fa-github"></i>View Source</a>
+        </div>
+      </div>
+
+      <div class="hero-screenshot reveal" id="heroScreenshot">
+        <div class="screenshot-bar">
+          <span class="term-dot red"></span>
+          <span class="term-dot yellow"></span>
+          <span class="term-dot green"></span>
+          <span class="term-title" id="screenshotTitle">RAVEN-C2 — operator console</span>
+        </div>
+        <div class="screenshot-body">
+          <div class="screenshot-track" id="screenshotTrack">
+            <div class="screenshot-slide"><img src="public/w1.png" alt="RAVEN C2 Web Panel" /></div>
+            <div class="screenshot-slide"><img src="public/w2.png" alt="RAVEN C2 Sessions" /></div>
+            <div class="screenshot-slide"><img src="public/w3.png" alt="RAVEN C2 Terminal" /></div>
+            <div class="screenshot-slide"><img src="public/w4.png" alt="RAVEN C2 CLI" /></div>
+            <div class="screenshot-slide"><img src="public/w5.png" alt="RAVEN C2 GUI" /></div>
+            <div class="screenshot-slide"><img src="public/w6.png" alt="RAVEN C2 Dashboard" /></div>
+          </div>
+          <button class="screenshot-nav prev" id="ssPrev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+          <button class="screenshot-nav next" id="ssNext" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="screenshot-dots" id="ssDots">
+          <button class="screenshot-dot active" data-idx="0"></button>
+          <button class="screenshot-dot" data-idx="1"></button>
+          <button class="screenshot-dot" data-idx="2"></button>
+          <button class="screenshot-dot" data-idx="3"></button>
+          <button class="screenshot-dot" data-idx="4"></button>
+          <button class="screenshot-dot" data-idx="5"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="page-layout">
+    <aside class="desktop-sidebar" id="desktopSidebar">
+      <div class="dsb-section-label">Navigation</div>
+      <ul class="dsb-menu">
+        <li><a href="#overview" class="dsb-item" data-section="overview"><i class="fas fa-circle-info"></i>Overview</a></li>
+        <li><a href="#features" class="dsb-item" data-section="features"><i class="fas fa-layer-group"></i>Features</a></li>
+        <li><a href="#installation" class="dsb-item" data-section="installation"><i class="fas fa-terminal"></i>Installation</a></li>
+        <li><a href="#commands" class="dsb-item" data-section="commands"><i class="fas fa-code"></i>Commands</a></li>
+        <li><a href="#architecture" class="dsb-item" data-section="architecture"><i class="fas fa-diagram-project"></i>Architecture</a></li>
+        <li><a href="#config" class="dsb-item" data-section="config"><i class="fas fa-gear"></i>Configuration</a></li>
+      </ul>
+      <div class="dsb-divider"></div>
+      <div class="dsb-section-label-links">Links</div>
+      <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="dsb-link"><i class="fab fa-github"></i>GitHub Repository</a>
+      <a href="https://github.com/MatrixTM26/RAVEN/wiki" target="_blank" class="dsb-link"><i class="fas fa-book"></i>Wiki / Docs</a>
+      <a href="https://github.com/MatrixTM26/RAVEN/issues" target="_blank" class="dsb-link"><i class="fas fa-circle-exclamation"></i>Open an Issue</a>
+    </aside>
+    <div class="page-content">
+
+  <section id="overview" class="section">
+    <div class="container">
+      <div class="sec-label reveal"><i class="fas fa-circle-info"></i> Overview</div>
+      <h2 class="sec-title reveal">What is RAVEN C2</h2>
+
+      <div class="overview-layout">
+        <div class="overview-text">
+          <p class="reveal">
+            RAVEN C2 is a multi-platform adversary emulation framework built in Java.
+            It supports multiple interface modes — Web Panel (HTTP), CLI, and JavaFX GUI —
+            and manages concurrent reverse shell sessions from a single operator console
+            across diverse target environments.
+          </p>
+          <p class="reveal">
+            Engineered for operational security: all agent communication is protected by
+            AES-256-GCM encryption and mutual TLS authentication using PKCS12 keystores.
+            The framework features a full certificate lifecycle manager (CA → Server → Agent),
+            file transfer, thread-safe session handling, an event-driven architecture, and
+            multi-operator TeamServer mode.
+          </p>
+          <div class="badge-row reveal">
+            <span class="badge"><i class="fab fa-java"></i> Java 17</span>
+            <span class="badge"><i class="fas fa-globe"></i> Web Panel</span>
+            <span class="badge"><i class="fas fa-terminal"></i> CLI</span>
+            <span class="badge"><i class="fas fa-desktop"></i> JavaFX GUI</span>
+            <span class="badge"><i class="fas fa-lock"></i> mTLS + AES-GCM</span>
+            <span class="badge active"><i class="fas fa-tag"></i> version 3.0</span>
+          </div>
         </div>
 
-        <section id="home" class="hero">
-            <div class="hero-body">
-                <div class="hero-left">
-                    <div class="hero-eyebrow reveal">
-                        <i class="fas fa-crow"></i>
-                        ADVERSARY EMULATION FRAMEWORK
-                    </div>
-                    <h1 class="hero-heading reveal">
-                        RAVEN
-                        <span class="h-sub">C2 FRAMEWORK v3.0</span>
-                    </h1>
-                    <p class="hero-lead reveal">Modular, enterprise-grade Command &amp; Control framework built in Java. Supports Web Panel, CLI, and JavaFX GUI with mutual TLS, AES-256-GCM encryption, and multi-protocol session handling.</p>
-                    <div class="hero-meta reveal">
-                        <div class="meta-item"><i class="fab fa-java"></i><span>OpenJDK 17+</span></div>
-                        <div class="meta-item"><i class="fas fa-cube"></i><span>Maven 3.8+</span></div>
-                        <div class="meta-item"><i class="fas fa-lock"></i><span>AES-256-GCM</span></div>
-                        <div class="meta-item"><i class="fas fa-shield-halved"></i><span>mTLS</span></div>
-                        <div class="meta-item"><i class="fas fa-scale-balanced"></i><span>AGPL v3</span></div>
-                    </div>
-                    <div class="hero-cta reveal">
-                        <a href="#installation" class="cta-primary"><i class="fas fa-terminal"></i>Get Started</a>
-                        <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="cta-outline"><i class="fab fa-github"></i>View Source</a>
-                    </div>
-                </div>
-
-                <div class="hero-screenshot reveal" id="heroScreenshot">
-                    <div class="screenshot-bar">
-                        <span class="term-dot red"></span>
-                        <span class="term-dot yellow"></span>
-                        <span class="term-dot green"></span>
-                        <span class="term-title" id="screenshotTitle">RAVEN-C2 — operator console</span>
-                    </div>
-                    <div class="screenshot-body">
-                        <div class="screenshot-track" id="screenshotTrack">
-                            <div class="screenshot-slide"><img src="public/w1.png" alt="RAVEN C2 Web Panel" /></div>
-                            <div class="screenshot-slide"><img src="public/w2.png" alt="RAVEN C2 Sessions" /></div>
-                            <div class="screenshot-slide"><img src="public/w3.png" alt="RAVEN C2 Terminal" /></div>
-                            <div class="screenshot-slide"><img src="public/w4.png" alt="RAVEN C2 CLI" /></div>
-                            <div class="screenshot-slide"><img src="public/w5.png" alt="RAVEN C2 GUI" /></div>
-                            <div class="screenshot-slide"><img src="public/w6.png" alt="RAVEN C2 Dashboard" /></div>
-                        </div>
-                        <button class="screenshot-nav prev" id="ssPrev" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
-                        <button class="screenshot-nav next" id="ssNext" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <div class="screenshot-dots" id="ssDots">
-                        <button class="screenshot-dot active" data-idx="0"></button>
-                        <button class="screenshot-dot" data-idx="1"></button>
-                        <button class="screenshot-dot" data-idx="2"></button>
-                        <button class="screenshot-dot" data-idx="3"></button>
-                        <button class="screenshot-dot" data-idx="4"></button>
-                        <button class="screenshot-dot" data-idx="5"></button>
-                    </div>
-                </div>
+        <div class="overview-cards">
+          <div class="stat-grid">
+            <div class="stat-card reveal">
+              <span class="stat-val">Multi</span>
+              <span class="stat-key">Transport Security</span>
             </div>
-        </section>
-
-        <section id="overview" class="section">
-            <div class="container">
-                <div class="sec-label reveal"><i class="fas fa-circle-info"></i> Overview</div>
-                <h2 class="sec-title reveal">What is RAVEN C2</h2>
-
-                <div class="overview-layout">
-                    <div class="overview-text">
-                        <p class="reveal">RAVEN C2 is a multi-platform adversary emulation framework built in Java. It supports multiple interface modes — Web Panel (HTTP), CLI, and JavaFX GUI — and manages concurrent reverse shell sessions from a single operator console across diverse target environments.</p>
-                        <p class="reveal">Engineered for operational security: all agent communication is protected by AES-256-GCM encryption and mutual TLS authentication using PKCS12 keystores. The framework features a full certificate lifecycle manager (CA → Server → Agent), file transfer, thread-safe session handling, an event-driven architecture, and multi-operator TeamServer mode.</p>
-                        <div class="badge-row reveal">
-                            <span class="badge"><i class="fab fa-java"></i> Java 17</span>
-                            <span class="badge"><i class="fas fa-globe"></i> Web Panel</span>
-                            <span class="badge"><i class="fas fa-terminal"></i> CLI</span>
-                            <span class="badge"><i class="fas fa-desktop"></i> JavaFX GUI</span>
-                            <span class="badge"><i class="fas fa-lock"></i> mTLS + AES-GCM</span>
-                            <span class="badge active"><i class="fas fa-circle"></i> v3.0 Active</span>
-                        </div>
-                    </div>
-
-                    <div class="overview-cards">
-                        <div class="stat-grid">
-                            <div class="stat-card reveal">
-                                <span class="stat-val">Multi</span>
-                                <span class="stat-key">Transport Security</span>
-                            </div>
-                            <div class="stat-card reveal">
-                                <span class="stat-val">v17</span>
-                                <span class="stat-key">Min JDK</span>
-                            </div>
-                            <div class="stat-card reveal">
-                                <span class="stat-val">AGPL</span>
-                                <span class="stat-key">License</span>
-                            </div>
-                            <div class="stat-card reveal">
-                                <span class="stat-val">v3.0</span>
-                                <span class="stat-key">Version</span>
-                            </div>
-                        </div>
-                        <div class="alert-card reveal">
-                            <div class="alert-icon"><i class="fas fa-triangle-exclamation"></i></div>
-                            <div class="alert-text">
-                                <strong>Authorized Use Only</strong>
-                                <p>This tool is for legally authorized penetration testing and red team engagements only. Unauthorized use is illegal and unethical.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-card reveal">
+              <span class="stat-val">v17</span>
+              <span class="stat-key">Min JDK</span>
             </div>
-        </section>
-
-        <section id="features" class="section section-alt">
-            <div class="container">
-                <div class="sec-label reveal"><i class="fas fa-layer-group"></i> Features</div>
-                <h2 class="sec-title reveal">Core Capabilities</h2>
-                <p class="sec-sub reveal">Everything a red team operator needs in a single Java-based framework.</p>
-
-                <div class="feat-grid">
-                    <div class="feat-card reveal">
-                        <div class="feat-num">01</div>
-                        <div class="feat-ico"><i class="fas fa-display"></i></div>
-                        <h3>Multi-Interface Support</h3>
-                        <p>Operate via Web Panel (browser at port 5000), CLI mode (-C), or full JavaFX desktop GUI (-G) — whichever fits your workflow.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">02</div>
-                        <div class="feat-ico"><i class="fas fa-lock"></i></div>
-                        <h3>AES-256-GCM Encryption</h3>
-                        <p>All agent communication is encrypted end-to-end with AES-256-GCM, preventing traffic analysis and ensuring operational confidentiality.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">03</div>
-                        <div class="feat-ico"><i class="fas fa-certificate"></i></div>
-                        <h3>Mutual TLS (mTLS)</h3>
-                        <p>Agent authentication via PKCS12 keystores. Full CA, server, and agent certificate lifecycle management with a single init command.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">04</div>
-                        <div class="feat-ico"><i class="fas fa-server"></i></div>
-                        <h3>Multi-Protocol Sessions</h3>
-                        <p>Handle RAVEN agents, Meterpreter sessions, and plain reverse shells concurrently from a single operator console.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">05</div>
-                        <div class="feat-ico"><i class="fas fa-file-transfer"></i></div>
-                        <h3>File Transfer</h3>
-                        <p>Upload payloads and download evidence files with built-in progress tracking. Evidence saved to the configurable output directory.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">06</div>
-                        <div class="feat-ico"><i class="fas fa-shield-halved"></i></div>
-                        <h3>OPSEC Design</h3>
-                        <p>Minimal target footprint, encrypted payloads, and configurable listeners. Designed for operational security in authorized engagements.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">07</div>
-                        <div class="feat-ico"><i class="fas fa-sitemap"></i></div>
-                        <h3>Thread-Safe Sessions</h3>
-                        <p>Concurrent session handling backed by a thread-safe manager. Multiple agents can connect and be interacted with simultaneously.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">08</div>
-                        <div class="feat-ico"><i class="fas fa-bolt"></i></div>
-                        <h3>Event-Driven Architecture</h3>
-                        <p>Decoupled event system for clean separation between the operator console, session manager, and agent handlers.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">09</div>
-                        <div class="feat-ico"><i class="fas fa-boxes-stacked"></i></div>
-                        <h3>Cross-Platform</h3>
-                        <p>Runs on Windows, Linux, macOS via the JVM. Platform-specific Maven build flags available for each target OS.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">10</div>
-                        <div class="feat-ico"><i class="fas fa-database"></i></div>
-                        <h3>Database Support</h3>
-                        <p>In-memory, SQLite, PostgreSQL, and MongoDB backends configurable via <code>raven.properties</code>.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">11</div>
-                        <div class="feat-ico"><i class="fas fa-users-gear"></i></div>
-                        <h3>Operator Roles</h3>
-                        <p>Role-based access control with four levels: SUPER, ADMIN, OPERATOR, MEMBER — each with distinct permission sets.</p>
-                    </div>
-                    <div class="feat-card reveal">
-                        <div class="feat-num">12</div>
-                        <div class="feat-ico"><i class="fas fa-network-wired"></i></div>
-                        <h3>TeamServer Mode</h3>
-                        <p>Multi-operator collaborative C2 with dedicated REST API, allowing multiple clients to connect to the same instance simultaneously.</p>
-                    </div>
-                </div>
+            <div class="stat-card reveal">
+              <span class="stat-val">AGPL</span>
+              <span class="stat-key">License</span>
             </div>
-        </section>
+            <div class="stat-card reveal">
+              <span class="stat-val">v3.0</span>
+              <span class="stat-key">Version</span>
+            </div>
+          </div>
+          <div class="alert-card reveal">
+            <div class="alert-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="alert-text">
+              <strong>Authorized Use Only</strong>
+              <p>This tool is for legally authorized penetration testing and red team engagements only. Unauthorized use is illegal and unethical.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <section id="installation" class="section">
-            <div class="container">
-                <div class="sec-label reveal"><i class="fas fa-terminal"></i> Installation</div>
-                <h2 class="sec-title reveal">Getting Started</h2>
-                <p class="sec-sub reveal">Deploy RAVEN C2 v3.0 in under 5 minutes.</p>
+  <section id="features" class="section section-alt">
+    <div class="container">
+      <div class="sec-label reveal"><i class="fas fa-layer-group"></i> Features</div>
+      <h2 class="sec-title reveal">Core Capabilities</h2>
+      <p class="sec-sub reveal">Everything a red team operator needs in a single Java-based framework.</p>
 
-                <div class="steps">
-                    <div class="step reveal">
-                        <div class="step-aside">
-                            <div class="step-idx">01</div>
-                            <div class="step-line"></div>
-                        </div>
-                        <div class="step-main">
-                            <h3>Prerequisites</h3>
-                            <p>Ensure the following are installed before proceeding.</p>
-                            <div class="req-grid">
-                                <div class="req-row"><i class="fab fa-java"></i><span>OpenJDK 17 or newer</span><span class="pill">Required</span></div>
-                                <div class="req-row"><i class="fas fa-cube"></i><span>Apache Maven 3.8+</span><span class="pill">Required</span></div>
-                                <div class="req-row"><i class="fab fa-git-alt"></i><span>Git</span><span class="pill">Required</span></div>
-                                <div class="req-row"><i class="fab fa-linux"></i><span>Linux / Termux (Debian recommended)</span><span class="pill muted">Recommended</span></div>
-                            </div>
-                        </div>
-                    </div>
+      <div class="feat-grid">
+        <div class="feat-card reveal">
+          <div class="feat-num">01</div>
+          <div class="feat-ico"><i class="fas fa-display"></i></div>
+          <h3>Multi-Interface Support</h3>
+          <p>Operate via Web Panel (browser at port 5000), CLI mode (-C), or full JavaFX desktop GUI (-G) — whichever fits your workflow.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">02</div>
+          <div class="feat-ico"><i class="fas fa-lock"></i></div>
+          <h3>AES-256-GCM Encryption</h3>
+          <p>All agent communication is encrypted end-to-end with AES-256-GCM, preventing traffic analysis and ensuring operational confidentiality.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">03</div>
+          <div class="feat-ico"><i class="fas fa-certificate"></i></div>
+          <h3>Mutual TLS (mTLS)</h3>
+          <p>Agent authentication via PKCS12 keystores. Full CA, server, and agent certificate lifecycle management with a single init command.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">04</div>
+          <div class="feat-ico"><i class="fas fa-server"></i></div>
+          <h3>Multi-Protocol Sessions</h3>
+          <p>Handle RAVEN agents, Meterpreter sessions, and plain reverse shells concurrently from a single operator console.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">05</div>
+          <div class="feat-ico"><i class="fas fa-file-transfer"></i></div>
+          <h3>File Transfer</h3>
+          <p>Upload payloads and download evidence files with built-in progress tracking. Evidence saved to the configurable output directory.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">06</div>
+          <div class="feat-ico"><i class="fas fa-shield-halved"></i></div>
+          <h3>OPSEC Design</h3>
+          <p>Minimal target footprint, encrypted payloads, and configurable listeners. Designed for operational security in authorized engagements.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">07</div>
+          <div class="feat-ico"><i class="fas fa-sitemap"></i></div>
+          <h3>Thread-Safe Sessions</h3>
+          <p>Concurrent session handling backed by a thread-safe manager. Multiple agents can connect and be interacted with simultaneously.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">08</div>
+          <div class="feat-ico"><i class="fas fa-bolt"></i></div>
+          <h3>Event-Driven Architecture</h3>
+          <p>Decoupled event system for clean separation between the operator console, session manager, and agent handlers.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">09</div>
+          <div class="feat-ico"><i class="fas fa-boxes-stacked"></i></div>
+          <h3>Cross-Platform</h3>
+          <p>Runs on Windows, Linux, macOS via the JVM. Platform-specific Maven build flags available for each target OS.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">10</div>
+          <div class="feat-ico"><i class="fas fa-database"></i></div>
+          <h3>Database Support</h3>
+          <p>In-memory, SQLite, PostgreSQL, and MongoDB backends configurable via <code>raven.properties</code>.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">11</div>
+          <div class="feat-ico"><i class="fas fa-users-gear"></i></div>
+          <h3>Operator Roles</h3>
+          <p>Role-based access control with four levels: SUPER, ADMIN, OPERATOR, MEMBER — each with distinct permission sets.</p>
+        </div>
+        <div class="feat-card reveal">
+          <div class="feat-num">12</div>
+          <div class="feat-ico"><i class="fas fa-network-wired"></i></div>
+          <h3>TeamServer Mode</h3>
+          <p>Multi-operator collaborative C2 with dedicated REST API, allowing multiple clients to connect to the same instance simultaneously.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-                    <div class="step reveal">
-                        <div class="step-aside">
-                            <div class="step-idx">02</div>
-                            <div class="step-line"></div>
-                        </div>
-                        <div class="step-main">
-                            <h3>Clone Repository</h3>
-                            <p>Pull the source from GitHub. Use the <code>main</code> branch for stable usage or <code>contrib</code> for contribution.</p>
-                            <div class="codeblock">
-                                <div class="cb-header">
-                                    <span class="cb-lang">bash</span>
-                                    <button class="cb-copy" data-copy="git clone --branch main https://github.com/MatrixTM26/RAVEN.git&#10;cd RAVEN"><i class="fas fa-copy"></i></button>
-                                </div>
-                                <pre><code>git clone --branch main https://github.com/MatrixTM26/RAVEN.git
+  <section id="installation" class="section">
+    <div class="container">
+      <div class="sec-label reveal"><i class="fas fa-terminal"></i> Installation</div>
+      <h2 class="sec-title reveal">Getting Started</h2>
+      <p class="sec-sub reveal">Deploy RAVEN C2 v3.0 in under 5 minutes.</p>
+
+      <div class="steps">
+        <div class="step reveal">
+          <div class="step-aside">
+            <div class="step-idx">01</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-main">
+            <h3>Prerequisites</h3>
+            <p>Ensure the following are installed before proceeding.</p>
+            <div class="req-grid">
+              <div class="req-row"><i class="fab fa-java"></i><span>OpenJDK 17 or newer</span><span class="pill">Required</span></div>
+              <div class="req-row"><i class="fas fa-cube"></i><span>Apache Maven 3.8+</span><span class="pill">Required</span></div>
+              <div class="req-row"><i class="fab fa-git-alt"></i><span>Git</span><span class="pill">Required</span></div>
+              <div class="req-row"><i class="fab fa-linux"></i><span>Linux / Termux (Debian recommended)</span><span class="pill muted">Recommended</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step reveal">
+          <div class="step-aside">
+            <div class="step-idx">02</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-main">
+            <h3>Clone Repository</h3>
+            <p>Pull the source from GitHub. Use the <code>main</code> branch for stable usage or <code>contrib</code> for contribution.</p>
+            <div class="codeblock">
+              <div class="cb-header">
+                <span class="cb-lang">bash</span>
+                <button class="cb-copy" data-copy="git clone --branch main https://github.com/MatrixTM26/RAVEN.git&#10;cd RAVEN"><i class="fas fa-copy"></i></button>
+              </div>
+              <pre><code>git clone --branch main https://github.com/MatrixTM26/RAVEN.git
 cd RAVEN</code></pre>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+          </div>
+        </div>
 
-                    <div class="step reveal">
-                        <div class="step-aside">
-                            <div class="step-idx">03</div>
-                            <div class="step-line"></div>
-                        </div>
-                        <div class="step-main">
-                            <h3>Quick Run (Pre-built JAR)</h3>
-                            <p>A ready-to-use JAR is included in the repository. No compilation required.</p>
-                            <div class="codeblock">
-                                <div class="cb-header">
-                                    <span class="cb-lang">bash</span>
-                                    <button class="cb-copy" data-copy="java -jar output/raven.jar"><i class="fas fa-copy"></i></button>
-                                </div>
-                                <pre><code>java -jar output/raven.jar</code></pre>
-                            </div>
-                        </div>
-                    </div>
+        <div class="step reveal">
+          <div class="step-aside">
+            <div class="step-idx">03</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-main">
+            <h3>Quick Run (Pre-built JAR)</h3>
+            <p>A ready-to-use JAR is included in the repository. No compilation required.</p>
+            <div class="codeblock">
+              <div class="cb-header">
+                <span class="cb-lang">bash</span>
+                <button class="cb-copy" data-copy="java -jar output/raven.jar"><i class="fas fa-copy"></i></button>
+              </div>
+              <pre><code>java -jar output/raven.jar</code></pre>
+            </div>
+          </div>
+        </div>
 
-                    <div class="step reveal">
-                        <div class="step-aside">
-                            <div class="step-idx">04</div>
-                            <div class="step-line"></div>
-                        </div>
-                        <div class="step-main">
-                            <h3>Build from Source</h3>
-                            <p>Compile with Maven. Use platform-specific flags for JavaFX support.</p>
-                            <div class="codeblock">
-                                <div class="cb-header">
-                                    <span class="cb-lang">bash</span>
-                                    <button class="cb-copy" data-copy="mvn clean package -Djavafx.platform=linux -q"><i class="fas fa-copy"></i></button>
-                                </div>
-                                <pre><code><span class="cm"># Linux / Termux</span>
+        <div class="step reveal">
+          <div class="step-aside">
+            <div class="step-idx">04</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-main">
+            <h3>Build from Source</h3>
+            <p>Compile with Maven. Use platform-specific flags for JavaFX support.</p>
+            <div class="codeblock">
+              <div class="cb-header">
+                <span class="cb-lang">bash</span>
+                <button class="cb-copy" data-copy="mvn clean package -Djavafx.platform=linux -q"><i class="fas fa-copy"></i></button>
+              </div>
+              <pre><code><span class="cm"># Linux / Termux</span>
 mvn clean package -Djavafx.platform=linux -q
 
 <span class="cm"># Windows</span>
@@ -1708,24 +376,24 @@ mvn clean package -Djavafx.platform=windows -q
 
 <span class="cm"># macOS</span>
 mvn clean package -Djavafx.platform=macos -q</code></pre>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+          </div>
+        </div>
 
-                    <div class="step reveal">
-                        <div class="step-aside">
-                            <div class="step-idx">05</div>
-                            <div class="step-line"></div>
-                        </div>
-                        <div class="step-main">
-                            <h3>Initialize Certificates &amp; Launch</h3>
-                            <p>Initialize mTLS certificates first, then start the server in your preferred interface mode.</p>
-                            <div class="codeblock">
-                                <div class="cb-header">
-                                    <span class="cb-lang">bash</span>
-                                    <button class="cb-copy" data-copy="java -jar target/raven-3.0.0.jar -i&#10;java -jar target/raven-3.0.0.jar"><i class="fas fa-copy"></i></button>
-                                </div>
-                                <pre><code><span class="cm"># Initialize CA and server certificates</span>
+        <div class="step reveal">
+          <div class="step-aside">
+            <div class="step-idx">05</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-main">
+            <h3>Initialize Certificates &amp; Launch</h3>
+            <p>Initialize mTLS certificates first, then start the server in your preferred interface mode.</p>
+            <div class="codeblock">
+              <div class="cb-header">
+                <span class="cb-lang">bash</span>
+                <button class="cb-copy" data-copy="java -jar target/raven-3.0.0.jar -i&#10;java -jar target/raven-3.0.0.jar"><i class="fas fa-copy"></i></button>
+              </div>
+              <pre><code><span class="cm"># Initialize CA and server certificates</span>
 java -jar target/raven-3.0.0.jar -i
 
 <span class="cm"># Web Panel mode (default — http://localhost:5000)</span>
@@ -1736,299 +404,290 @@ java -jar target/raven-3.0.0.jar -C
 
 <span class="cm"># JavaFX GUI mode</span>
 java -jar target/raven-3.0.0.jar -G</code></pre>
-                            </div>
-                            <div class="ok-box"><i class="fas fa-circle-check"></i> Server running — Web panel at http://localhost:5000, waiting for agents.</div>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </section>
-
-        <section id="commands" class="section section-alt">
-            <div class="container">
-                <div class="sec-label reveal"><i class="fas fa-code"></i> Commands</div>
-                <h2 class="sec-title reveal">Command Reference</h2>
-                <p class="sec-sub reveal">CLI flags and operator console commands for RAVEN C2 v3.0.</p>
-
-                <div class="tab-row reveal">
-                    <button class="tab active" data-tab="cli">CLI Flags</button>
-                    <button class="tab" data-tab="listener">Listener Mode</button>
-                    <button class="tab" data-tab="session">Session</button>
-                    <button class="tab" data-tab="recon">Recon</button>
-                    <button class="tab" data-tab="file">File Ops</button>
-                    <button class="tab" data-tab="lateral">Lateral Movement</button>
-                    <button class="tab" data-tab="certs">Certificates</button>
-                    <button class="tab" data-tab="operators">Operators</button>
-                </div>
-
-                <div class="tab-panel active" id="tab-cli">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
-                            <div class="cmd-row"><code>-h</code><code>-help</code><span>Show help and exit</span></div>
-                            <div class="cmd-row"><code>-s &lt;addr&gt;</code><code>-host &lt;addr&gt;</code><span>C2 server bind address (default: server.properties)</span></div>
-                            <div class="cmd-row"><code>-p &lt;port&gt;</code><code>-port &lt;port&gt;</code><span>C2 listener port (default: server.properties)</span></div>
-                            <div class="cmd-row"><code>-C</code><code>-cli-mode</code><span>Start in CLI interface mode</span></div>
-                            <div class="cmd-row"><code>-G</code><code>-gui-mode</code><span>Start in JavaFX GUI mode</span></div>
-                            <div class="cmd-row"><code>-W</code><code>-web-mode</code><span>Start in Web Panel mode</span></div>
-                            <div class="cmd-row"><code>-TSC</code><code>-teamserver-cli</code><span>TeamServer with CLI interface</span></div>
-                            <div class="cmd-row"><code>-TSW</code><code>-teamserver-web</code><span>TeamServer with Web interface</span></div>
-                            <div class="cmd-row"><code>-TSG</code><code>-teamserver-gui</code><span>TeamServer with GUI interface</span></div>
-                            <div class="cmd-row"><code>-tp &lt;port&gt;</code><code>-teamserver-port &lt;port&gt;</code><span>TeamServer API port (default: server.properties)</span></div>
-                            <div class="cmd-row"><code>-i</code><code>-init-certs</code><span>Initialize CA and server certificates</span></div>
-                            <div class="cmd-row"><code>-l</code><code>-list</code><span>List all generated agent certificates</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="tab-listener">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
-                            <div class="cmd-row"><code>-A</code><code>-multi</code><span>Multi-protocol auto-detect</span></div>
-                            <div class="cmd-row"><code>-R</code><code>-raw</code><span>Raw TCP reverse shell only</span></div>
-                            <div class="cmd-row"><code>-b</code><code>-http</code><span>HTTP beacon only</span></div>
-                            <div class="cmd-row"><code>-B</code><code>-https</code><span>HTTPS beacon only</span></div>
-                            <div class="cmd-row"><code>-T</code><code>-tls</code><span>TCP TLS — RAVEN agent</span></div>
-                            <div class="cmd-row"><code>-M</code><code>-mtls</code><span>Mutual TLS — RAVEN agent</span></div>
-                            <div class="cmd-row"><code>-F</code><code>-fmtls</code><span>Full mTLS + HTTPS beacon</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="tab-session">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
-                            <div class="cmd-row"><code>sessions</code><code>sessions</code><span>List all active agent sessions</span></div>
-                            <div class="cmd-row"><code>agents</code><code>agents</code><span>Alias for sessions</span></div>
-                            <div class="cmd-row"><code>use</code><code>use &lt;id&gt;</code><span>Enter interactive shell with agent</span></div>
-                            <div class="cmd-row"><code>sysinfo</code><code>sysinfo &lt;id&gt;</code><span>Show full system info for agent</span></div>
-                            <div class="cmd-row"><code>exec</code><code>exec &lt;id&gt; &lt;cmd&gt;</code><span>Execute arbitrary command on agent (raw passthrough)</span></div>
-                            <div class="cmd-row"><code>shell</code><code>shell &lt;id&gt; &lt;cmd&gt;</code><span>Execute via shell interpreter (sh -c / cmd /c)</span></div>
-                            <div class="cmd-row"><code>broadcast</code><code>broadcast &lt;id,...|all&gt; &lt;cmd&gt;</code><span>Broadcast command to selected or all agents</span></div>
-                            <div class="cmd-row"><code>kill</code><code>kill &lt;id&gt;</code><span>Terminate an agent session</span></div>
-                            <div class="cmd-row"><code>ping</code><code>ping &lt;id&gt;</code><span>Ping agent to verify liveness (raven: protocol)</span></div>
-                            <div class="cmd-row"><code>reconnect</code><code>reconnect &lt;id&gt;</code><span>Ask RAVEN agent to reconnect</span></div>
-                            <div class="cmd-row"><code>self-destruct</code><code>self-destruct &lt;id&gt;</code><span>Wipe agent and terminate session (ADMIN+)</span></div>
-                            <div class="cmd-row"><code>sleep</code><code>sleep &lt;id&gt; &lt;seconds&gt;</code><span>Set agent sleep interval</span></div>
-                            <div class="cmd-row"><code>jitter</code><code>jitter &lt;id&gt; &lt;ms&gt;</code><span>Set agent jitter delay in ms</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="tab-recon">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
-                            <div class="cmd-row"><code>whoami</code><code>whoami &lt;id&gt;</code><span>Current user info</span></div>
-                            <div class="cmd-row"><code>id</code><code>id &lt;id&gt;</code><span>User ID / groups</span></div>
-                            <div class="cmd-row"><code>hostname</code><code>hostname &lt;id&gt;</code><span>Show agent hostname</span></div>
-                            <div class="cmd-row"><code>uname</code><code>uname &lt;id&gt;</code><span>OS / kernel info</span></div>
-                            <div class="cmd-row"><code>ps</code><code>ps &lt;id&gt;</code><span>Process list</span></div>
-                            <div class="cmd-row"><code>netstat</code><code>netstat &lt;id&gt;</code><span>Network connections</span></div>
-                            <div class="cmd-row"><code>ifconfig</code><code>ifconfig &lt;id&gt;</code><span>Network interfaces</span></div>
-                            <div class="cmd-row"><code>arp</code><code>arp &lt;id&gt;</code><span>ARP table</span></div>
-                            <div class="cmd-row"><code>route</code><code>route &lt;id&gt;</code><span>Routing table</span></div>
-                            <div class="cmd-row"><code>users</code><code>users &lt;id&gt;</code><span>Local users list</span></div>
-                            <div class="cmd-row"><code>services</code><code>services &lt;id&gt;</code><span>Running services</span></div>
-                            <div class="cmd-row"><code>screenshot</code><code>screenshot &lt;id&gt;</code><span>Capture desktop screenshot (raven: protocol)</span></div>
-                            <div class="cmd-row"><code>privcheck</code><code>privcheck &lt;id&gt;</code><span>Privilege escalation check</span></div>
-                            <div class="cmd-row"><code>antivirus</code><code>antivirus &lt;id&gt;</code><span>Detect AV / EDR presence</span></div>
-                            <div class="cmd-row"><code>hashdump</code><code>hashdump &lt;id&gt;</code><span>Dump credential hashes (raven: protocol)</span></div>
-                            <div class="cmd-row"><code>keystroke</code><code>keystroke &lt;id&gt; &lt;on|off&gt;</code><span>Toggle keylogger on agent</span></div>
-                            <div class="cmd-row"><code>dumpbrowsers</code><code>dumpbrowsers &lt;id&gt;</code><span>Saved browser credentials (raven: protocol)</span></div>
-                            <div class="cmd-row"><code>wifidump</code><code>wifidump &lt;id&gt;</code><span>WiFi credentials dump</span></div>
-                            <div class="cmd-row"><code>osquery</code><code>osquery &lt;id&gt; &lt;sql&gt;</code><span>Run osquery SQL on agent</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="tab-file">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
-                            <div class="cmd-row"><code>ls</code><code>ls &lt;id&gt; [path]</code><span>List directory</span></div>
-                            <div class="cmd-row"><code>pwd</code><code>pwd &lt;id&gt;</code><span>Working directory</span></div>
-                            <div class="cmd-row"><code>cd</code><code>cd &lt;id&gt; &lt;path&gt;</code><span>Change directory on agent</span></div>
-                            <div class="cmd-row"><code>cat</code><code>cat &lt;id&gt; &lt;file&gt;</code><span>Read file contents</span></div>
-                            <div class="cmd-row"><code>head</code><code>head &lt;id&gt; &lt;file&gt; [n]</code><span>First N lines of a file</span></div>
-                            <div class="cmd-row"><code>tail</code><code>tail &lt;id&gt; &lt;file&gt; [n]</code><span>Last N lines of a file</span></div>
-                            <div class="cmd-row"><code>rm</code><code>rm &lt;id&gt; &lt;path&gt;</code><span>Delete file / directory</span></div>
-                            <div class="cmd-row"><code>mkdir</code><code>mkdir &lt;id&gt; &lt;path&gt;</code><span>Create directory</span></div>
-                            <div class="cmd-row"><code>cp</code><code>cp &lt;id&gt; &lt;src&gt; &lt;dst&gt;</code><span>Copy file or directory</span></div>
-                            <div class="cmd-row"><code>mv</code><code>mv &lt;id&gt; &lt;src&gt; &lt;dst&gt;</code><span>Move file or directory</span></div>
-                            <div class="cmd-row"><code>find</code><code>find &lt;id&gt; &lt;path&gt; [name]</code><span>Find files</span></div>
-                            <div class="cmd-row"><code>grep</code><code>grep &lt;id&gt; &lt;pattern&gt; &lt;file&gt;</code><span>Search text in file</span></div>
-                            <div class="cmd-row"><code>hash</code><code>hash &lt;id&gt; &lt;file&gt; [sha256|md5]</code><span>File hash computation</span></div>
-                            <div class="cmd-row"><code>download</code><code>download &lt;id&gt; &lt;remote-path&gt;</code><span>Download file from agent (raven: protocol)</span></div>
-                            <div class="cmd-row"><code>upload</code><code>upload &lt;id&gt; &lt;local-path&gt; [remote-path]</code><span>Upload file to agent (raven: protocol)</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="tab-lateral">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
-                            <div class="cmd-row"><code>pivot</code><code>pivot &lt;id&gt; &lt;host:port&gt;</code><span>Register pivot route through agent</span></div>
-                            <div class="cmd-row"><code>portfwd</code><code>portfwd &lt;id&gt; &lt;lport&gt; &lt;rhost&gt; &lt;rport&gt;</code><span>Port forward through agent</span></div>
-                            <div class="cmd-row"><code>socks</code><code>socks &lt;id&gt; &lt;lport&gt;</code><span>SOCKS5 proxy through agent</span></div>
-                            <div class="cmd-row"><code>spawn</code><code>spawn &lt;id&gt;</code><span>Spawn new agent process on target</span></div>
-                            <div class="cmd-row"><code>shellcode</code><code>shellcode &lt;id&gt; &lt;hex&gt;</code><span>Inject shellcode into agent process</span></div>
-                            <div class="cmd-row"><code>persist</code><code>persist &lt;id&gt; [method]</code><span>Install persistence (cron/bashrc/systemd/reg/schtask)</span></div>
-                            <div class="cmd-row"><code>unpersist</code><code>unpersist &lt;id&gt; [method]</code><span>Remove persistence entry</span></div>
-                            <div class="cmd-row"><code>runas</code><code>runas &lt;id&gt; &lt;user&gt; &lt;pass&gt; &lt;cmd&gt;</code><span>Run command as another user</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="tab-certs">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
-                            <div class="cmd-row"><code>-i</code><code>-init-certs</code><span>Initialize CA and server certificates</span></div>
-                            <div class="cmd-row"><code>-s &lt;host&gt;</code><code>-server &lt;host&gt;</code><span>Server host used during cert init</span></div>
-                            <div class="cmd-row"><code>-a &lt;id&gt;</code><code>-agent &lt;id&gt;</code><span>Generate a single agent certificate</span></div>
-                            <div class="cmd-row"><code>-m</code><code>-multi</code><span>Generate multiple agent certificates</span></div>
-                            <div class="cmd-row"><code>-c &lt;count&gt;</code><code>-count &lt;count&gt;</code><span>Number of agents to generate (default: 10)</span></div>
-                            <div class="cmd-row"><code>-u &lt;prefix&gt;</code><code>-prefix &lt;prefix&gt;</code><span>Username prefix for bulk agent certs</span></div>
-                            <div class="cmd-row"><code>-ah &lt;host&gt;</code><code>-agent-host &lt;host&gt;</code><span>Agent callback host</span></div>
-                            <div class="cmd-row"><code>-ap &lt;port&gt;</code><code>-agent-port &lt;port&gt;</code><span>Agent callback port</span></div>
-                            <div class="cmd-row"><code>-am</code><code>-agent-mtls</code><span>Enable mTLS in generated agent</span></div>
-                            <div class="cmd-row"><code>-ps</code><code>-persistent</code><span>Enable persistence in generated agent</span></div>
-                            <div class="cmd-row"><code>-hc</code><code>-hide-console</code><span>Hide console window in generated agent</span></div>
-                            <div class="cmd-row"><code>-l</code><code>-list</code><span>List all generated agent certificates</span></div>
-                            <div class="cmd-row"><code>-r &lt;id&gt;</code><code>-revoke &lt;id&gt;</code><span>Revoke an agent certificate by ID</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" id="tab-operators">
-                    <div class="cmd-scroll">
-                        <div class="cmd-grid">
-                            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
-                            <div class="cmd-row"><code>-AO</code><code>-add-operator</code><span>Add a new operator</span></div>
-                            <div class="cmd-row"><code>-RO</code><code>-remove-operator</code><span>Remove an existing operator</span></div>
-                            <div class="cmd-row"><code>-OP</code><code>-operator-permission</code><span>View or update operator role</span></div>
-                            <div class="cmd-row"><code>-u &lt;user&gt;</code><code>-username &lt;user&gt;</code><span>Operator username</span></div>
-                            <div class="cmd-row"><code>-pw &lt;pass&gt;</code><code>-password &lt;pass&gt;</code><span>Operator password (min 8 characters)</span></div>
-                            <div class="cmd-row"><code>-r &lt;role&gt;</code><code>-role &lt;role&gt;</code><span>Operator role: SUPER / ADMIN / OPERATOR / MEMBER</span></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="ok-box">
+              <i class="fas fa-circle-check"></i> Server running — Web panel at http://localhost:5000, waiting for agents.
             </div>
-        </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <section id="architecture" class="section">
-            <div class="container">
-                <div class="sec-label reveal"><i class="fas fa-diagram-project"></i> Architecture</div>
-                <h2 class="sec-title reveal">System Architecture</h2>
-                <p class="sec-sub reveal">How RAVEN C2 v3.0 components interconnect in a live deployment.</p>
+  <section id="commands" class="section section-alt">
+    <div class="container">
+      <div class="sec-label reveal"><i class="fas fa-code"></i> Commands</div>
+      <h2 class="sec-title reveal">Command Reference</h2>
+      <p class="sec-sub reveal">CLI flags and operator console commands for RAVEN C2 v3.0.</p>
 
-                <div class="arch-wrap">
-                    <div class="arch-diagram reveal">
-                        <svg viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <marker id="arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
-                                    <path d="M0,0 L0,6 L7,3 z" fill="#555555" opacity="0.9" />
-                                </marker>
-                            </defs>
+      <div class="tab-row reveal">
+        <button class="tab active" data-tab="cli">CLI Flags</button>
+        <button class="tab" data-tab="listener">Listener Mode</button>
+        <button class="tab" data-tab="session">Session</button>
+        <button class="tab" data-tab="recon">Recon</button>
+        <button class="tab" data-tab="file">File Ops</button>
+        <button class="tab" data-tab="lateral">Lateral Movement</button>
+        <button class="tab" data-tab="certs">Certificates</button>
+        <button class="tab" data-tab="operators">Operators</button>
+      </div>
 
-                            <rect x="220" y="16" width="240" height="64" rx="0" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
-                            <text x="340" y="42" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="10" font-weight="600" letter-spacing="1">OPERATOR INTERFACES</text>
-                            <text x="340" y="60" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="9">Web Panel · CLI · JavaFX GUI</text>
+      <div class="tab-panel active" id="tab-cli">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
+            <div class="cmd-row"><code>-h</code><code>-help</code><span>Show help and exit</span></div>
+            <div class="cmd-row"><code>-s &lt;addr&gt;</code><code>-host &lt;addr&gt;</code><span>C2 server bind address (default: server.properties)</span></div>
+            <div class="cmd-row"><code>-p &lt;port&gt;</code><code>-port &lt;port&gt;</code><span>C2 listener port (default: server.properties)</span></div>
+            <div class="cmd-row"><code>-C</code><code>-cli-mode</code><span>Start in CLI interface mode</span></div>
+            <div class="cmd-row"><code>-G</code><code>-gui-mode</code><span>Start in JavaFX GUI mode</span></div>
+            <div class="cmd-row"><code>-W</code><code>-web-mode</code><span>Start in Web Panel mode</span></div>
+            <div class="cmd-row"><code>-TSC</code><code>-teamserver-cli</code><span>TeamServer with CLI interface</span></div>
+            <div class="cmd-row"><code>-TSW</code><code>-teamserver-web</code><span>TeamServer with Web interface</span></div>
+            <div class="cmd-row"><code>-TSG</code><code>-teamserver-gui</code><span>TeamServer with GUI interface</span></div>
+            <div class="cmd-row"><code>-tp &lt;port&gt;</code><code>-teamserver-port &lt;port&gt;</code><span>TeamServer API port (default: server.properties)</span></div>
+            <div class="cmd-row"><code>-i</code><code>-init-certs</code><span>Initialize CA and server certificates</span></div>
+            <div class="cmd-row"><code>-l</code><code>-list</code><span>List all generated agent certificates</span></div>
+          </div>
+        </div>
+      </div>
 
-                            <rect x="200" y="152" width="280" height="80" rx="0" fill="#111111" stroke="#555555" stroke-width="1.5" />
-                            <text x="340" y="182" text-anchor="middle" fill="#ffffff" font-family="Space Grotesk" font-size="12" font-weight="700" letter-spacing="1.5">RAVEN C2 SERVER</text>
-                            <text x="340" y="200" text-anchor="middle" fill="#777777" font-family="Courier New" font-size="9">Session Manager · mTLS Auth · AES-256-GCM</text>
-                            <text x="340" y="216" text-anchor="middle" fill="#777777" font-family="Courier New" font-size="9">Event System · Cert Manager · File Transfer</text>
+      <div class="tab-panel" id="tab-listener">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
+            <div class="cmd-row"><code>-A</code><code>-multi</code><span>Multi-protocol auto-detect</span></div>
+            <div class="cmd-row"><code>-R</code><code>-raw</code><span>Raw TCP reverse shell only</span></div>
+            <div class="cmd-row"><code>-b</code><code>-http</code><span>HTTP beacon only</span></div>
+            <div class="cmd-row"><code>-B</code><code>-https</code><span>HTTPS beacon only</span></div>
+            <div class="cmd-row"><code>-T</code><code>-tls</code><span>TCP TLS — RAVEN agent</span></div>
+            <div class="cmd-row"><code>-M</code><code>-mtls</code><span>Mutual TLS — RAVEN agent</span></div>
+            <div class="cmd-row"><code>-F</code><code>-fmtls</code><span>Full mTLS + HTTPS beacon</span></div>
+          </div>
+        </div>
+      </div>
 
-                            <line x1="340" y1="80" x2="340" y2="152" stroke="#555555" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)" opacity="0.7" />
+      <div class="tab-panel" id="tab-session">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
+            <div class="cmd-row"><code>sessions</code><code>sessions</code><span>List all active agent sessions</span></div>
+            <div class="cmd-row"><code>agents</code><code>agents</code><span>Alias for sessions</span></div>
+            <div class="cmd-row"><code>use</code><code>use &lt;id&gt;</code><span>Enter interactive shell with agent</span></div>
+            <div class="cmd-row"><code>sysinfo</code><code>sysinfo &lt;id&gt;</code><span>Show full system info for agent</span></div>
+            <div class="cmd-row"><code>exec</code><code>exec &lt;id&gt; &lt;cmd&gt;</code><span>Execute arbitrary command on agent (raw passthrough)</span></div>
+            <div class="cmd-row"><code>shell</code><code>shell &lt;id&gt; &lt;cmd&gt;</code><span>Execute via shell interpreter (sh -c / cmd /c)</span></div>
+            <div class="cmd-row"><code>broadcast</code><code>broadcast &lt;id,...|all&gt; &lt;cmd&gt;</code><span>Broadcast command to selected or all agents</span></div>
+            <div class="cmd-row"><code>kill</code><code>kill &lt;id&gt;</code><span>Terminate an agent session</span></div>
+            <div class="cmd-row"><code>ping</code><code>ping &lt;id&gt;</code><span>Ping agent to verify liveness (raven: protocol)</span></div>
+            <div class="cmd-row"><code>reconnect</code><code>reconnect &lt;id&gt;</code><span>Ask RAVEN agent to reconnect</span></div>
+            <div class="cmd-row"><code>self-destruct</code><code>self-destruct &lt;id&gt;</code><span>Wipe agent and terminate session (ADMIN+)</span></div>
+            <div class="cmd-row"><code>sleep</code><code>sleep &lt;id&gt; &lt;seconds&gt;</code><span>Set agent sleep interval</span></div>
+            <div class="cmd-row"><code>jitter</code><code>jitter &lt;id&gt; &lt;ms&gt;</code><span>Set agent jitter delay in ms</span></div>
+          </div>
+        </div>
+      </div>
 
-                            <rect x="20" y="320" width="130" height="68" rx="0" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
-                            <text x="85" y="344" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="9" font-weight="700">RAVEN AGENT</text>
-                            <text x="85" y="360" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="8">192.168.1.42</text>
-                            <text x="85" y="374" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="7">session-1 · mTLS</text>
+      <div class="tab-panel" id="tab-recon">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
+            <div class="cmd-row"><code>whoami</code><code>whoami &lt;id&gt;</code><span>Current user info</span></div>
+            <div class="cmd-row"><code>id</code><code>id &lt;id&gt;</code><span>User ID / groups</span></div>
+            <div class="cmd-row"><code>hostname</code><code>hostname &lt;id&gt;</code><span>Show agent hostname</span></div>
+            <div class="cmd-row"><code>uname</code><code>uname &lt;id&gt;</code><span>OS / kernel info</span></div>
+            <div class="cmd-row"><code>ps</code><code>ps &lt;id&gt;</code><span>Process list</span></div>
+            <div class="cmd-row"><code>netstat</code><code>netstat &lt;id&gt;</code><span>Network connections</span></div>
+            <div class="cmd-row"><code>ifconfig</code><code>ifconfig &lt;id&gt;</code><span>Network interfaces</span></div>
+            <div class="cmd-row"><code>arp</code><code>arp &lt;id&gt;</code><span>ARP table</span></div>
+            <div class="cmd-row"><code>route</code><code>route &lt;id&gt;</code><span>Routing table</span></div>
+            <div class="cmd-row"><code>users</code><code>users &lt;id&gt;</code><span>Local users list</span></div>
+            <div class="cmd-row"><code>services</code><code>services &lt;id&gt;</code><span>Running services</span></div>
+            <div class="cmd-row"><code>screenshot</code><code>screenshot &lt;id&gt;</code><span>Capture desktop screenshot (raven: protocol)</span></div>
+            <div class="cmd-row"><code>privcheck</code><code>privcheck &lt;id&gt;</code><span>Privilege escalation check</span></div>
+            <div class="cmd-row"><code>antivirus</code><code>antivirus &lt;id&gt;</code><span>Detect AV / EDR presence</span></div>
+            <div class="cmd-row"><code>hashdump</code><code>hashdump &lt;id&gt;</code><span>Dump credential hashes (raven: protocol)</span></div>
+            <div class="cmd-row"><code>keystroke</code><code>keystroke &lt;id&gt; &lt;on|off&gt;</code><span>Toggle keylogger on agent</span></div>
+            <div class="cmd-row"><code>dumpbrowsers</code><code>dumpbrowsers &lt;id&gt;</code><span>Saved browser credentials (raven: protocol)</span></div>
+            <div class="cmd-row"><code>wifidump</code><code>wifidump &lt;id&gt;</code><span>WiFi credentials dump</span></div>
+            <div class="cmd-row"><code>osquery</code><code>osquery &lt;id&gt; &lt;sql&gt;</code><span>Run osquery SQL on agent</span></div>
+          </div>
+        </div>
+      </div>
 
-                            <rect x="185" y="320" width="130" height="68" rx="0" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
-                            <text x="250" y="344" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="9" font-weight="700">METERPRETER</text>
-                            <text x="250" y="360" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="8">10.0.0.15</text>
-                            <text x="250" y="374" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="7">session-2 · multi-proto</text>
+      <div class="tab-panel" id="tab-file">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
+            <div class="cmd-row"><code>ls</code><code>ls &lt;id&gt; [path]</code><span>List directory</span></div>
+            <div class="cmd-row"><code>pwd</code><code>pwd &lt;id&gt;</code><span>Working directory</span></div>
+            <div class="cmd-row"><code>cd</code><code>cd &lt;id&gt; &lt;path&gt;</code><span>Change directory on agent</span></div>
+            <div class="cmd-row"><code>cat</code><code>cat &lt;id&gt; &lt;file&gt;</code><span>Read file contents</span></div>
+            <div class="cmd-row"><code>head</code><code>head &lt;id&gt; &lt;file&gt; [n]</code><span>First N lines of a file</span></div>
+            <div class="cmd-row"><code>tail</code><code>tail &lt;id&gt; &lt;file&gt; [n]</code><span>Last N lines of a file</span></div>
+            <div class="cmd-row"><code>rm</code><code>rm &lt;id&gt; &lt;path&gt;</code><span>Delete file / directory</span></div>
+            <div class="cmd-row"><code>mkdir</code><code>mkdir &lt;id&gt; &lt;path&gt;</code><span>Create directory</span></div>
+            <div class="cmd-row"><code>cp</code><code>cp &lt;id&gt; &lt;src&gt; &lt;dst&gt;</code><span>Copy file or directory</span></div>
+            <div class="cmd-row"><code>mv</code><code>mv &lt;id&gt; &lt;src&gt; &lt;dst&gt;</code><span>Move file or directory</span></div>
+            <div class="cmd-row"><code>find</code><code>find &lt;id&gt; &lt;path&gt; [name]</code><span>Find files</span></div>
+            <div class="cmd-row"><code>grep</code><code>grep &lt;id&gt; &lt;pattern&gt; &lt;file&gt;</code><span>Search text in file</span></div>
+            <div class="cmd-row"><code>hash</code><code>hash &lt;id&gt; &lt;file&gt; [sha256|md5]</code><span>File hash computation</span></div>
+            <div class="cmd-row"><code>download</code><code>download &lt;id&gt; &lt;remote-path&gt;</code><span>Download file from agent (raven: protocol)</span></div>
+            <div class="cmd-row"><code>upload</code><code>upload &lt;id&gt; &lt;local-path&gt; [remote-path]</code><span>Upload file to agent (raven: protocol)</span></div>
+          </div>
+        </div>
+      </div>
 
-                            <rect x="350" y="320" width="130" height="68" rx="0" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
-                            <text x="415" y="344" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="9" font-weight="700">REVERSE SHELL</text>
-                            <text x="415" y="360" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="8">172.16.0.8</text>
-                            <text x="415" y="374" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="7">session-3 · tcp</text>
+      <div class="tab-panel" id="tab-lateral">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Command</span><span>Syntax</span><span>Description</span></div>
+            <div class="cmd-row"><code>pivot</code><code>pivot &lt;id&gt; &lt;host:port&gt;</code><span>Register pivot route through agent</span></div>
+            <div class="cmd-row"><code>portfwd</code><code>portfwd &lt;id&gt; &lt;lport&gt; &lt;rhost&gt; &lt;rport&gt;</code><span>Port forward through agent</span></div>
+            <div class="cmd-row"><code>socks</code><code>socks &lt;id&gt; &lt;lport&gt;</code><span>SOCKS5 proxy through agent</span></div>
+            <div class="cmd-row"><code>spawn</code><code>spawn &lt;id&gt;</code><span>Spawn new agent process on target</span></div>
+            <div class="cmd-row"><code>shellcode</code><code>shellcode &lt;id&gt; &lt;hex&gt;</code><span>Inject shellcode into agent process</span></div>
+            <div class="cmd-row"><code>persist</code><code>persist &lt;id&gt; [method]</code><span>Install persistence (cron/bashrc/systemd/reg/schtask)</span></div>
+            <div class="cmd-row"><code>unpersist</code><code>unpersist &lt;id&gt; [method]</code><span>Remove persistence entry</span></div>
+            <div class="cmd-row"><code>runas</code><code>runas &lt;id&gt; &lt;user&gt; &lt;pass&gt; &lt;cmd&gt;</code><span>Run command as another user</span></div>
+          </div>
+        </div>
+      </div>
 
-                            <rect x="515" y="320" width="130" height="68" rx="0" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="1" stroke-dasharray="3 2" opacity="0.5" />
-                            <text x="580" y="357" text-anchor="middle" fill="#2a2a2a" font-family="Space Grotesk" font-size="9">+ more agents</text>
+      <div class="tab-panel" id="tab-certs">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
+            <div class="cmd-row"><code>-i</code><code>-init-certs</code><span>Initialize CA and server certificates</span></div>
+            <div class="cmd-row"><code>-s &lt;host&gt;</code><code>-server &lt;host&gt;</code><span>Server host used during cert init</span></div>
+            <div class="cmd-row"><code>-a &lt;id&gt;</code><code>-agent &lt;id&gt;</code><span>Generate a single agent certificate</span></div>
+            <div class="cmd-row"><code>-m</code><code>-multi</code><span>Generate multiple agent certificates</span></div>
+            <div class="cmd-row"><code>-c &lt;count&gt;</code><code>-count &lt;count&gt;</code><span>Number of agents to generate (default: 10)</span></div>
+            <div class="cmd-row"><code>-u &lt;prefix&gt;</code><code>-prefix &lt;prefix&gt;</code><span>Username prefix for bulk agent certs</span></div>
+            <div class="cmd-row"><code>-ah &lt;host&gt;</code><code>-agent-host &lt;host&gt;</code><span>Agent callback host</span></div>
+            <div class="cmd-row"><code>-ap &lt;port&gt;</code><code>-agent-port &lt;port&gt;</code><span>Agent callback port</span></div>
+            <div class="cmd-row"><code>-am</code><code>-agent-mtls</code><span>Enable mTLS in generated agent</span></div>
+            <div class="cmd-row"><code>-ps</code><code>-persistent</code><span>Enable persistence in generated agent</span></div>
+            <div class="cmd-row"><code>-hc</code><code>-hide-console</code><span>Hide console window in generated agent</span></div>
+            <div class="cmd-row"><code>-l</code><code>-list</code><span>List all generated agent certificates</span></div>
+            <div class="cmd-row"><code>-r &lt;id&gt;</code><code>-revoke &lt;id&gt;</code><span>Revoke an agent certificate by ID</span></div>
+          </div>
+        </div>
+      </div>
 
-                            <line x1="340" y1="232" x2="85" y2="320" stroke="#555555" stroke-width="1" marker-end="url(#arr)" opacity="0.5" />
-                            <line x1="340" y1="232" x2="250" y2="320" stroke="#555555" stroke-width="1" marker-end="url(#arr)" opacity="0.5" />
-                            <line x1="340" y1="232" x2="415" y2="320" stroke="#555555" stroke-width="1" marker-end="url(#arr)" opacity="0.5" />
-                            <line x1="340" y1="232" x2="565" y2="320" stroke="#555555" stroke-width="0.8" marker-end="url(#arr)" opacity="0.2" />
+      <div class="tab-panel" id="tab-operators">
+        <div class="cmd-scroll">
+          <div class="cmd-grid">
+            <div class="cmd-head"><span>Option</span><span>Long Option</span><span>Description</span></div>
+            <div class="cmd-row"><code>-AO</code><code>-add-operator</code><span>Add a new operator</span></div>
+            <div class="cmd-row"><code>-RO</code><code>-remove-operator</code><span>Remove an existing operator</span></div>
+            <div class="cmd-row"><code>-OP</code><code>-operator-permission</code><span>View or update operator role</span></div>
+            <div class="cmd-row"><code>-u &lt;user&gt;</code><code>-username &lt;user&gt;</code><span>Operator username</span></div>
+            <div class="cmd-row"><code>-pw &lt;pass&gt;</code><code>-password &lt;pass&gt;</code><span>Operator password (min 8 characters)</span></div>
+            <div class="cmd-row"><code>-r &lt;role&gt;</code><code>-role &lt;role&gt;</code><span>Operator role: SUPER / ADMIN / OPERATOR / MEMBER</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-                            <text x="200" y="282" text-anchor="middle" fill="#555555" font-family="Courier New" font-size="8" opacity="0.8">mTLS / AES-256-GCM</text>
+  <section id="architecture" class="section">
+    <div class="container">
+      <div class="sec-label reveal"><i class="fas fa-diagram-project"></i> Architecture</div>
+      <h2 class="sec-title reveal">System Architecture</h2>
+      <p class="sec-sub reveal">How RAVEN C2 v3.0 components interconnect in a live deployment.</p>
 
-                            <rect x="36" y="152" width="108" height="44" rx="0" fill="#111111" stroke="#1c1c1c" stroke-width="1" opacity="0.7" />
-                            <text x="90" y="171" text-anchor="middle" fill="#3a3a3a" font-family="Space Grotesk" font-size="8" font-weight="600">OUTPUT LOGS</text>
-                            <text x="90" y="185" text-anchor="middle" fill="#2a2a2a" font-family="Courier New" font-size="7">./output</text>
-                            <line x1="200" y1="195" x2="144" y2="185" stroke="#2a2a2a" stroke-width="1" stroke-dasharray="3 2" />
+      <div class="arch-wrap">
+        <div class="arch-diagram reveal">
+          <svg viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L7,3 z" fill="#555555" opacity="0.9" />
+              </marker>
+            </defs>
+            <rect x="220" y="16" width="240" height="64" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
+            <text x="340" y="42" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="10" font-weight="600" letter-spacing="1">OPERATOR INTERFACES</text>
+            <text x="340" y="60" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="9">Web Panel · CLI · JavaFX GUI</text>
+            <rect x="200" y="152" width="280" height="80" fill="#111111" stroke="#555555" stroke-width="1.5" />
+            <text x="340" y="182" text-anchor="middle" fill="#ffffff" font-family="Space Grotesk" font-size="12" font-weight="700" letter-spacing="1.5">RAVEN C2 SERVER</text>
+            <text x="340" y="200" text-anchor="middle" fill="#777777" font-family="Courier New" font-size="9">Session Manager · mTLS Auth · AES-256-GCM</text>
+            <text x="340" y="216" text-anchor="middle" fill="#777777" font-family="Courier New" font-size="9">Event System · Cert Manager · File Transfer</text>
+            <line x1="340" y1="80" x2="340" y2="152" stroke="#555555" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)" opacity="0.7" />
+            <rect x="20" y="320" width="130" height="68" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
+            <text x="85" y="344" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="9" font-weight="700">RAVEN AGENT</text>
+            <text x="85" y="360" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="8">192.168.1.42</text>
+            <text x="85" y="374" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="7">session-1 · mTLS</text>
+            <rect x="185" y="320" width="130" height="68" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
+            <text x="250" y="344" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="9" font-weight="700">METERPRETER</text>
+            <text x="250" y="360" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="8">10.0.0.15</text>
+            <text x="250" y="374" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="7">session-2 · multi-proto</text>
+            <rect x="350" y="320" width="130" height="68" fill="#111111" stroke="#2a2a2a" stroke-width="1" />
+            <text x="415" y="344" text-anchor="middle" fill="#777777" font-family="Space Grotesk" font-size="9" font-weight="700">REVERSE SHELL</text>
+            <text x="415" y="360" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="8">172.16.0.8</text>
+            <text x="415" y="374" text-anchor="middle" fill="#3a3a3a" font-family="Courier New" font-size="7">session-3 · tcp</text>
+            <rect x="515" y="320" width="130" height="68" fill="#0a0a0a" stroke="#1a1a1a" stroke-width="1" stroke-dasharray="3 2" opacity="0.5" />
+            <text x="580" y="357" text-anchor="middle" fill="#2a2a2a" font-family="Space Grotesk" font-size="9">+ more agents</text>
+            <line x1="340" y1="232" x2="85" y2="320" stroke="#555555" stroke-width="1" marker-end="url(#arr)" opacity="0.5" />
+            <line x1="340" y1="232" x2="250" y2="320" stroke="#555555" stroke-width="1" marker-end="url(#arr)" opacity="0.5" />
+            <line x1="340" y1="232" x2="415" y2="320" stroke="#555555" stroke-width="1" marker-end="url(#arr)" opacity="0.5" />
+            <line x1="340" y1="232" x2="565" y2="320" stroke="#555555" stroke-width="0.8" marker-end="url(#arr)" opacity="0.2" />
+            <text x="200" y="282" text-anchor="middle" fill="#555555" font-family="Courier New" font-size="8" opacity="0.8">mTLS / AES-256-GCM</text>
+            <rect x="36" y="152" width="108" height="44" fill="#111111" stroke="#1c1c1c" stroke-width="1" opacity="0.7" />
+            <text x="90" y="171" text-anchor="middle" fill="#3a3a3a" font-family="Space Grotesk" font-size="8" font-weight="600">OUTPUT LOGS</text>
+            <text x="90" y="185" text-anchor="middle" fill="#2a2a2a" font-family="Courier New" font-size="7">./output</text>
+            <line x1="200" y1="195" x2="144" y2="185" stroke="#2a2a2a" stroke-width="1" stroke-dasharray="3 2" />
+            <rect x="536" y="152" width="108" height="44" fill="#111111" stroke="#1c1c1c" stroke-width="1" opacity="0.7" />
+            <text x="590" y="171" text-anchor="middle" fill="#3a3a3a" font-family="Space Grotesk" font-size="8" font-weight="600">CONFIG</text>
+            <text x="590" y="185" text-anchor="middle" fill="#2a2a2a" font-family="Courier New" font-size="7">server.properties</text>
+            <line x1="480" y1="195" x2="536" y2="185" stroke="#2a2a2a" stroke-width="1" stroke-dasharray="3 2" />
+          </svg>
+        </div>
 
-                            <rect x="536" y="152" width="108" height="44" rx="0" fill="#111111" stroke="#1c1c1c" stroke-width="1" opacity="0.7" />
-                            <text x="590" y="171" text-anchor="middle" fill="#3a3a3a" font-family="Space Grotesk" font-size="8" font-weight="600">CONFIG</text>
-                            <text x="590" y="185" text-anchor="middle" fill="#2a2a2a" font-family="Courier New" font-size="7">server.properties</text>
-                            <line x1="480" y1="195" x2="536" y2="185" stroke="#2a2a2a" stroke-width="1" stroke-dasharray="3 2" />
-                        </svg>
-                    </div>
-
-                    <div class="arch-notes">
-                        <div class="arch-note reveal">
-                            <div class="an-dot"></div>
-                            <div>
-                                <h4>Operator Interfaces</h4>
-                                <p>Web Panel (browser), CLI terminal, and JavaFX desktop GUI — all connecting to the same C2 server core.</p>
-                            </div>
-                        </div>
-                        <div class="arch-note reveal">
-                            <div class="an-dot"></div>
-                            <div>
-                                <h4>C2 Server Core</h4>
-                                <p>Thread-safe session manager, mTLS auth, AES-256-GCM encryption, event-driven architecture, and certificate lifecycle manager.</p>
-                            </div>
-                        </div>
-                        <div class="arch-note reveal">
-                            <div class="an-dot"></div>
-                            <div>
-                                <h4>Multi-Protocol Agents</h4>
-                                <p>Supports RAVEN agents (mTLS), Meterpreter sessions, and plain reverse shells — all managed from one console.</p>
-                            </div>
-                        </div>
-                        <div class="arch-note reveal">
-                            <div class="an-dot"></div>
-                            <div>
-                                <h4>Output &amp; Config</h4>
-                                <p>All session I/O captured to timestamped logs in <code>./output</code>. All settings configurable via <code>server.properties</code>.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="arch-notes">
+          <div class="arch-note reveal">
+            <div class="an-dot"></div>
+            <div>
+              <h4>Operator Interfaces</h4>
+              <p>Web Panel (browser), CLI terminal, and JavaFX desktop GUI — all connecting to the same C2 server core.</p>
             </div>
-        </section>
+          </div>
+          <div class="arch-note reveal">
+            <div class="an-dot"></div>
+            <div>
+              <h4>C2 Server Core</h4>
+              <p>Thread-safe session manager, mTLS auth, AES-256-GCM encryption, event-driven architecture, and certificate lifecycle manager.</p>
+            </div>
+          </div>
+          <div class="arch-note reveal">
+            <div class="an-dot"></div>
+            <div>
+              <h4>Multi-Protocol Agents</h4>
+              <p>Supports RAVEN agents (mTLS), Meterpreter sessions, and plain reverse shells — all managed from one console.</p>
+            </div>
+          </div>
+          <div class="arch-note reveal">
+            <div class="an-dot"></div>
+            <div>
+              <h4>Output &amp; Config</h4>
+              <p>All session I/O captured to timestamped logs in <code>./output</code>. All settings configurable via <code>server.properties</code>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <section id="config" class="section section-alt">
-            <div class="container">
-                <div class="sec-label reveal"><i class="fas fa-gear"></i> Configuration</div>
-                <h2 class="sec-title reveal">Configuration Reference</h2>
-                <p class="sec-sub reveal">All parameters available in <code>config/server/raven.properties</code>.</p>
+  <section id="config" class="section section-alt">
+    <div class="container">
+      <div class="sec-label reveal"><i class="fas fa-gear"></i> Configuration</div>
+      <h2 class="sec-title reveal">Configuration Reference</h2>
+      <p class="sec-sub reveal">All parameters available in <code>config/server/raven.properties</code>.</p>
 
-                <div class="codeblock reveal" style="margin-bottom: 32px">
-                    <div class="cb-header">
-                        <span class="cb-lang">properties</span>
-                        <button class="cb-copy" data-copy="server.host=0.0.0.0&#10;server.port=4444&#10;server.mode=multi&#10;web.host=0.0.0.0&#10;web.port=5000&#10;db.type=none&#10;cert.tls.protocol=TLSv1.3&#10;logging.level=INFO&#10;logging.file.enabled=false"><i class="fas fa-copy"></i></button>
-                    </div>
-                    <pre><code><span class="cm"># C2 listener</span>
+      <div class="codeblock reveal" style="margin-bottom:32px">
+        <div class="cb-header">
+          <span class="cb-lang">properties</span>
+          <button class="cb-copy" data-copy="server.host=0.0.0.0&#10;server.port=4444&#10;server.mode=multi&#10;web.host=0.0.0.0&#10;web.port=5000&#10;db.type=none&#10;cert.tls.protocol=TLSv1.3&#10;logging.level=INFO&#10;logging.file.enabled=false"><i class="fas fa-copy"></i></button>
+        </div>
+        <pre><code><span class="cm"># C2 listener</span>
 server.host=0.0.0.0
 server.port=4444
 server.mode=multi
@@ -2046,263 +705,152 @@ cert.tls.protocol=TLSv1.3
 <span class="cm"># Logging</span>
 logging.level=INFO
 logging.file.enabled=false</code></pre>
-                </div>
+      </div>
 
-                <div class="cfg-groups">
-                    <div class="cfg-group reveal">
-                        <div class="cfg-group-label"><i class="fas fa-network-wired"></i> Server</div>
-                        <div class="cfg-scroll">
-                            <div class="cfg-table">
-                                <div class="cfg-head"><span>Key</span><span>Default</span><span>Description</span></div>
-                                <div class="cfg-row"><code>server.host</code><code>0.0.0.0</code><span>Bind address for C2 listener</span></div>
-                                <div class="cfg-row"><code>server.port</code><code>4444</code><span>Default agent listener port</span></div>
-                                <div class="cfg-row"><code>server.mode</code><code>multi</code><span>Listener mode (single / multi)</span></div>
-                                <div class="cfg-row"><code>web.host</code><code>0.0.0.0</code><span>Web panel bind address</span></div>
-                                <div class="cfg-row"><code>web.port</code><code>5000</code><span>Web panel HTTP port</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="cfg-group reveal">
-                        <div class="cfg-group-label"><i class="fas fa-database"></i> Database</div>
-                        <div class="cfg-scroll">
-                            <div class="cfg-table">
-                                <div class="cfg-head"><span>Value</span><span>db.type</span><span>Notes</span></div>
-                                <div class="cfg-row"><code>In-memory</code><code>none</code><span>Default, no persistence</span></div>
-                                <div class="cfg-row"><code>SQLite</code><code>sqlite</code><span>File-based, no server required</span></div>
-                                <div class="cfg-row"><code>PostgreSQL</code><code>postgres</code><span>Production-grade relational DB</span></div>
-                                <div class="cfg-row"><code>MongoDB</code><code>mongo</code><span>Document-oriented store</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="cfg-group reveal">
-                        <div class="cfg-group-label"><i class="fas fa-lock"></i> Security</div>
-                        <div class="cfg-scroll">
-                            <div class="cfg-table">
-                                <div class="cfg-head"><span>Key</span><span>Default</span><span>Description</span></div>
-                                <div class="cfg-row"><code>cert.tls.protocol</code><code>TLSv1.3</code><span>TLS protocol version enforced</span></div>
-                                <div class="cfg-row"><code>logging.level</code><code>INFO</code><span>Log verbosity level</span></div>
-                                <div class="cfg-row"><code>logging.file.enabled</code><code>false</code><span>Enable file-based logging</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <div class="cfg-groups">
+        <div class="cfg-group reveal">
+          <div class="cfg-group-label"><i class="fas fa-network-wired"></i> Server</div>
+          <div class="cfg-scroll">
+            <div class="cfg-table">
+              <div class="cfg-head"><span>Key</span><span>Default</span><span>Description</span></div>
+              <div class="cfg-row"><code>server.host</code><code>0.0.0.0</code><span>Bind address for C2 listener</span></div>
+              <div class="cfg-row"><code>server.port</code><code>4444</code><span>Default agent listener port</span></div>
+              <div class="cfg-row"><code>server.mode</code><code>multi</code><span>Listener mode (single / multi)</span></div>
+              <div class="cfg-row"><code>web.host</code><code>0.0.0.0</code><span>Web panel bind address</span></div>
+              <div class="cfg-row"><code>web.port</code><code>5000</code><span>Web panel HTTP port</span></div>
             </div>
-        </section>
+          </div>
+        </div>
 
-        <section class="disclaimer-section">
-            <div class="container">
-                <div class="disclaimer-box reveal">
-                    <div class="disclaimer-header">
-                        <i class="fas fa-gavel"></i>
-                        <h3>LEGAL DISCLAIMER</h3>
-                    </div>
-                    <p class="disclaimer-text">RAVEN C2 Framework is an offensive security tool designed exclusively for authorized penetration testing and red team engagements, controlled lab and research environments, and cybersecurity education under supervised conditions. You MUST have explicit written authorization from the system/network owner before deployment. Unauthorized use constitutes a criminal offense under applicable international and local cybercrime laws.</p>
-                    <table class="legal-table">
-                        <thead>
-                            <tr>
-                                <th>Jurisdiction</th>
-                                <th>Applicable Law</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>🇺🇸 United States</td>
-                                <td>Computer Fraud and Abuse Act (CFAA) — 18 U.S.C. § 1030</td>
-                            </tr>
-                            <tr>
-                                <td>🇬🇧 United Kingdom</td>
-                                <td>Computer Misuse Act 1990 (CMA)</td>
-                            </tr>
-                            <tr>
-                                <td>🇪🇺 European Union</td>
-                                <td>Directive on Attacks Against Information Systems (2013/40/EU)</td>
-                            </tr>
-                            <tr>
-                                <td>🇦🇺 Australia</td>
-                                <td>Criminal Code Act 1995 — Part 10.7</td>
-                            </tr>
-                            <tr>
-                                <td>🇮🇩 Indonesia</td>
-                                <td>UU ITE No. 19 Tahun 2016 — Pasal 30-32</td>
-                            </tr>
-                            <tr>
-                                <td>🌐 International</td>
-                                <td>Budapest Convention on Cybercrime (ETS No. 185)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+        <div class="cfg-group reveal">
+          <div class="cfg-group-label"><i class="fas fa-database"></i> Database</div>
+          <div class="cfg-scroll">
+            <div class="cfg-table">
+              <div class="cfg-head"><span>Value</span><span>db.type</span><span>Notes</span></div>
+              <div class="cfg-row"><code>In-memory</code><code>none</code><span>Default, no persistence</span></div>
+              <div class="cfg-row"><code>SQLite</code><code>sqlite</code><span>File-based, no server required</span></div>
+              <div class="cfg-row"><code>PostgreSQL</code><code>postgres</code><span>Production-grade relational DB</span></div>
+              <div class="cfg-row"><code>MongoDB</code><code>mongo</code><span>Document-oriented store</span></div>
             </div>
-        </section>
+          </div>
+        </div>
 
-        <section class="cta-final">
-            <div class="container">
-                <div class="cta-inner reveal">
-                    <div>
-                        <h2>Ready to deploy</h2>
-                        <p>Explore the source, open issues, or contribute to RAVEN C2 on GitHub.</p>
-                    </div>
-                    <div class="cta-btns">
-                        <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="cta-primary"><i class="fab fa-github"></i>View on GitHub</a>
-                        <a href="https://github.com/MatrixTM26/RAVEN/issues" target="_blank" class="cta-outline"><i class="fas fa-circle-exclamation"></i>Open an Issue</a>
-                    </div>
-                </div>
+        <div class="cfg-group reveal">
+          <div class="cfg-group-label"><i class="fas fa-lock"></i> Security</div>
+          <div class="cfg-scroll">
+            <div class="cfg-table">
+              <div class="cfg-head"><span>Key</span><span>Default</span><span>Description</span></div>
+              <div class="cfg-row"><code>cert.tls.protocol</code><code>TLSv1.3</code><span>TLS protocol version enforced</span></div>
+              <div class="cfg-row"><code>logging.level</code><code>INFO</code><span>Log verbosity level</span></div>
+              <div class="cfg-row"><code>logging.file.enabled</code><code>false</code><span>Enable file-based logging</span></div>
             </div>
-        </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <footer class="footer">
-            <div class="container">
-                <div class="footer-top">
-                    <div class="footer-brand">
-                        <img src="public/logo.svg" alt="RAVEN C2" class="footer-logo" />
-                        <div>
-                            <div class="footer-name">RAVEN C2</div>
-                            <div class="footer-sub">Command and Control Framework v3.0</div>
-                        </div>
-                    </div>
-                    <div class="footer-cols">
-                        <div class="footer-col">
-                            <div class="fcol-label">Docs</div>
-                            <a href="#overview">Overview</a>
-                            <a href="#features">Features</a>
-                            <a href="#installation">Installation</a>
-                            <a href="#commands">Commands</a>
-                        </div>
-                        <div class="footer-col">
-                            <div class="fcol-label">Reference</div>
-                            <a href="#architecture">Architecture</a>
-                            <a href="#config">Configuration</a>
-                            <a href="https://github.com/MatrixTM26/RAVEN" target="_blank">GitHub</a>
-                            <a href="https://github.com/MatrixTM26/RAVEN/wiki" target="_blank">Wiki</a>
-                        </div>
-                        <div class="footer-col">
-                            <div class="fcol-label">Legal</div>
-                            <a href="https://github.com/MatrixTM26/RAVEN/blob/main/LICENSE" target="_blank">AGPL v3</a>
-                            <a href="https://github.com/MatrixTM26/RAVEN/blob/main/.github/CODE_OF_CONDUCT.md" target="_blank">Code of Conduct</a>
-                            <a href="https://github.com/MatrixTM26/RAVEN/blob/main/.github/CONTRIBUTING.md" target="_blank">Contributing</a>
-                        </div>
-                        <div class="footer-col">
-                            <div class="fcol-label">Support</div>
-                            <a href="https://ko-fi.com/MatrixTM26" target="_blank">Ko-fi</a>
-                            <a href="https://trakteer.id/MatrixTM26" target="_blank">Trakteer</a>
-                            <a href="https://paypal.me/TeukuMaulana" target="_blank">PayPal</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <span>RAVEN C2 by <a href="https://github.com/MatrixTM26" target="_blank">MatrixTM26</a> — AGPL v3 — Copyright ©2023-2026</span>
-                    <span>For authorized red team use only.</span>
-                </div>
-            </div>
-        </footer>
+    </div>
+  </div>
 
-        <button class="to-top" id="toTop" aria-label="Back to top">
-            <i class="fas fa-chevron-up"></i>
-        </button>
+  <section class="disclaimer-section">
+    <div class="container">
+      <div class="disclaimer-box reveal">
+        <div class="disclaimer-header">
+          <i class="fas fa-gavel"></i>
+          <h3>LEGAL DISCLAIMER</h3>
+        </div>
+        <p class="disclaimer-text">
+          RAVEN C2 Framework is an offensive security tool designed exclusively for authorized penetration testing and red team engagements,
+          controlled lab and research environments, and cybersecurity education under supervised conditions.
+          You MUST have explicit written authorization from the system/network owner before deployment.
+          Unauthorized use constitutes a criminal offense under applicable international and local cybercrime laws.
+        </p>
+        <table class="legal-table">
+          <thead>
+            <tr>
+              <th>Jurisdiction</th>
+              <th>Applicable Law</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>🇺🇸 United States</td><td>Computer Fraud and Abuse Act (CFAA) — 18 U.S.C. § 1030</td></tr>
+            <tr><td>🇬🇧 United Kingdom</td><td>Computer Misuse Act 1990 (CMA)</td></tr>
+            <tr><td>🇪🇺 European Union</td><td>Directive on Attacks Against Information Systems (2013/40/EU)</td></tr>
+            <tr><td>🇦🇺 Australia</td><td>Criminal Code Act 1995 — Part 10.7</td></tr>
+            <tr><td>🇮🇩 Indonesia</td><td>UU ITE No. 19 Tahun 2016 — Pasal 30-32</td></tr>
+            <tr><td>🌐 International</td><td>Budapest Convention on Cybercrime (ETS No. 185)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
-        <script>
-            const burgerBtn = document.getElementById("burgerBtn");
-            const burgerIcon = document.getElementById("burgerIcon");
-            const mobileDrawer = document.getElementById("mobileDrawer");
-            const drawerOverlay = document.getElementById("drawerOverlay");
-            const drawerClose = document.getElementById("drawerClose");
+  <section class="cta-final">
+    <div class="container">
+      <div class="cta-inner reveal">
+        <div>
+          <h2>Ready to deploy</h2>
+          <p>Explore the source, open issues, or contribute to RAVEN C2 on GitHub.</p>
+        </div>
+        <div class="cta-btns">
+          <a href="https://github.com/MatrixTM26/RAVEN" target="_blank" class="cta-primary"><i class="fab fa-github"></i>View on GitHub</a>
+          <a href="https://github.com/MatrixTM26/RAVEN/issues" target="_blank" class="cta-outline"><i class="fas fa-circle-exclamation"></i>Open an Issue</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-            function openDrawer() {
-                mobileDrawer.classList.add("open");
-                drawerOverlay.classList.add("open");
-                burgerIcon.className = "fas fa-xmark";
-            }
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <img src="public/logo.svg" alt="RAVEN C2" class="footer-logo" />
+          <div>
+            <div class="footer-name">RAVEN C2</div>
+            <div class="footer-sub">Command and Control Framework v3.0</div>
+          </div>
+        </div>
+        <div class="footer-cols">
+          <div class="footer-col">
+            <div class="fcol-label">Docs</div>
+            <a href="#overview">Overview</a>
+            <a href="#features">Features</a>
+            <a href="#installation">Installation</a>
+            <a href="#commands">Commands</a>
+          </div>
+          <div class="footer-col">
+            <div class="fcol-label">Reference</div>
+            <a href="#architecture">Architecture</a>
+            <a href="#config">Configuration</a>
+            <a href="https://github.com/MatrixTM26/RAVEN" target="_blank">GitHub</a>
+            <a href="https://github.com/MatrixTM26/RAVEN/wiki" target="_blank">Wiki</a>
+          </div>
+          <div class="footer-col">
+            <div class="fcol-label">Legal</div>
+            <a href="https://github.com/MatrixTM26/RAVEN/blob/main/LICENSE" target="_blank">AGPL v3</a>
+            <a href="https://github.com/MatrixTM26/RAVEN/blob/main/.github/CODE_OF_CONDUCT.md" target="_blank">Code of Conduct</a>
+            <a href="https://github.com/MatrixTM26/RAVEN/blob/main/.github/CONTRIBUTING.md" target="_blank">Contributing</a>
+          </div>
+          <div class="footer-col">
+            <div class="fcol-label">Support</div>
+            <a href="https://ko-fi.com/MatrixTM26" target="_blank">Ko-fi</a>
+            <a href="https://trakteer.id/MatrixTM26" target="_blank">Trakteer</a>
+            <a href="https://paypal.me/TeukuMaulana" target="_blank">PayPal</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>RAVEN C2 by <a href="https://github.com/MatrixTM26/RAVEN" target="_blank">MatrixTM26</a> — AGPL v3 — Copyright &copy;2023-2026</span>
+        <span>For authorized red team use only.</span>
+      </div>
+    </div>
+  </footer>
 
-            function closeDrawer() {
-                mobileDrawer.classList.remove("open");
-                drawerOverlay.classList.remove("open");
-                burgerIcon.className = "fas fa-bars";
-            }
+  <button class="to-top" id="toTop" aria-label="Back to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
 
-            burgerBtn.addEventListener("click", openDrawer);
-            drawerClose.addEventListener("click", closeDrawer);
-            drawerOverlay.addEventListener("click", closeDrawer);
-
-            document.querySelectorAll(".drawer-item").forEach((item) => {
-                item.addEventListener("click", closeDrawer);
-            });
-
-            const track = document.getElementById("screenshotTrack");
-            const dots = document.querySelectorAll(".screenshot-dot");
-            const titleEl = document.getElementById("screenshotTitle");
-            const titles = ["RAVEN-C2 — web panel", "RAVEN-C2 — sessions", "RAVEN-C2 — terminal", "RAVEN-C2 — cli mode", "RAVEN-C2 — javafx gui", "RAVEN-C2 — dashboard"];
-            let currentSlide = 0;
-            const totalSlides = 6;
-
-            function goToSlide(n) {
-                currentSlide = (n + totalSlides) % totalSlides;
-                track.style.transform = `translateX(-${currentSlide * 100}%)`;
-                dots.forEach((d, i) => d.classList.toggle("active", i === currentSlide));
-                titleEl.textContent = titles[currentSlide];
-            }
-
-            document.getElementById("ssPrev").addEventListener("click", () => goToSlide(currentSlide - 1));
-            document.getElementById("ssNext").addEventListener("click", () => goToSlide(currentSlide + 1));
-            dots.forEach((d) => d.addEventListener("click", () => goToSlide(parseInt(d.dataset.idx))));
-
-            setInterval(() => goToSlide(currentSlide + 1), 4000);
-
-            document.querySelectorAll(".tab").forEach((tab) => {
-                tab.addEventListener("click", () => {
-                    document.querySelectorAll(".tab").forEach((t) => t.classList.remove("active"));
-                    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
-                    tab.classList.add("active");
-                    document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
-                });
-            });
-
-            document.querySelectorAll(".cb-copy").forEach((btn) => {
-                btn.addEventListener("click", () => {
-                    const text = btn.dataset.copy.replace(/&#10;/g, "\n");
-                    navigator.clipboard.writeText(text).then(() => {
-                        btn.innerHTML = '<i class="fas fa-check"></i>';
-                        setTimeout(() => {
-                            btn.innerHTML = '<i class="fas fa-copy"></i>';
-                        }, 1500);
-                    });
-                });
-            });
-
-            const toTop = document.getElementById("toTop");
-            window.addEventListener("scroll", () => {
-                toTop.classList.toggle("visible", window.scrollY > 400);
-            });
-            toTop.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
-
-            const navItems = document.querySelectorAll(".nav-item[data-section]");
-            const sections = document.querySelectorAll("section[id]");
-
-            window.addEventListener("scroll", () => {
-                let current = "";
-                sections.forEach((sec) => {
-                    if (window.scrollY >= sec.offsetTop - 100) current = sec.id;
-                });
-                navItems.forEach((item) => {
-                    item.classList.toggle("active", item.dataset.section === current);
-                });
-            });
-
-            const revealEls = document.querySelectorAll(".reveal");
-            const observer = new IntersectionObserver(
-                (entries) => {
-                    entries.forEach((entry) => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add("in");
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                },
-                { threshold: 0.1 }
-            );
-
-            revealEls.forEach((el) => observer.observe(el));
-        </script>
-    </body>
+  <script src="static/script/app.js"></script>
+</body>
 </html>
