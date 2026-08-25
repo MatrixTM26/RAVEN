@@ -1,6 +1,5 @@
 package com.raven.interfaces.GUI;
 
-import com.raven.utils.RavenConstants;
 import com.raven.core.command.AgentCommandDispatcher;
 import com.raven.core.event.EventManager.EventType;
 import com.raven.interfaces.GUI.module.UI.color.Palette;
@@ -412,6 +411,6 @@ public class GUI extends Application {
     }
 
     private String Ts() {
-        return java.time.LocalTime.now().format(RavenConstants.ChatTimeFmt);
+        return java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
     }
 }

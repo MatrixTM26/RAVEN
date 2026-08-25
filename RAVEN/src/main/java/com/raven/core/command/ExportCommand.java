@@ -2,7 +2,6 @@ package com.raven.core.command;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.raven.utils.RavenConstants;
 import com.raven.core.database.TeamDatabase;
 import com.raven.core.output.EventLog;
 import com.raven.core.output.Logger;
@@ -11,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,6 +18,7 @@ import java.util.Map;
 
 public final class ExportCommand {
 
+    private static final DateTimeFormatter FileFmt = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
     private static final DateTimeFormatter LogFmt = com.raven.utils.RavenConstants.TimestampFmt;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path OUT_DIR = Paths.get("exports");
@@ -137,7 +138,7 @@ public final class ExportCommand {
     }
 
     private void WriteRaw(String Name, String Ext, String Content) {
-        String Filename = Name + "_" + LocalDateTime.now().format(com.raven.utils.RavenConstants.FilenameFmt) + "." + Ext;
+        String Filename = Name + "_" + LocalDateTime.now().format(FileFmt) + "." + Ext;
         Path File = OUT_DIR.resolve(Filename);
         try {
             Files.writeString(File, Content);

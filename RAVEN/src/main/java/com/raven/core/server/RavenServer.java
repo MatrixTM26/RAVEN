@@ -7,7 +7,6 @@ import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
 import com.raven.core.session.Session;
 import com.raven.utils.ConnectorConfig;
-import com.raven.utils.Helper;
 import com.raven.utils.ServerConfig;
 import java.io.*;
 import java.net.*;
@@ -302,7 +301,7 @@ public final class RavenServer extends BaseServer {
                 if (C > 0) Headers.put(Line.substring(0, C).trim().toLowerCase(), Line.substring(C + 1).trim());
             }
 
-            int ContentLen = Helper.ParseInt(Headers.getOrDefault("content-length", "0"), 0);
+            int ContentLen = ParseInt(Headers.getOrDefault("content-length", "0"), 0);
             byte[] Body = ContentLen > 0 ? In.readNBytes(ContentLen) : new byte[0];
             String[] Parts = ReqLine.split(" ");
             String Method = Parts.length > 0 ? Parts[0] : "GET";
@@ -545,4 +544,11 @@ public final class RavenServer extends BaseServer {
         return Value != null ? Value.toString() : Default;
     }
 
+    private static int ParseInt(String Value, int Default) {
+        try {
+            return Integer.parseInt(Value.trim());
+        } catch (Exception Ignored) {
+            return Default;
+        }
+    }
 }
