@@ -1,8 +1,8 @@
 <div align="center">
-    <img src="public/raven.svg" width="50%" />
+    <img src="public/raven.svg" width="240px" />
 </div>
 
-# RAVEN
+# RAVEN C2 Framework
 
 A multi-platform adversary emulation framework.
 
@@ -101,14 +101,14 @@ git clone --branch contrib https://github.com/MatrixTM26/RAVEN.git
 cd RAVEN
 ```
 
-> **MASTER** — Reserved for owner/admin commits and upcoming version development only.
+> **MASTER | SEC | DEV** — Reserved for owner/admin commits and upcoming version development only.
 
 </details>
 
 ### 2. Build the Project
 
 ```bash
-mvn clean package -q
+mvn clean package -q -X
 ```
 
 Output: `target/raven-3.0.0.jar`
