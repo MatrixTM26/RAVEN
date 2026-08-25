@@ -52,12 +52,16 @@ jobs:
                   path: output/raven.jar
                   retention-days: 30
 
+            - name: Create Tag
+              run: |
+                  git tag "v3.0-build-${{ github.run_number }}"
+                  git push origin "v3.0-build-${{ github.run_number }}"
+
             - name: Create Release
-              if: github.ref == 'refs/heads/main'
               uses: softprops/action-gh-release@v2
               with:
                   tag_name: v3.0-build-${{ github.run_number }}
-                  name: "RAVEN C2 v3.0 - #${{ github.run_number }}"
+                  name: "RAVEN C2 v3.0 - Build #${{ github.run_number }}"
                   files: output/raven.jar
                   generate_release_notes: false
               env:
