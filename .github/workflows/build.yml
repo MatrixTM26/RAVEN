@@ -27,12 +27,13 @@ jobs:
               run: rm -rf ~/.m2/repository/org/openjfx
 
             - name: Build With Maven
+              working-directory: RAVEN
               run: mvn clean package -DskipTests -Plinux
 
             - name: Copy JAR To Output Folder
               run: |
                   mkdir -p output
-                  JAR=$(ls target/*.jar | grep -v original | head -1)
+                  JAR=$(ls RAVEN/target/*.jar | grep -v original | head -1)
                   cp -r "$JAR" output/raven.jar
                   echo "JAR copied: $JAR"
 
