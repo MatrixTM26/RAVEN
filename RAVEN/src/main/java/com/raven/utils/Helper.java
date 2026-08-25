@@ -110,6 +110,10 @@ public final class Helper {
         return Default;
     }
 
+    public static int ParseInt(String Value) {
+        return ParseInt(Value, -1);
+    }
+
     public static int ParseInt(String Value, int Default) {
         try {
             return Integer.parseInt(Value.trim());

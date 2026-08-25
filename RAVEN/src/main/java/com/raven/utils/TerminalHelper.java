@@ -1,6 +1,7 @@
 package com.raven.utils;
 
 import java.util.concurrent.TimeUnit;
+import com.raven.utils.SystemHelper;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class TerminalHelper {
@@ -45,15 +46,6 @@ public final class TerminalHelper {
         return Detected;
     }
 
-    public static void Clear() {
-        try {
-            if (IsWindows()) new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
-            else             new ProcessBuilder("clear").inheritIO().start().waitFor();
-        } catch (Exception Ignored) {
-            System.out.print("\033[H\033[2J");
-            System.out.flush();
-        }
-    }
 
     public static String OutputBox(String Output) {
         int Width     = Math.max(34, ContentWidth());
@@ -110,12 +102,12 @@ public final class TerminalHelper {
         return "  " + Text;
     }
 
-    private static boolean IsWindows() {
+    private static boolean SystemHelper.IsWindows() {
         return System.getProperty("os.name", "").toLowerCase().contains("win");
     }
 
     private static int Detect() {
-        if (IsWindows()) {
+        if (SystemHelper.IsWindows()) {
             Integer Width = DetectWindowsViaPowerShell();
             if (Width != null) return Width;
             Width = DetectWindowsViaModeCon();

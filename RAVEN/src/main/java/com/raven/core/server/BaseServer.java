@@ -31,8 +31,8 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class BaseServer {
 
-    protected static final byte[] EndMarker = "<END>".getBytes();
-    protected static final byte[] MetaMarker = "<META>".getBytes();
+    protected static final byte[] EndMarker  = "<END>".getBytes(StandardCharsets.UTF_8);
+    protected static final byte[] MetaMarker = "<META>".getBytes(StandardCharsets.UTF_8);
     protected static final Gson Gson = new Gson();
     protected static final int MinFrameBytes = 12 + 16;
 
