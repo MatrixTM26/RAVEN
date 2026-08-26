@@ -16,6 +16,7 @@ import com.raven.core.server.RavenServer;
 import com.raven.core.session.Session;
 import com.raven.interfaces.CLI.core.web.WebPanelManager;
 import com.raven.utils.AnsiColor;
+import com.raven.utils.Helper;
 import com.raven.utils.ProfileManager;
 import com.raven.utils.OperatorConfig;
 import com.raven.utils.ServerConfig;
@@ -242,7 +243,7 @@ public final class CLI {
             }
             case "help" -> ShowHelp();
             case "clean" -> {
-                TerminalHelper.Clear();
+                SystemHelper.ClearScreen();
                 return 1;
             }
             case "status" -> {
@@ -272,7 +273,7 @@ public final class CLI {
             }
             case "webstart" -> {
                 String WebHost = P.length > 1 ? P[1] : Config.GetWebHost();
-                int WebPort = P.length > 2 ? ParseIntSafe(P[2], Config.GetWebPort()) : Config.GetWebPort();
+                int WebPort = P.length > 2 ? Helper.ParseInt(P[2], Config.GetWebPort()) : Config.GetWebPort();
                 WebPanelManager.Start(WebHost, WebPort, Server, ServerStartTime);
             }
             case "webstop" -> WebPanelManager.Stop();
@@ -286,7 +287,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Interactive(ParseInt(P[1]));
+                    Interactive(Integer.parseInt(P[1].trim()));
                     return 1;
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
@@ -302,7 +303,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), BuildArgs(P, 2));
+                    Execute(Integer.parseInt(P[1].trim()), BuildArgs(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -317,7 +318,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), "shell " + BuildArgs(P, 2));
+                    Execute(Integer.parseInt(P[1].trim()), "shell " + BuildArgs(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -354,7 +355,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int KillId = ParseInt(P[1]);
+                    int KillId = Integer.parseInt(P[1].trim());
                     if (Server.GetSessions().Get(KillId).isEmpty()) {
                         Logger.Warn("session-" + KillId + " not found");
                         break;
@@ -372,7 +373,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    ShowSessionInfo(ParseInt(P[1]));
+                    ShowSessionInfo(Integer.parseInt(P[1].trim()));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -383,7 +384,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), Cmd);
+                    Execute(Integer.parseInt(P[1].trim()), Cmd);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -398,7 +399,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), "self-destruct");
+                    Execute(Integer.parseInt(P[1].trim()), "self-destruct");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -409,7 +410,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), "sleep " + P[2]);
+                    Execute(Integer.parseInt(P[1].trim()), "sleep " + P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -420,18 +421,18 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(ParseInt(P[1]), "jitter " + P[2]);
+                    Execute(Integer.parseInt(P[1].trim()), "jitter " + P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
             }
             case "history" -> {
-                int AgentId = P.length > 1 ? ParseIntSafe(P[1], 0) : 0;
-                int Limit = P.length > 2 ? ParseIntSafe(P[2], 50) : 50;
+                int AgentId = P.length > 1 ? Helper.ParseInt(P[1], 0) : 0;
+                int Limit = P.length > 2 ? Helper.ParseInt(P[2], 50) : 50;
                 ShowCommandHistory(AgentId, Limit);
             }
             case "sessions-history", "sesshistory" -> {
-                int Limit = P.length > 1 ? ParseIntSafe(P[1], 50) : 50;
+                int Limit = P.length > 1 ? Helper.ParseInt(P[1], 50) : 50;
                 List<Map<String, Object>> Sessions = Db.GetSessionHistory(Limit);
                 System.out.println(TerminalHelper.Box("SESSION HISTORY (last " + Limit + ")"));
                 System.out.println();
@@ -449,7 +450,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int NoteId = ParseInt(P[1]);
+                    int NoteId = Integer.parseInt(P[1].trim());
                     Db.SetAgentNote(NoteId, BuildArgs(P, 2));
                     Logger.Custom("  %s✔ note saved for session-%d%s%n%n", AnsiColor.Green, NoteId, AnsiColor.Reset);
                 } catch (NumberFormatException Ex) {
@@ -462,7 +463,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int NoteId = ParseInt(P[1]);
+                    int NoteId = Integer.parseInt(P[1].trim());
                     String Note = Db.GetAgentNote(NoteId);
                     Logger.Custom("  %sNote [session-%d]:%s %s%n%n", AnsiColor.Red, NoteId, AnsiColor.White, Note.isBlank() ? "(empty)" : Note);
                 } catch (NumberFormatException Ex) {
@@ -656,19 +657,10 @@ public final class CLI {
                 }
                 String SaveName = P[1];
                 String SaveDesc = P.length > 2 ? BuildArgs(P, 2) : "";
-                Map<String, String> CurrentSettings = new java.util.LinkedHashMap<>();
-                CurrentSettings.put("operator.name",                 OperatorName != null ? OperatorName : "");
-                CurrentSettings.put("operator.role",                 OperatorRole != null ? OperatorRole.name() : "MEMBER");
-                CurrentSettings.put("operator.theme",                "dark");
-                CurrentSettings.put("operator.output.box",           "true");
-                CurrentSettings.put("operator.output.timestamp",     "true");
-                CurrentSettings.put("operator.session.log.limit",    "100");
-                CurrentSettings.put("operator.history.limit",        "50");
-                CurrentSettings.put("operator.auto.reconnect",       "true");
-                CurrentSettings.put("operator.chat.notify",          "true");
-                CurrentSettings.put("operator.broadcast.confirm",    "true");
-                CurrentSettings.put("operator.selfdestruct.confirm", "true");
-                if (ProfileManager.Save(SaveName, CurrentSettings, SaveDesc)) Logger.Custom("  %s✔ profile saved: %s%s%n%n", AnsiColor.Green, SaveName, AnsiColor.Reset);
+                OperatorConfig SaveConfig = new OperatorConfig();
+                if (OperatorName != null) SaveConfig.SetOperatorName(OperatorName);
+                if (OperatorRole != null) SaveConfig.SetOperatorRole(OperatorRole.name());
+                if (ProfileManager.Save(SaveName, SaveConfig.ToMap(), SaveDesc)) Logger.Custom("  %s✔ profile saved: %s%s%n%n", AnsiColor.Green, SaveName, AnsiColor.Reset);
                 else Logger.Error("failed to save profile: " + SaveName);
             }
             case "delprofile" -> {
@@ -737,7 +729,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int SessionId = ParseInt(P[1]);
+                    int SessionId = Integer.parseInt(P[1].trim());
                     String Arguments = BuildArgs(P, 2);
                     String FullInput = Arguments.isBlank() ? Cmd : Cmd + " " + Arguments;
                     Execute(SessionId, FullInput);
@@ -854,7 +846,7 @@ public final class CLI {
                 String Input = Reader.readLine();
                 if (Input == null || Input.equalsIgnoreCase("back") || Input.equalsIgnoreCase("exit")) break;
                 if (Input.isBlank()) continue;
-                if (Input.trim().equalsIgnoreCase("clean")) { TerminalHelper.Clear(); continue; }
+                if (Input.trim().equalsIgnoreCase("clean")) { SystemHelper.ClearScreen(); continue; }
                 Execute(Id, Input);
             } catch (IOException Ex) {
                 break;
@@ -942,12 +934,12 @@ public final class CLI {
             return;
         }
         for (Map<String, Object> M : Msgs) {
-            String From = M.getOrDefault("from_operator", "?").toString();
-            String To = M.getOrDefault("to_operators", "all").toString();
-            String Ts = M.getOrDefault("timestamp", "").toString();
+            String From = M.getOrDefault("From", "?").toString();
+            String To = M.getOrDefault("To", "all").toString();
+            String Ts = M.getOrDefault("Timestamp", "").toString();
             if (Ts.length() > 19) Ts = Ts.substring(11, 19);
             boolean Mine = From.equals(OperatorName);
-            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("message", ""), AnsiColor.Reset);
+            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
         }
         System.out.println();
     }
@@ -962,12 +954,12 @@ public final class CLI {
             return;
         }
         for (Map<String, Object> M : Msgs) {
-            String From = M.getOrDefault("from_operator", "?").toString();
-            String To = M.getOrDefault("to_operators", "all").toString();
-            String Ts = M.getOrDefault("timestamp", "").toString();
+            String From = M.getOrDefault("From", "?").toString();
+            String To = M.getOrDefault("To", "all").toString();
+            String Ts = M.getOrDefault("Timestamp", "").toString();
             if (Ts.length() > 19) Ts = Ts.substring(11, 19);
             boolean Mine = From.equals(OperatorName);
-            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("message", ""), AnsiColor.Reset);
+            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
         }
         System.out.println();
     }
@@ -997,17 +989,7 @@ public final class CLI {
         return D != null ? "usage: " + D.Usage() : "usage: " + Cmd;
     }
 
-    private static int ParseInt(String S) {
-        return Integer.parseInt(S.trim());
-    }
 
-    private static int ParseIntSafe(String S, int D) {
-        try {
-            return Integer.parseInt(S.trim());
-        } catch (Exception Ex) {
-            return D;
-        }
-    }
 
     private static String BuildArgs(String[] Parts, int StartIndex) {
         if (Parts.length <= StartIndex) return "";

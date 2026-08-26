@@ -70,7 +70,7 @@ public class SymmetricCryptography {
     }
 
     public byte[] EncryptString(String Text) throws Exception {
-        return Encrypt(Text.getBytes("UTF-8"));
+        return Encrypt(Text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     public String DecryptString(byte[] Data) throws Exception {

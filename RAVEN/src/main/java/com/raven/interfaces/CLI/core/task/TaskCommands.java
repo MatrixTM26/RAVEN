@@ -106,11 +106,4 @@ public final class TaskCommands {
             AnsiColor.White, PivotHost, PivotPort, AnsiColor.Reset);
     }
 
-    public static int ParseIntSafe(String Value, int Default) {
-        try {
-            return Integer.parseInt(Value.trim());
-        } catch (Exception Exception) {
-            return Default;
-        }
-    }
 }

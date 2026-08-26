@@ -7,6 +7,7 @@ import com.raven.core.event.EventManager.EventType;
 import com.raven.core.output.Logger;
 import com.raven.core.session.Session;
 import com.raven.utils.ConnectorConfig;
+import com.raven.utils.Helper;
 import com.raven.utils.ServerConfig;
 import java.io.*;
 import java.net.*;
@@ -301,7 +302,7 @@ public final class RavenServer extends BaseServer {
                 if (C > 0) Headers.put(Line.substring(0, C).trim().toLowerCase(), Line.substring(C + 1).trim());
             }
 
-            int ContentLen = ParseInt(Headers.getOrDefault("content-length", "0"), 0);
+            int ContentLen = Helper.ParseInt(Headers.getOrDefault("content-length", "0"), 0);
             byte[] Body = ContentLen > 0 ? In.readNBytes(ContentLen) : new byte[0];
             String[] Parts = ReqLine.split(" ");
             String Method = Parts.length > 0 ? Parts[0] : "GET";
@@ -329,7 +330,7 @@ public final class RavenServer extends BaseServer {
     }
 
     private int BeaconRegister(Socket Client, OutputStream Out, byte[] Body, boolean IsTls) throws Exception {
-        String Json = new String(Body, "UTF-8").trim();
+        String Json = new String(Body, java.nio.charset.StandardCharsets.UTF_8).trim();
         if (!Json.startsWith("{")) {
             HttpReply(Out, 400, "Bad Request", "Expected JSON".getBytes());
             return -1;
@@ -366,7 +367,7 @@ public final class RavenServer extends BaseServer {
         FireConnected(S, Id);
 
         String Reply = Gson.toJson(Map.of("token", Token, "key", Crypto.GetKeyAsBase64Url(), "id", Id));
-        HttpReply(Out, 200, "OK", Reply.getBytes("UTF-8"));
+        HttpReply(Out, 200, "OK", Reply.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         return Id;
     }
 
@@ -382,7 +383,7 @@ public final class RavenServer extends BaseServer {
             return;
         }
         String Cmd = PendingCommands.remove(Id);
-        byte[] Enc = Crypto.Encrypt((Cmd != null ? Cmd : "IDLE").getBytes("UTF-8"));
+        byte[] Enc = Crypto.Encrypt((Cmd != null ? Cmd : "IDLE").getBytes(java.nio.charset.StandardCharsets.UTF_8));
         HttpReply(Out, 200, "OK", Base64.getEncoder().encode(Enc));
     }
 
@@ -523,7 +524,7 @@ public final class RavenServer extends BaseServer {
 
     private static void HttpReply(OutputStream Out, int Status, String Reason, byte[] Body) throws IOException {
         String H = "HTTP/1.1 " + Status + " " + Reason + "\r\n" + "Content-Length: " + Body.length + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Connection: close\r\n\r\n";
-        Out.write(H.getBytes("UTF-8"));
+        Out.write(H.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         if (Body.length > 0) Out.write(Body);
         Out.flush();
     }
@@ -544,11 +545,4 @@ public final class RavenServer extends BaseServer {
         return Value != null ? Value.toString() : Default;
     }
 
-    private static int ParseInt(String Value, int Default) {
-        try {
-            return Integer.parseInt(Value.trim());
-        } catch (Exception Ignored) {
-            return Default;
-        }
-    }
 }

@@ -10,6 +10,8 @@ import com.raven.interfaces.CLI.core.web.WebPanelManager;
 import com.raven.interfaces.CLI.module.chat.ChatManager;
 import com.raven.interfaces.CLI.module.log.LogManager;
 import com.raven.utils.ServerConfig;
+import com.raven.utils.SystemHelper;
+import com.raven.utils.Helper;
 import com.raven.utils.TerminalHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +64,7 @@ public final class CommandDispatcher {
             }
             case "help" -> OperatorCommands.ShowHelp();
             case "clean" -> {
-                TerminalHelper.Clear();
+                SystemHelper.ClearScreen();
                 return DispatchResult.UpdateLastCount;
             }
             case "sessions", "agents" -> SessionCommands.ShowSessions();
@@ -213,8 +215,8 @@ public final class CommandDispatcher {
                 }
             }
             case "history" -> {
-                int SessionId = Parts.length > 1 ? TaskCommands.ParseIntSafe(Parts[1], 0) : 0;
-                int Limit = Parts.length > 2 ? TaskCommands.ParseIntSafe(Parts[2], 50) : 50;
+                int SessionId = Parts.length > 1 ? Helper.ParseInt(Parts[1], 0) : 0;
+                int Limit = Parts.length > 2 ? Helper.ParseInt(Parts[2], 50) : 50;
                 TaskCommands.ShowCommandHistory(SessionId, Limit);
             }
             case "note" -> {
@@ -313,7 +315,7 @@ public final class CommandDispatcher {
             }
             case "webstart" -> {
                 String WebHost = Parts.length > 1 ? Parts[1] : Config.GetWebHost();
-                int WebPort = Parts.length > 2 ? TaskCommands.ParseIntSafe(Parts[2], Config.GetWebPort()) : Config.GetWebPort();
+                int WebPort = Parts.length > 2 ? Helper.ParseInt(Parts[2], Config.GetWebPort()) : Config.GetWebPort();
                 WebPanelManager.Start(WebHost, WebPort, ServerManager.GetServer(), ServerManager.GetServerStartTime());
             }
             case "webstop" -> WebPanelManager.Stop();

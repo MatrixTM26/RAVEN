@@ -25,7 +25,7 @@ public final class CommandRegistry {
 
     public record CommandDef(String Name, String Usage, String Description, Category Category, boolean RequireTeamMode) {}
 
-    private static final Map<String, CommandDef> REGISTRY = new LinkedHashMap<>();
+    private static final Map<String, CommandDef> Registry = new LinkedHashMap<>();
 
     static {
         Register("help", "help", "Show this command reference", Category.SYSTEM, false);
@@ -138,15 +138,15 @@ public final class CommandRegistry {
     }
 
     private static void Register(String Name, String Usage, String Description, Category Category, boolean RequireTeamMode) {
-        REGISTRY.put(Name, new CommandDef(Name, Usage, Description, Category, RequireTeamMode));
+        Registry.put(Name, new CommandDef(Name, Usage, Description, Category, RequireTeamMode));
     }
 
     public static CommandDef Get(String Name) {
-        return REGISTRY.get(Name.toLowerCase());
+        return Registry.get(Name.toLowerCase());
     }
 
     public static boolean Has(String Name) {
-        return REGISTRY.containsKey(Name.toLowerCase());
+        return Registry.containsKey(Name.toLowerCase());
     }
 
     public static Map<String, CommandDef> All() {
@@ -154,7 +154,7 @@ public final class CommandRegistry {
     }
 
     public static List<CommandDef> ByCategory(Category Category) {
-        return REGISTRY.values()
+        return Registry.values()
             .stream()
             .filter(Command -> Command.Category() == Category)
             .collect(Collectors.toList());
