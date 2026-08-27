@@ -1,8 +1,10 @@
-Pull Request
+# Pull Request
 
-Description
+## Description:
 
+<!---
 Please include a summary of the changes and the motivation behind them.
+--->
 
 What does this PR do?
 
@@ -14,47 +16,41 @@ What does this PR do?
 - [ ] Security Enhancement
 - [ ] Other (describe below)
 
-Details:
+## Details:
 
-<!-- Explain your changes here -->---
+<!-- Explain your changes here -->
 
-Related Issues
+## Related Issues:
 
-Closes #
-Fixes #
-Related to #
+- Closes #
+- Fixes #
+- Related to #
 
----
-
-Type of Change
+## Type of Changes:
 
 - [x] Patch (non-breaking bug fix)
 - [x] Minor (new feature, backward compatible)
 - [ ] Major (breaking change)
 
----
+## Changes Made:
 
-Changes Made
-
-Added
+Added:
 
 -
 
-Changed
+Changed:
 
 -
 
-Removed
+Removed:
 
 -
 
-Fixed
+Fixed:
 
-- cli char formatting and clean repo from unnecessaries files
+-
 
----
-
-Security Impact
+## Security Impact:
 
 Does this change affect security?
 
@@ -63,26 +59,25 @@ Does this change affect security?
 
 If yes, explain:
 
-<!-- Security-related information -->---
+## <!-- Security-related information -->
 
-Testing
-
-Testing Environment
+## Testing Environment:
 
 - OS: 7.0.12+kali-amd64 x86_64
 - OpenJDK Version: 17
 - RAVEN-C2 Version: v3.0
 
-Test Results
+## Test Results:
 
 - [x] Build Successful
 - [x] Unit Tests Passed
 - [x] Manual Testing Completed
 - [x] No Regressions Found
 
-Provide details:
+<!---
+## Provide Details:
 
-<!-- Test evidence -->---
+Test evidence
 
 Screenshots / Logs
 
@@ -90,31 +85,29 @@ If applicable, add screenshots, terminal output, or logs.
 
 Paste output here
 
----
+--->
 
-Checklist
+## Checklist
 
-Code Quality
+### Code Quality
 
 - [x] My code follows the project's coding standards.
 - [x] I have reviewed my own code.
 - [ ] I have commented complex sections where necessary.
 - [x] No sensitive information or credentials are included.
 
-Documentation
+### Documentation
 
 - [x] Documentation has been updated.
 - [ ] README changes are included (if required).
 
-Testing
+### Testing:
 
 - [x] Existing functionality remains unaffected.
 - [x] New functionality has been tested.
 - [ ] Security implications have been considered.
 
----
-
-Contributor Declaration
+### Contributor Declaration
 
 I confirm that:
 
@@ -122,13 +115,13 @@ I confirm that:
 - I have permission to submit this code.
 - I agree that this contribution may be distributed under the project's license.
 
----
+<!---
+Additional Notes Here If Needed
+--->
 
-Additional Notes
-
-<!-- Anything maintainers should know -->---
+## <!-- Anything maintainers should know -->
 
 If you interest about this project and want to contribute, please read all guidelines.
 Thank You
 
-Thank you for contributing to RAVEN-C2-Framework.
+## Thank you for contributing to RAVEN-C2-Framework.

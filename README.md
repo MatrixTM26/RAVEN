@@ -6,8 +6,6 @@
 
 A multi-platform adversary emulation framework.
 
-> **_Author:_** _MatrixTM26_ **_GitHub:_** _[MatrixTM26](https://github.com/MatrixTM26)_
-
 ---
 
 ## Overview
@@ -95,8 +93,9 @@ cd RAVEN
 <details>
 <summary>Other branches</summary>
 
+> CONTRIB branch — for contributions, pull requests, and development
+
 ```bash
-# Contrib branch — for contributions, pull requests, and development
 git clone --branch contrib https://github.com/MatrixTM26/RAVEN.git
 cd RAVEN
 ```
@@ -243,153 +242,153 @@ java -jar target/raven-3.0.0.jar -F -TSW -tp 5001            # fmTLS + TeamServe
 
 ### Session
 
-| Command                              | Description                                                 | Permission |
-| ------------------------------------ | ----------------------------------------------------------- | ---------- |
-| `sessions`                           | List all active agent sessions                              | all        |
-| `agents`                             | Alias for `sessions`                                        | all        |
-| `stats`                              | Show session type statistics                                | all        |
-| `use <id>`                           | Enter interactive shell with agent                          | all        |
-| `sysinfo <id>`                       | Show full system info for agent                             | all        |
-| `info <id>`                          | Alias for `sysinfo`                                         | all        |
-| `exec <id> <command>`                | Execute arbitrary command on agent (raw passthrough)        | all        |
-| `shell <id> <command>`               | Execute via shell interpreter (`sh -c` / `cmd /c`)          | all        |
-| `broadcast <id,id,...\|all> <command>` | Broadcast command to selected or all agents               | all        |
-| `kill <id>`                          | Terminate an agent session                                  | all        |
-| `ping <id>`                          | Ping agent to verify liveness (raven: protocol)             | all        |
-| `reconnect <id>`                     | Ask RAVEN agent to reconnect (raven: protocol only)         | all        |
-| `self-destruct <id>`                 | Wipe agent and terminate session                            | ADMIN+     |
-| `sleep <id> <seconds>`               | Set agent sleep interval (raven: protocol)                  | all        |
-| `jitter <id> <ms>`                   | Set agent jitter delay in ms (raven: protocol)              | all        |
+| Command                                | Description                                          | Permission |
+| -------------------------------------- | ---------------------------------------------------- | ---------- |
+| `sessions`                             | List all active agent sessions                       | all        |
+| `agents`                               | Alias for `sessions`                                 | all        |
+| `stats`                                | Show session type statistics                         | all        |
+| `use <id>`                             | Enter interactive shell with agent                   | all        |
+| `sysinfo <id>`                         | Show full system info for agent                      | all        |
+| `info <id>`                            | Alias for `sysinfo`                                  | all        |
+| `exec <id> <command>`                  | Execute arbitrary command on agent (raw passthrough) | all        |
+| `shell <id> <command>`                 | Execute via shell interpreter (`sh -c` / `cmd /c`)   | all        |
+| `broadcast <id,id,...\|all> <command>` | Broadcast command to selected or all agents          | all        |
+| `kill <id>`                            | Terminate an agent session                           | all        |
+| `ping <id>`                            | Ping agent to verify liveness (raven: protocol)      | all        |
+| `reconnect <id>`                       | Ask RAVEN agent to reconnect (raven: protocol only)  | all        |
+| `self-destruct <id>`                   | Wipe agent and terminate session                     | ADMIN+     |
+| `sleep <id> <seconds>`                 | Set agent sleep interval (raven: protocol)           | all        |
+| `jitter <id> <ms>`                     | Set agent jitter delay in ms (raven: protocol)       | all        |
 
 ### Recon
 
-| Command                    | Description                                                          |
-| -------------------------- | -------------------------------------------------------------------- |
-| `whoami <id>`              | Current user — Linux: `whoami` / Windows: `whoami /all`              |
-| `id <id>`                  | User ID/groups — Linux: `id` / Windows: `whoami /groups`             |
-| `hostname <id>`            | Show agent hostname                                                  |
-| `uname <id>`               | OS/kernel info — Linux: `uname -a` / Windows: `ver + systeminfo`     |
-| `ps <id>`                  | Process list — Linux: `ps aux` / Windows: `tasklist /v`              |
-| `env <id>`                 | Environment variables — Linux: `env` / Windows: `set`               |
-| `netstat <id>`             | Network connections — Linux: `ss -tulpn` / Windows: `netstat -an`   |
-| `ifconfig <id>`            | Network interfaces — Linux: `ip addr` / Windows: `ipconfig /all`    |
-| `arp <id>`                 | ARP table — Linux: `arp -n` / Windows: `arp -a`                     |
-| `route <id>`               | Routing table — Linux: `ip route` / Windows: `route print`          |
-| `users <id>`               | Local users — Linux: `/etc/passwd` / Windows: `net user`            |
-| `groups <id>`              | Groups — Linux: `groups` / Windows: `net localgroup`                |
-| `services <id>`            | Running services — Linux: `systemctl` / Windows: `sc query`         |
-| `screenshot <id>`          | Capture desktop screenshot (raven: protocol)                         |
-| `privcheck <id>`           | Privilege check — Linux: `id+sudo -l` / Windows: `whoami /priv`     |
-| `antivirus <id>`           | Detect AV/EDR — Linux: `ps grep` / Windows: `wmic AntivirusProduct` |
-| `crontab <id>`             | Scheduled tasks — Linux: `crontab -l` / Windows: `schtasks /query`  |
-| `clipboard <id>`           | Read clipboard — Linux: `xclip/xsel` / Windows: PowerShell          |
-| `keystroke <id> <on\|off>` | Toggle keylogger on agent (raven: protocol)                          |
-| `hashdump <id>`            | Dump hashes — Linux: `/etc/shadow` / Windows: SAM (raven: protocol) |
-| `searchfiles <id> <pattern>` | File search — Linux: `find` / Windows: `where /r`                 |
-| `wifidump <id>`            | WiFi credentials — Linux: `nmcli` / Windows: `netsh wlan`           |
-| `dumpbrowsers <id>`        | Saved browser credentials (raven: protocol)                          |
-| `lastlog <id>`             | Recent logins — Linux: `last -n 20` / Windows: `net user + wevtutil` |
-| `osquery <id> <sql>`       | Run osquery SQL on agent (requires osquery installed)                |
+| Command                      | Description                                                          |
+| ---------------------------- | -------------------------------------------------------------------- |
+| `whoami <id>`                | Current user — Linux: `whoami` / Windows: `whoami /all`              |
+| `id <id>`                    | User ID/groups — Linux: `id` / Windows: `whoami /groups`             |
+| `hostname <id>`              | Show agent hostname                                                  |
+| `uname <id>`                 | OS/kernel info — Linux: `uname -a` / Windows: `ver + systeminfo`     |
+| `ps <id>`                    | Process list — Linux: `ps aux` / Windows: `tasklist /v`              |
+| `env <id>`                   | Environment variables — Linux: `env` / Windows: `set`                |
+| `netstat <id>`               | Network connections — Linux: `ss -tulpn` / Windows: `netstat -an`    |
+| `ifconfig <id>`              | Network interfaces — Linux: `ip addr` / Windows: `ipconfig /all`     |
+| `arp <id>`                   | ARP table — Linux: `arp -n` / Windows: `arp -a`                      |
+| `route <id>`                 | Routing table — Linux: `ip route` / Windows: `route print`           |
+| `users <id>`                 | Local users — Linux: `/etc/passwd` / Windows: `net user`             |
+| `groups <id>`                | Groups — Linux: `groups` / Windows: `net localgroup`                 |
+| `services <id>`              | Running services — Linux: `systemctl` / Windows: `sc query`          |
+| `screenshot <id>`            | Capture desktop screenshot (raven: protocol)                         |
+| `privcheck <id>`             | Privilege check — Linux: `id+sudo -l` / Windows: `whoami /priv`      |
+| `antivirus <id>`             | Detect AV/EDR — Linux: `ps grep` / Windows: `wmic AntivirusProduct`  |
+| `crontab <id>`               | Scheduled tasks — Linux: `crontab -l` / Windows: `schtasks /query`   |
+| `clipboard <id>`             | Read clipboard — Linux: `xclip/xsel` / Windows: PowerShell           |
+| `keystroke <id> <on\|off>`   | Toggle keylogger on agent (raven: protocol)                          |
+| `hashdump <id>`              | Dump hashes — Linux: `/etc/shadow` / Windows: SAM (raven: protocol)  |
+| `searchfiles <id> <pattern>` | File search — Linux: `find` / Windows: `where /r`                    |
+| `wifidump <id>`              | WiFi credentials — Linux: `nmcli` / Windows: `netsh wlan`            |
+| `dumpbrowsers <id>`          | Saved browser credentials (raven: protocol)                          |
+| `lastlog <id>`               | Recent logins — Linux: `last -n 20` / Windows: `net user + wevtutil` |
+| `osquery <id> <sql>`         | Run osquery SQL on agent (requires osquery installed)                |
 
 ### Filesystem
 
-| Command                          | Description                                                        |
-| -------------------------------- | ------------------------------------------------------------------ |
-| `ls <id> [path]`                 | List directory — Linux: `ls -la` / Windows: `dir`                 |
-| `pwd <id>`                       | Working directory — Linux: `pwd` / Windows: `cd`                  |
-| `cd <id> <path>`                 | Change directory on agent                                          |
-| `cat <id> <file>`                | Read file — Linux: `cat` / Windows: `type`                         |
-| `head <id> <file> [n]`           | First N lines of a file                                            |
-| `tail <id> <file> [n]`           | Last N lines of a file                                             |
-| `rm <id> <path>`                 | Delete file/dir — Linux: `rm -rf` / Windows: `del/rmdir`           |
-| `mkdir <id> <path>`              | Create directory — Linux: `mkdir -p` / Windows: `mkdir`            |
-| `cp <id> <src> <dst>`            | Copy — Linux: `cp -r` / Windows: `copy`                            |
-| `mv <id> <src> <dst>`            | Move — Linux: `mv` / Windows: `move`                               |
-| `chmod <id> <mode> <file>`       | Permissions — Linux: `chmod` / Windows: `icacls` (best-effort)     |
-| `find <id> <path> [name]`        | Find files — Linux: `find` / Windows: `where /r`                   |
-| `grep <id> <pattern> <file>`     | Search text — Linux: `grep -n` / Windows: `findstr`                |
-| `hash <id> <file> [sha256\|md5]` | File hash — Linux: `sha256sum/md5sum` / Windows: `certutil`        |
-| `download <id> <remote-path>`    | Download file from agent (raven: protocol)                         |
-| `upload <id> <local-path> [remote-path]` | Upload file to agent (raven: protocol)                   |
+| Command                                  | Description                                                    |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `ls <id> [path]`                         | List directory — Linux: `ls -la` / Windows: `dir`              |
+| `pwd <id>`                               | Working directory — Linux: `pwd` / Windows: `cd`               |
+| `cd <id> <path>`                         | Change directory on agent                                      |
+| `cat <id> <file>`                        | Read file — Linux: `cat` / Windows: `type`                     |
+| `head <id> <file> [n]`                   | First N lines of a file                                        |
+| `tail <id> <file> [n]`                   | Last N lines of a file                                         |
+| `rm <id> <path>`                         | Delete file/dir — Linux: `rm -rf` / Windows: `del/rmdir`       |
+| `mkdir <id> <path>`                      | Create directory — Linux: `mkdir -p` / Windows: `mkdir`        |
+| `cp <id> <src> <dst>`                    | Copy — Linux: `cp -r` / Windows: `copy`                        |
+| `mv <id> <src> <dst>`                    | Move — Linux: `mv` / Windows: `move`                           |
+| `chmod <id> <mode> <file>`               | Permissions — Linux: `chmod` / Windows: `icacls` (best-effort) |
+| `find <id> <path> [name]`                | Find files — Linux: `find` / Windows: `where /r`               |
+| `grep <id> <pattern> <file>`             | Search text — Linux: `grep -n` / Windows: `findstr`            |
+| `hash <id> <file> [sha256\|md5]`         | File hash — Linux: `sha256sum/md5sum` / Windows: `certutil`    |
+| `download <id> <remote-path>`            | Download file from agent (raven: protocol)                     |
+| `upload <id> <local-path> [remote-path]` | Upload file to agent (raven: protocol)                         |
 
 ### Task
 
-| Command                  | Description                                       |
-| ------------------------ | ------------------------------------------------- |
-| `tasks`                  | Show pending task queue                           |
-| `history [id] [limit]`   | Command history (all agents or a specific one)    |
-| `sesshistory [limit]`    | Session connection history from database          |
-| `note <id> <text>`       | Set a note for an agent                           |
-| `getnote <id>`           | Get the note for an agent                         |
+| Command                | Description                                    |
+| ---------------------- | ---------------------------------------------- |
+| `tasks`                | Show pending task queue                        |
+| `history [id] [limit]` | Command history (all agents or a specific one) |
+| `sesshistory [limit]`  | Session connection history from database       |
+| `note <id> <text>`     | Set a note for an agent                        |
+| `getnote <id>`         | Get the note for an agent                      |
 
 ### Lateral Movement
 
-| Command                              | Description                                                              |
-| ------------------------------------ | ------------------------------------------------------------------------ |
-| `pivot <id> <host:port>`             | Register pivot route through agent (raven: protocol)                     |
-| `portfwd <id> <lport> <rhost> <rport>` | Port forward through agent (raven: protocol)                           |
-| `socks <id> <lport>`                 | SOCKS5 proxy through agent (raven: protocol)                             |
-| `spawn <id>`                         | Spawn new agent process on target (raven: protocol)                      |
-| `shellcode <id> <hex>`               | Inject shellcode — Linux: `ptrace` / Windows: `VirtualAllocEx`           |
-| `persist <id> [method]`              | Install persistence — Linux: `cron/bashrc/systemd` / Windows: `reg/schtask` |
-| `unpersist <id> [method]`            | Remove persistence entry (raven: protocol)                               |
-| `runas <id> <user> <pass> <cmd>`     | Run as user — Linux: `su` / Windows: `runas`                             |
+| Command                                | Description                                                                 |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `pivot <id> <host:port>`               | Register pivot route through agent (raven: protocol)                        |
+| `portfwd <id> <lport> <rhost> <rport>` | Port forward through agent (raven: protocol)                                |
+| `socks <id> <lport>`                   | SOCKS5 proxy through agent (raven: protocol)                                |
+| `spawn <id>`                           | Spawn new agent process on target (raven: protocol)                         |
+| `shellcode <id> <hex>`                 | Inject shellcode — Linux: `ptrace` / Windows: `VirtualAllocEx`              |
+| `persist <id> [method]`                | Install persistence — Linux: `cron/bashrc/systemd` / Windows: `reg/schtask` |
+| `unpersist <id> [method]`              | Remove persistence entry (raven: protocol)                                  |
+| `runas <id> <user> <pass> <cmd>`       | Run as user — Linux: `su` / Windows: `runas`                                |
 
 ### Operator Management
 
-| Command                                    | Description                        | Permission  |
-| ------------------------------------------ | ---------------------------------- | ----------- |
-| `listopt`                                  | List all operators and their roles | all         |
-| `addopt <user> <pass> [SUPER\|ADMIN\|OPERATOR\|MEMBER]` | Add a new operator account | ADMIN+  |
-| `delopt <username>`                        | Delete an operator account         | ADMIN+      |
-| `kick <username>`                          | Kick and remove operator token     | SUPER only  |
-| `setrole <user> <SUPER\|ADMIN\|OPERATOR\|MEMBER>` | Change operator role        | ADMIN+      |
-| `passwd <user> <newpass>`                  | Change operator password           | ADMIN+      |
+| Command                                                 | Description                        | Permission |
+| ------------------------------------------------------- | ---------------------------------- | ---------- |
+| `listopt`                                               | List all operators and their roles | all        |
+| `addopt <user> <pass> [SUPER\|ADMIN\|OPERATOR\|MEMBER]` | Add a new operator account         | ADMIN+     |
+| `delopt <username>`                                     | Delete an operator account         | ADMIN+     |
+| `kick <username>`                                       | Kick and remove operator token     | SUPER only |
+| `setrole <user> <SUPER\|ADMIN\|OPERATOR\|MEMBER>`       | Change operator role               | ADMIN+     |
+| `passwd <user> <newpass>`                               | Change operator password           | ADMIN+     |
 
 ### Chat (TeamServer only)
 
-| Command                          | Description                               |
-| -------------------------------- | ----------------------------------------- |
-| `chat`                           | Show in-memory chat messages              |
-| `chathistory [limit]`            | Show chat history from database           |
-| `ch <recipient> <message>`       | Send a direct message to an operator      |
-| `gc <all\|name,...> <message>`   | Send a group or broadcast chat message    |
+| Command                        | Description                            |
+| ------------------------------ | -------------------------------------- |
+| `chat`                         | Show in-memory chat messages           |
+| `chathistory [limit]`          | Show chat history from database        |
+| `ch <recipient> <message>`     | Send a direct message to an operator   |
+| `gc <all\|name,...> <message>` | Send a group or broadcast chat message |
 
 ### Export
 
-| Command                     | Description                                                                        |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `export <target> <format>`  | Export data — targets: `all`, `logs`, `chat`, `history`, `sessions`, `operators`, `notes` — formats: `txt`, `json` |
+| Command                    | Description                                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `export <target> <format>` | Export data — targets: `all`, `logs`, `chat`, `history`, `sessions`, `operators`, `notes` — formats: `txt`, `json` |
 
 ### Profiles
 
-| Command                              | Description                                          |
-| ------------------------------------ | ---------------------------------------------------- |
-| `profiles`                           | List all saved operator profiles                     |
-| `profile [name]`                     | Show active profile or details of a named profile    |
-| `loadprofile <name>`                 | Load and apply a profile to current session          |
-| `saveprofile <name> [description]`   | Save current session settings as a new profile       |
-| `delprofile <name>`                  | Delete a saved profile (cannot delete `default`)     |
-| `cloneprofile <source> <target>`     | Clone an existing profile under a new name           |
-| `editprofile <name> <key> <value>`   | Set a single key in a saved profile                  |
+| Command                            | Description                                       |
+| ---------------------------------- | ------------------------------------------------- |
+| `profiles`                         | List all saved operator profiles                  |
+| `profile [name]`                   | Show active profile or details of a named profile |
+| `loadprofile <name>`               | Load and apply a profile to current session       |
+| `saveprofile <name> [description]` | Save current session settings as a new profile    |
+| `delprofile <name>`                | Delete a saved profile (cannot delete `default`)  |
+| `cloneprofile <source> <target>`   | Clone an existing profile under a new name        |
+| `editprofile <name> <key> <value>` | Set a single key in a saved profile               |
 
 ### Web Panel
 
-| Command                    | Description                     |
-| -------------------------- | ------------------------------- |
-| `webstart [host] [port]`   | Start the web panel server      |
-| `webstop`                  | Stop the web panel server       |
-| `webstatus`                | Show web panel current status   |
+| Command                  | Description                   |
+| ------------------------ | ----------------------------- |
+| `webstart [host] [port]` | Start the web panel server    |
+| `webstop`                | Stop the web panel server     |
+| `webstatus`              | Show web panel current status |
 
 ### Live Session Commands
 
 When inside an interactive session (entered via `use <id>`):
 
-| Command     | Description                 |
-| ----------- | --------------------------- |
-| `back`      | Return to the main console  |
-| `clean`     | Clear the terminal screen   |
-| `<command>` | Run any system command      |
+| Command     | Description                |
+| ----------- | -------------------------- |
+| `back`      | Return to the main console |
+| `clean`     | Clear the terminal screen  |
+| `<command>` | Run any system command     |
 
 ---
 
@@ -406,21 +405,21 @@ java -jar target/raven-3.0.0.jar -i -s 192.168.1.10
 
 ### Certificate CLI Options
 
-| Option        | Long Option          | Description                                                   |
-| ------------- | -------------------- | ------------------------------------------------------------- |
-| `-i`          | `-init-certs`        | Initialize CA and server certificates                         |
-| `-s <host>`   | `-server <host>`     | Server host used during cert init                             |
-| `-a <id>`     | `-agent <id>`        | Generate a single agent certificate                           |
-| `-m`          | `-multi`             | Generate multiple agent certificates                          |
-| `-c <count>`  | `-count <count>`     | Number of agents to generate (used with `-m`, default: `10`)  |
-| `-u <prefix>` | `-prefix <prefix>`   | Username prefix for bulk agent certs (default: `agent`)       |
-| `-ah <host>`  | `-agent-host <host>` | Agent callback host                                           |
-| `-ap <port>`  | `-agent-port <port>` | Agent callback port                                           |
-| `-am`         | `-agent-mtls`        | Enable mTLS in the generated agent                            |
-| `-ps`         | `-persistent`        | Enable persistence in the generated agent                     |
-| `-hc`         | `-hide-console`      | Hide the console window in the generated agent                |
-| `-l`          | `-list`              | List all generated agent certificates                         |
-| `-r <id>`     | `-revoke <id>`       | Revoke an agent certificate by ID                             |
+| Option        | Long Option          | Description                                                  |
+| ------------- | -------------------- | ------------------------------------------------------------ |
+| `-i`          | `-init-certs`        | Initialize CA and server certificates                        |
+| `-s <host>`   | `-server <host>`     | Server host used during cert init                            |
+| `-a <id>`     | `-agent <id>`        | Generate a single agent certificate                          |
+| `-m`          | `-multi`             | Generate multiple agent certificates                         |
+| `-c <count>`  | `-count <count>`     | Number of agents to generate (used with `-m`, default: `10`) |
+| `-u <prefix>` | `-prefix <prefix>`   | Username prefix for bulk agent certs (default: `agent`)      |
+| `-ah <host>`  | `-agent-host <host>` | Agent callback host                                          |
+| `-ap <port>`  | `-agent-port <port>` | Agent callback port                                          |
+| `-am`         | `-agent-mtls`        | Enable mTLS in the generated agent                           |
+| `-ps`         | `-persistent`        | Enable persistence in the generated agent                    |
+| `-hc`         | `-hide-console`      | Hide the console window in the generated agent               |
+| `-l`          | `-list`              | List all generated agent certificates                        |
+| `-r <id>`     | `-revoke <id>`       | Revoke an agent certificate by ID                            |
 
 ```bash
 # Generate a single agent certificate
@@ -443,14 +442,14 @@ java -jar target/raven-3.0.0.jar -r myagent
 
 ## Operator Management
 
-| Option       | Long Option            | Description                                              |
-| ------------ | ---------------------- | -------------------------------------------------------- |
-| `-AO`        | `-add-operator`        | Add a new operator                                       |
-| `-RO`        | `-remove-operator`     | Remove an existing operator                              |
-| `-OP`        | `-operator-permission` | View or update operator role                             |
-| `-u <user>`  | `-username <user>`     | Operator username                                        |
-| `-pw <pass>` | `-password <pass>`     | Operator password (min 8 characters)                     |
-| `-r <role>`  | `-role <role>`         | Operator role: `SUPER`, `ADMIN`, `OPERATOR`, `MEMBER`    |
+| Option       | Long Option            | Description                                           |
+| ------------ | ---------------------- | ----------------------------------------------------- |
+| `-AO`        | `-add-operator`        | Add a new operator                                    |
+| `-RO`        | `-remove-operator`     | Remove an existing operator                           |
+| `-OP`        | `-operator-permission` | View or update operator role                          |
+| `-u <user>`  | `-username <user>`     | Operator username                                     |
+| `-pw <pass>` | `-password <pass>`     | Operator password (min 8 characters)                  |
+| `-r <role>`  | `-role <role>`         | Operator role: `SUPER`, `ADMIN`, `OPERATOR`, `MEMBER` |
 
 ```bash
 # Add operator with default role (OPERATOR)
@@ -517,9 +516,18 @@ RAVEN supports multiple storage backends, configured in `raven.properties` via `
 - **Documentation:** [Open](https://matrixtm26.github.io/RAVEN)
 - **Wiki:** [Open](https://github.com/MatrixTM26/RAVEN/wiki)
 
-## Credit
+---
 
-- **Author:** [MatrixTM26](https://github.com/MatrixTM26)
-- **License:** [AGPL-V3](./LICENSE)
-
-<p align="center">Copyright &copy;2023-2026 MatrixTM26 &middot; All Rights Reserved</p>
+<p align="center">
+    &copy;
+    Copyright 2023-2026 
+    <a href="https://github.com/matrixtm26">@MatrixTM26</a>
+    &nbsp;
+    &middot;
+    &nbsp;
+    All right reserved.
+    <br>
+    Licensed under
+    &nbsp;
+    <a href="./LICENSE">AGPL-V3</a>
+</p>

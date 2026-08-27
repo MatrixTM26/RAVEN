@@ -2,7 +2,7 @@
 
 ## Overview
 
-RAVEN Framework is a adversary emulation framework designed for authorized security research, penetration testing, and educational purposes. This document outlines the security policy, responsible disclosure practices, and authorized use guidelines for this project.
+RAVEN C2 Framework is a adversary emulation framework _`"C2"`_ designed for authorized security research, penetration testing, and educational purposes. This document outlines the security policy, responsible disclosure practices, and authorized use guidelines for this project.
 
 ---
 
@@ -10,11 +10,11 @@ RAVEN Framework is a adversary emulation framework designed for authorized secur
 
 Security updates and vulnerability patches are provided for the following versions:
 
-| Version | Supported          | Notes                |
-| ------- | ------------------ | -------------------- |
-| Latest  | :white_check_mark: | Active development   |
-| 2.x     | :white_check_mark: | Stable release       |
-| < 1.0   | :x:                | No longer maintained |
+| Version | Supported | Notes                |
+| ------- | --------- | -------------------- |
+| Latest  | yes       | Active development   |
+| 2.x     | no        | No longer maintained |
+| < 1.0   | no        | No longer maintained |
 
 ---
 
@@ -26,7 +26,7 @@ If you discover a security vulnerability in RAVEN Framework:
 
 1. **DO NOT** open a public GitHub issue
 2. **DO NOT** post vulnerability details on social media or public forums
-3. **Email privately** to: anonymous.matrixtm26.dev@gmail.com
+3. **Email privately** to: anonymous.matrixtm26.sec@gmail.com
 
 ### Information to Include in Your Report
 
@@ -47,7 +47,7 @@ Please provide:
 
 ### Supported Contact Methods
 
-- **Email**: anonymous.matrixtm26.dev@gmail.com
+- **Email**: anonymous.matrixtm26.sec@gmail.com
 - **GitHub Security Advisory**: [Enable private vulnerability reporting]
 
 ---
@@ -201,7 +201,7 @@ If you become aware of a security incident involving RAVEN Framework:
 1. **Cease operations** immediately if unauthorized access is suspected
 2. **Preserve evidence** of the incident
 3. **Report to authorities** if applicable in your jurisdiction
-4. **Notify the project** at anonymous.matrixtm26.dev@gmail.com
+4. **Notify the project** at anonymous.matrixtm26.sec@gmail.com
 5. **Follow local incident response procedures**
 
 ---
@@ -235,7 +235,7 @@ When a version reaches end of life, no further security patches will be provided
 
 ### Security Contact
 
-- **Email**: anonymous.matrixtm26.dev@gmail.com
+- **Email**: anonymous.matrixtm26.sec@gmail.com
 - **GitHub**: @MatrixTM26
 - **Response Time**: 48 hours maximum
 
@@ -273,5 +273,5 @@ This policy may be updated periodically. Users are encouraged to review it regul
 
 ---
 
-**Last Modified**: June 4, 2026
+**Last Modified**: August 27th, 2026
 **Maintainer**: @MatrixTM26
