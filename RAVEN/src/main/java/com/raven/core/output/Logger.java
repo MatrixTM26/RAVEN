@@ -1,5 +1,6 @@
 package com.raven.core.output;
 
+import com.raven.core.output.PromptManager;
 import com.raven.utils.AnsiColor;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -54,12 +55,12 @@ public final class Logger {
             Files.createDirectories(Paths.get(Path).getParent());
         } catch (Exception Ignored) {}
         WriterThread = new Thread(() -> {
-            try (BufferedWriter Writer = new BufferedWriter(new FileWriter(Path, true))) {
+            try (BufferedWriter StrObject = new BufferedWriter(new FileWriter(Path, true))) {
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
-                        Writer.write(FileQueue.take());
-                        Writer.newLine();
-                        Writer.flush();
+                        StrObject.write(FileQueue.take());
+                        StrObject.newLine();
+                        StrObject.flush();
                     } catch (InterruptedException E) {
                         Thread.currentThread().interrupt();
                         break;
@@ -143,9 +144,21 @@ public final class Logger {
         Custom(Text, (long) DelayMs);
     }
 
+    public static void Messages(String Message, Object... Args) {
+        Info(Message, Args);
+    }
 
+    public static void Warnings(String Message, Object... Args) {
+        Warn(Message, Args);
+    }
 
+    public static void ErrorMessage(String Message, Object... Args) {
+        Error(Message, Args);
+    }
 
+    public static void Warning(String Message, Object... Args) {
+        Warn(Message, Args);
+    }
 
     public static void Shutdown() {
         if (WriterThread != null) WriterThread.interrupt();

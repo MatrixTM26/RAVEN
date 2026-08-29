@@ -7,9 +7,9 @@ import com.raven.core.command.CommandRegistry.CommandDef;
 import com.raven.core.database.TeamDatabase.OperatorRole;
 import com.raven.core.output.PromptManager;
 import com.raven.utils.AnsiColor;
-import com.raven.utils.Helper;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.TerminalHelper;
+import com.raven.utils.SystemHelper;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -98,7 +98,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(Integer.parseInt(P[1].trim()), Line.substring(Line.indexOf(P[2])));
+                    Exec(ParseInt(P[1]), Line.substring(Line.indexOf(P[2])));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -116,7 +116,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Kill(Integer.parseInt(P[1].trim()));
+                    Kill(ParseInt(P[1]));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -127,7 +127,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    ShowSessionInfo(Integer.parseInt(P[1].trim()));
+                    ShowSessionInfo(ParseInt(P[1]));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -174,7 +174,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(Integer.parseInt(P[1].trim()), "sleep " + P[2]);
+                    Exec(ParseInt(P[1]), "sleep " + P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -185,7 +185,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(Integer.parseInt(P[1].trim()), P.length > 2 ? "ls " + P[2] : "ls");
+                    Exec(ParseInt(P[1]), P.length > 2 ? "ls " + P[2] : "ls");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -196,7 +196,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(Integer.parseInt(P[1].trim()), "cat " + P[2]);
+                    Exec(ParseInt(P[1]), "cat " + P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -207,7 +207,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    DoDownload(Integer.parseInt(P[1].trim()), P[2]);
+                    DoDownload(ParseInt(P[1]), P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -219,7 +219,7 @@ public final class TeamClient {
                 }
                 try {
                     String[] Up = P[2].split("\\s+", 2);
-                    DoUpload(Integer.parseInt(P[1].trim()), Up[0], Up.length > 1 ? Up[1] : "");
+                    DoUpload(ParseInt(P[1]), Up[0], Up.length > 1 ? Up[1] : "");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -230,7 +230,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    SetNote(Integer.parseInt(P[1].trim()), P[2]);
+                    SetNote(ParseInt(P[1]), P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -241,14 +241,14 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    GetNote(Integer.parseInt(P[1].trim()));
+                    GetNote(ParseInt(P[1]));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
             }
             case "history" -> {
-                int Id = P.length > 1 ? Integer.parseInt(P[1], 0) : 0;
-                int Lim = P.length > 2 ? Integer.parseInt(P[2], 50) : 50;
+                int Id = P.length > 1 ? ParseIntSafe(P[1], 0) : 0;
+                int Lim = P.length > 2 ? ParseIntSafe(P[2], 50) : 50;
                 ShowHistory(Id, Lim);
             }
             case "ch" -> {
@@ -280,7 +280,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(Integer.parseInt(P[1].trim()), "shell " + P[2]);
+                    Exec(ParseInt(P[1]), "shell " + P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -295,18 +295,18 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(Integer.parseInt(P[1].trim()), "self-destruct");
+                    Exec(ParseInt(P[1]), "self-destruct");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
             }
             case "sessions-history", "sesshistory" -> {
-                int Lim = P.length > 1 ? Integer.parseInt(P[1], 50) : 50;
+                int Lim = P.length > 1 ? ParseIntSafe(P[1], 50) : 50;
                 ShowSessionHistory(Lim);
             }
             case "use" -> {
                 if (P.length < 2) { Logger.Warn("usage: use <id>"); break; }
-                try { InteractiveSession(Integer.parseInt(P[1].trim())); }
+                try { InteractiveSession(ParseInt(P[1])); }
                 catch (NumberFormatException Ex) { Logger.Warn("invalid session ID"); }
             }
             case "id" -> { if (P.length < 2) Logger.Warn("usage: id <id>"); else SimpleExec(P, "id"); }
@@ -466,7 +466,7 @@ public final class TeamClient {
             }
             case "webstart" -> {
                 String WHost = P.length > 1 ? P[1] : "0.0.0.0";
-                int WPort = P.length > 2 ? Integer.parseInt(P[2], 5000) : 5000;
+                int WPort = P.length > 2 ? ParseIntSafe(P[2], 5000) : 5000;
                 try {
                     Map<String, Object> R = Post("/api/server/webpanel/start",
                         Map.of("Host", WHost, "Port", WPort, "Operator", OperatorName));
@@ -794,7 +794,7 @@ public final class TeamClient {
 
     private void SimpleExec(String[] Parts, String Cmd) {
         try {
-            Exec(Integer.parseInt(Parts[1]), Cmd);
+            Exec(ParseInt(Parts[1]), Cmd);
         } catch (NumberFormatException Ex) {
             Logger.Warn("invalid session ID");
         }
@@ -930,7 +930,17 @@ public final class TeamClient {
         return R != null ? R : new LinkedHashMap<>();
     }
 
+    private static int ParseInt(String Value) {
+        return Integer.parseInt(Value.trim());
+    }
 
+    private static int ParseIntSafe(String Value, int Default) {
+        try {
+            return Integer.parseInt(Value.trim());
+        } catch (Exception Ignored) {
+            return Default;
+        }
+    }
 
     private static final class Logger {
 

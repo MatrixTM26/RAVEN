@@ -1,5 +1,7 @@
 package com.raven.interfaces.CLI;
 
+import com.raven.utils.Helper;
+
 import com.raven.core.command.AgentCommandDispatcher;
 import com.raven.core.command.AgentCommandDispatcher.CommandResult;
 import com.raven.core.command.CommandRegistry;
@@ -16,7 +18,6 @@ import com.raven.core.server.RavenServer;
 import com.raven.core.session.Session;
 import com.raven.interfaces.CLI.core.web.WebPanelManager;
 import com.raven.utils.AnsiColor;
-import com.raven.utils.Helper;
 import com.raven.utils.ProfileManager;
 import com.raven.utils.OperatorConfig;
 import com.raven.utils.ServerConfig;
@@ -287,7 +288,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Interactive(Integer.parseInt(P[1].trim()));
+                    Interactive(ParseInt(P[1]));
                     return 1;
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
@@ -303,7 +304,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(Integer.parseInt(P[1].trim()), BuildArgs(P, 2));
+                    Execute(ParseInt(P[1]), BuildArgs(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -318,7 +319,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(Integer.parseInt(P[1].trim()), "shell " + BuildArgs(P, 2));
+                    Execute(ParseInt(P[1]), "shell " + BuildArgs(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -355,7 +356,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int KillId = Integer.parseInt(P[1].trim());
+                    int KillId = ParseInt(P[1]);
                     if (Server.GetSessions().Get(KillId).isEmpty()) {
                         Logger.Warn("session-" + KillId + " not found");
                         break;
@@ -373,7 +374,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    ShowSessionInfo(Integer.parseInt(P[1].trim()));
+                    ShowSessionInfo(ParseInt(P[1]));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -384,7 +385,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(Integer.parseInt(P[1].trim()), Cmd);
+                    Execute(ParseInt(P[1]), Cmd);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -399,7 +400,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(Integer.parseInt(P[1].trim()), "self-destruct");
+                    Execute(ParseInt(P[1]), "self-destruct");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -410,7 +411,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(Integer.parseInt(P[1].trim()), "sleep " + P[2]);
+                    Execute(ParseInt(P[1]), "sleep " + P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -421,7 +422,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    Execute(Integer.parseInt(P[1].trim()), "jitter " + P[2]);
+                    Execute(ParseInt(P[1]), "jitter " + P[2]);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -450,7 +451,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int NoteId = Integer.parseInt(P[1].trim());
+                    int NoteId = ParseInt(P[1]);
                     Db.SetAgentNote(NoteId, BuildArgs(P, 2));
                     Logger.Custom("  %s✔ note saved for session-%d%s%n%n", AnsiColor.Green, NoteId, AnsiColor.Reset);
                 } catch (NumberFormatException Ex) {
@@ -463,7 +464,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int NoteId = Integer.parseInt(P[1].trim());
+                    int NoteId = ParseInt(P[1]);
                     String Note = Db.GetAgentNote(NoteId);
                     Logger.Custom("  %sNote [session-%d]:%s %s%n%n", AnsiColor.Red, NoteId, AnsiColor.White, Note.isBlank() ? "(empty)" : Note);
                 } catch (NumberFormatException Ex) {
@@ -657,10 +658,10 @@ public final class CLI {
                 }
                 String SaveName = P[1];
                 String SaveDesc = P.length > 2 ? BuildArgs(P, 2) : "";
-                OperatorConfig SaveConfig = new OperatorConfig();
-                if (OperatorName != null) SaveConfig.SetOperatorName(OperatorName);
-                if (OperatorRole != null) SaveConfig.SetOperatorRole(OperatorRole.name());
-                if (ProfileManager.Save(SaveName, SaveConfig.ToMap(), SaveDesc)) Logger.Custom("  %s✔ profile saved: %s%s%n%n", AnsiColor.Green, SaveName, AnsiColor.Reset);
+                Map<String, String> CurrentSettings = new java.util.LinkedHashMap<>(OperatorCfg.ToMap());
+                if (OperatorName != null) CurrentSettings.put("operator.name", OperatorName);
+                if (OperatorRole != null) CurrentSettings.put("operator.role", OperatorRole.name());
+                if (ProfileManager.Save(SaveName, CurrentSettings, SaveDesc)) Logger.Custom("  %s✔ profile saved: %s%s%n%n", AnsiColor.Green, SaveName, AnsiColor.Reset);
                 else Logger.Error("failed to save profile: " + SaveName);
             }
             case "delprofile" -> {
@@ -729,7 +730,7 @@ public final class CLI {
                     break;
                 }
                 try {
-                    int SessionId = Integer.parseInt(P[1].trim());
+                    int SessionId = ParseInt(P[1]);
                     String Arguments = BuildArgs(P, 2);
                     String FullInput = Arguments.isBlank() ? Cmd : Cmd + " " + Arguments;
                     Execute(SessionId, FullInput);
@@ -989,7 +990,17 @@ public final class CLI {
         return D != null ? "usage: " + D.Usage() : "usage: " + Cmd;
     }
 
+    private static int ParseInt(String S) {
+        return Integer.parseInt(S.trim());
+    }
 
+    private static int ParseIntSafe(String S, int D) {
+        try {
+            return Integer.parseInt(S.trim());
+        } catch (Exception Ex) {
+            return D;
+        }
+    }
 
     private static String BuildArgs(String[] Parts, int StartIndex) {
         if (Parts.length <= StartIndex) return "";

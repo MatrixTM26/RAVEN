@@ -62,6 +62,14 @@ public abstract class TeamDatabase {
             };
         }
 
+        public String ShortPerm() {
+            return switch (this) {
+                case SUPER -> "RWXK";
+                case ADMIN -> "RWX";
+                case OPERATOR -> "RX";
+                case MEMBER -> "R";
+            };
+        }
 
         public static OperatorRole FromString(String S) {
             if (S == null) return MEMBER;
@@ -144,7 +152,7 @@ public abstract class TeamDatabase {
     public static String HashPassword(String Password) {
         try {
             java.security.MessageDigest Md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] Hash = Md.digest((Password + "RAVEN-SALT").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            byte[] Hash = Md.digest((Password + "RAVEN-SALT").getBytes("UTF-8"));
             StringBuilder Hex = new StringBuilder();
             for (byte B : Hash) Hex.append(String.format("%02x", B));
             return Hex.toString();

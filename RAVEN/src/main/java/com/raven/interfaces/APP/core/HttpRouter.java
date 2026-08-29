@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.nio.charset.StandardCharsets;
 
 public final class HttpRouter {
 
@@ -49,14 +48,14 @@ public final class HttpRouter {
                 Exchange.sendResponseHeaders(200, -1);
                 return;
             }
-            byte[] Body = Handler.Handle(Exchange).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] Body = Handler.Handle(Exchange).getBytes("UTF-8");
             Exchange.sendResponseHeaders(200, Body.length);
             try (OutputStream Output = Exchange.getResponseBody()) {
                 Output.write(Body);
             }
         } catch (Exception Exception) {
             try {
-                byte[] Body = HttpHelper.Json(Map.of("Error", String.valueOf(Exception.getMessage()))).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                byte[] Body = HttpHelper.Json(Map.of("Error", String.valueOf(Exception.getMessage()))).getBytes("UTF-8");
                 Exchange.sendResponseHeaders(500, Body.length);
                 try (OutputStream Output = Exchange.getResponseBody()) {
                     Output.write(Body);

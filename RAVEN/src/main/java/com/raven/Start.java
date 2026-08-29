@@ -56,7 +56,7 @@ public final class Start {
         ShowBanner();
 
         String Host  = Arg(Args, "-s", "-host", Config.GetServerHost());
-        int    Port  = Helper.ParseInt(Arg(Args, "-p", "-port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
+        int    Port  = ParseInt(Arg(Args, "-p", "-port", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
         ListenerMode Mode = ResolveMode(Args);
 
         if (Mode.RequiresTls() && !Files.exists(Paths.get(Config.GetKeystorePath()))) {
@@ -98,18 +98,18 @@ public final class Start {
                 case "cli"            -> new CLI(Config).Run(Host, Port, Mode);
                 case "gui"            -> GUI.Launch(Config);
                 case "teamserver"     -> {
-                    int TeamPort = Helper.ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    int TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new TeamServer(Config, Mode).RunAsBackend(Host, Port, Config.GetWebHost(), TeamPort);
                     Thread.currentThread().join();
                 }
                 case "teamserver-cli" -> {
                     String TeamHost = Arg(Args, "-ts", "-thost", "127.0.0.1");
-                    int    TeamPort = Helper.ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    int    TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new com.raven.interfaces.TeamClient(Config, TeamHost, TeamPort).Run();
                 }
                 case "teamserver-gui" -> GUI.LaunchTeam(Config);
                 case "teamserver-web" -> {
-                    int TeamPort = Helper.ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    int TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
                     new TeamServer(Config, Mode).Run(Config.GetWebHost(), TeamPort);
                     Thread.currentThread().join();
                 }
@@ -146,7 +146,7 @@ public final class Start {
         try {
             AssertCaExists();
             String  Host    = Arg(Args, "-ah", "-ahost",   Config.GetServerHost());
-            int     Port    = Helper.ParseInt(Arg(Args, "-ap", "-aport", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
+            int     Port    = ParseInt(Arg(Args, "-ap", "-aport", String.valueOf(Config.GetServerPort())), Config.GetServerPort());
             boolean UseMtls = Has(Args, "-am", "-amtls");
             boolean Persist = Has(Args, "-ps", "-persist");
             boolean Hide    = Has(Args, "-hc", "-hide");
@@ -160,7 +160,7 @@ public final class Start {
     }
 
     private static void GenerateMultiAgent(List<String> Args) {
-        int    Count  = Helper.ParseInt(Arg(Args, "-c", "-count", "10"), 10);
+        int    Count  = ParseInt(Arg(Args, "-c", "-count", "10"), 10);
         String Prefix = Arg(Args, "-px", "-prefix", "agent");
         Logger.Info("Generating " + Count + " agents — prefix: " + Prefix);
         int Done = 0;
@@ -298,4 +298,7 @@ public final class Start {
         return Helper.Arg(Args, Short, Long, Default);
     }
 
+    private static int ParseInt(String Value, int Default) {
+        return Helper.ParseInt(Value, Default);
+    }
 }

@@ -5,6 +5,7 @@ import com.raven.core.database.TeamDatabase;
 import com.raven.core.output.Logger;
 import com.raven.utils.AnsiColor;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -14,6 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class ChatManager {
 
+    private static final DateTimeFormatter TimeFormat  = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final int               MaxMessages = 500;
 
     private final List<Map<String, Object>> MessageHistory = new CopyOnWriteArrayList<>();
@@ -35,7 +37,7 @@ public final class ChatManager {
         Entry.put("From",    OperatorName);
         Entry.put("To",      Recipient);
         Entry.put("Message", Message);
-        Entry.put("Time",    LocalTime.now().format(RavenConstants.ChatTimeFmt));
+        Entry.put("Time",    LocalTime.now().format(TimeFormat));
         MessageHistory.add(Entry);
         if (MessageHistory.size() > MaxMessages) MessageHistory.remove(0);
         Database.SaveChatLog(OperatorName, Recipient, Message);

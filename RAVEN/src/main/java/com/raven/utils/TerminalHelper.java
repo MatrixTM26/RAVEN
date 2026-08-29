@@ -1,5 +1,7 @@
 package com.raven.utils;
 
+import com.raven.utils.SystemHelper;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -44,7 +46,6 @@ public final class TerminalHelper {
         CachedWidth.set(Detected);
         return Detected;
     }
-
 
     public static String OutputBox(String Output) {
         int Width     = Math.max(34, ContentWidth());

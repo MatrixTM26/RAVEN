@@ -1,6 +1,5 @@
 package com.raven.interfaces.GUI.module.UI.controller;
 
-import com.raven.utils.RavenConstants;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -11,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class LogsController {
     }
 
     public void AppendEntry(String Level, String Message) {
-        String Ts = LocalDateTime.now().format(RavenConstants.ChatTimeFmt);
+        String Ts = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         AllEntries.add(new String[]{Ts, Level, Message});
         Platform.runLater(() -> {
             EntryCount.setText(AllEntries.size() + " entries");

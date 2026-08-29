@@ -21,9 +21,9 @@ import com.sun.net.httpserver.*;
 import java.io.*;
 import java.net.*;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
-import java.nio.charset.StandardCharsets;
 
 public final class TeamServer {
 
@@ -214,7 +214,7 @@ public final class TeamServer {
                 }
             }
             String Result = H.Handle(E, T);
-            byte[] Bytes = Result.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            byte[] Bytes = Result.getBytes("UTF-8");
             E.getResponseHeaders().set("Content-Type", JsonContentType);
             E.getResponseHeaders().set("X-Content-Type-Options", "nosniff");
             E.sendResponseHeaders(200, Bytes.length);
@@ -229,7 +229,7 @@ public final class TeamServer {
     }
 
     private void Respond(HttpExchange E, int Status, Object Body) throws IOException {
-        byte[] Bytes = HttpHelper.Json(Body).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        byte[] Bytes = HttpHelper.Json(Body).getBytes("UTF-8");
         E.getResponseHeaders().set("Content-Type", JsonContentType);
         E.sendResponseHeaders(Status, Bytes.length);
         try (OutputStream Out = E.getResponseBody()) {
@@ -242,7 +242,7 @@ public final class TeamServer {
             byte[] Raw = In.readAllBytes();
             if (Raw.length == 0) return new HashMap<>();
             @SuppressWarnings("unchecked")
-            Map<String, Object> M = Json.fromJson(new String(Raw, java.nio.charset.StandardCharsets.UTF_8), Map.class);
+            Map<String, Object> M = Json.fromJson(new String(Raw, "UTF-8"), Map.class);
             return M != null ? M : new HashMap<>();
         }
     }
@@ -641,7 +641,7 @@ public final class TeamServer {
         Entry.put("From", T.Username());
         Entry.put("To", To);
         Entry.put("Message", Msg);
-        Entry.put("Timestamp", LocalTime.now().format(RavenConstants.TimestampFmt));
+        Entry.put("Timestamp", LocalTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         Chat.add(Entry);
         if (Chat.size() > MaxChatSize) Chat.remove(0);
         Db.SaveChatLog(T.Username(), To, Msg);
