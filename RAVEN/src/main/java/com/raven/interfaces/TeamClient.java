@@ -427,7 +427,7 @@ public final class TeamClient {
                     Body.put("Role", AddRole); Body.put("Operator", OperatorName);
                     Map<String, Object> R = Post("/api/team/operators/create", Body);
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("operator created: " + P[1] + " [" + Role + "]");
+                    else Logger.Ok("operator created: " + P[1] + " [" + AddRole + "]");
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "delopt" -> {
@@ -957,7 +957,7 @@ public final class TeamClient {
         }
 
         static void Info(String Message) {
-            System.out.println(M);
+            System.out.println(Message);
         }
 
         static void Custom(String Format, Object... Args) {
