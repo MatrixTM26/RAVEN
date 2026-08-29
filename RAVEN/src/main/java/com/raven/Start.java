@@ -113,8 +113,14 @@ public final class Start {
                     new TeamServer(Config, Mode).Run(Config.GetWebHost(), TeamPort);
                     Thread.currentThread().join();
                 }
+                case "web" -> {
+                    int WebPort = ParseInt(Arg(Args, "-wp", "-web-port", String.valueOf(Config.GetWebPort())), Config.GetWebPort());
+                    new WebApp(Config, Mode).Run(Config.GetWebHost(), WebPort);
+                    Thread.currentThread().join();
+                }
                 default -> {
-                    new WebApp(Config, Mode).Run(Config.GetWebHost(), Config.GetWebPort());
+                    int WebPort = ParseInt(Arg(Args, "-wp", "-web-port", String.valueOf(Config.GetWebPort())), Config.GetWebPort());
+                    new WebApp(Config, Mode).Run(Config.GetWebHost(), WebPort);
                     Thread.currentThread().join();
                 }
             }

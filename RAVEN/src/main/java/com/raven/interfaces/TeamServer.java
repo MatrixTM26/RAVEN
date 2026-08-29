@@ -74,31 +74,58 @@ public final class TeamServer {
         Log.Add("TeamServer initialized — mode: " + Mode.name());
     }
 
-    private volatile boolean WebPanelEnabled = false;
+    private volatile HttpServer WebPanelHttpServer = null;
+    private volatile String WebPanelHost = null;
+    private volatile int WebPanelPort = -1;
 
     private String ApiWebPanelStart(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
         if (!Token.Role().CanWrite()) return HttpHelper.Json(Map.of("Error", "insufficient permissions"));
-        if (Router == null) return HttpHelper.Json(Map.of("Error", "server not initialized"));
-        if (WebPanelEnabled) return HttpHelper.Json(Map.of("Error", "web panel already running"));
+        if (WebPanelHttpServer != null) return HttpHelper.Json(Map.of("Error", "web panel already running"));
+        Map<String, Object> Body = Body(Exchange);
+        String RequestedHost = Str(Body, "Host", "0.0.0.0");
+        int RequestedPort = Num(Body, "Port", 8080);
         try {
-            Router.RegisterStatic();
-            WebPanelEnabled = true;
-            String ServerAddress = Exchange.getLocalAddress().getHostName() + ":" + Exchange.getLocalAddress().getPort();
-            Logger.Info("Web panel enabled on http://" + ServerAddress + "/ by " + Token.Username());
-            return HttpHelper.Json(Map.of("Success", true, "URL", "http://" + ServerAddress + "/"));
+            HttpServer Panel = HttpServer.create(new InetSocketAddress(RequestedHost, RequestedPort), 64);
+            HttpRouter PanelRouter = new HttpRouter(Panel, Config, PathResolver);
+            PanelRouter.RegisterStatic();
+            Panel.setExecutor(Executors.newFixedThreadPool(8));
+            Panel.start();
+            WebPanelHttpServer = Panel;
+            WebPanelHost = RequestedHost;
+            WebPanelPort = RequestedPort;
+            String DisplayHost = RequestedHost.equals("0.0.0.0") ? "localhost" : RequestedHost;
+            String Url = "http://" + DisplayHost + ":" + RequestedPort + "/";
+            Logger.Info("Web panel enabled on " + Url + " by " + Token.Username());
+            AddLog("Web panel started on " + Url + " by " + Token.Username());
+            return HttpHelper.Json(Map.of("Success", true, "URL", Url));
         } catch (Exception Ex) {
-            return HttpHelper.Json(Map.of("Error", "web panel enable failed: " + Ex.getMessage()));
+            return HttpHelper.Json(Map.of("Error", "web panel start failed: " + Ex.getMessage()));
         }
     }
 
     private String ApiWebPanelStop(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
         if (!Token.Role().CanWrite()) return HttpHelper.Json(Map.of("Error", "insufficient permissions"));
-        Logger.Info("Web panel stop requested by " + Token.Username());
-        return HttpHelper.Json(Map.of("Success", true, "Message", "web panel stop not implemented in embedded mode"));
+        if (WebPanelHttpServer == null) return HttpHelper.Json(Map.of("Error", "web panel not running"));
+        WebPanelHttpServer.stop(1);
+        WebPanelHttpServer = null;
+        WebPanelHost = null;
+        WebPanelPort = -1;
+        Logger.Info("Web panel stopped by " + Token.Username());
+        AddLog("Web panel stopped by " + Token.Username());
+        return HttpHelper.Json(Map.of("Success", true));
     }
 
     private String ApiWebPanelStatus(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
-        return HttpHelper.Json(Map.of("Running", false, "Mode", "embedded-api"));
+        boolean Running = WebPanelHttpServer != null;
+        Map<String, Object> Response = new LinkedHashMap<>();
+        Response.put("Running", Running);
+        if (Running) {
+            String DisplayHost = WebPanelHost != null && WebPanelHost.equals("0.0.0.0") ? "localhost" : WebPanelHost;
+            Response.put("URL", "http://" + DisplayHost + ":" + WebPanelPort + "/");
+            Response.put("Host", WebPanelHost);
+            Response.put("Port", WebPanelPort);
+        }
+        return HttpHelper.Json(Response);
     }
 
     private String ApiTasks(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
@@ -641,7 +668,7 @@ public final class TeamServer {
         Entry.put("From", T.Username());
         Entry.put("To", To);
         Entry.put("Message", Msg);
-        Entry.put("Timestamp", LocalTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        Entry.put("Timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         Chat.add(Entry);
         if (Chat.size() > MaxChatSize) Chat.remove(0);
         Db.SaveChatLog(T.Username(), To, Msg);
@@ -650,11 +677,12 @@ public final class TeamServer {
 
     private String ApiChatMessages(HttpExchange E, TokenInfo T) throws Exception {
         String User = T.Username();
+        List<Map<String, Object>> DbMessages = Db.GetChatLogs(MaxChatSize);
         List<Map<String, Object>> Visible = new ArrayList<>();
-        for (Map<String, Object> M : Chat) {
-            String To = M.getOrDefault("To", "all").toString();
-            String From = M.getOrDefault("From", "").toString();
-            if (To.equals("all") || To.equals(User) || From.equals(User)) Visible.add(M);
+        for (Map<String, Object> Message : DbMessages) {
+            String To = Message.getOrDefault("To", "all").toString();
+            String From = Message.getOrDefault("From", "").toString();
+            if (To.equals("all") || To.equals(User) || From.equals(User)) Visible.add(Message);
         }
         return HttpHelper.Json(Map.of("Messages", Visible, "Count", Visible.size()));
     }

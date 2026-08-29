@@ -45,6 +45,7 @@ public final class Helper {
                 "        -C   -cli             CLI solo — no auth, direct access",
                 "        -G   -gui             GUI solo — no auth",
                 "        -W   -web             Web panel — auth required",
+                "        -wp  -web-port <port> Web panel port for -W/-G (default: web.port)",
                 "        -TSC                  TeamServer CLI — login, no HTTP API",
                 "        -TSW                  TeamServer Web — multi-operator via HTTP",
                 "        -TSG                  TeamServer GUI — login, GUI interface",
