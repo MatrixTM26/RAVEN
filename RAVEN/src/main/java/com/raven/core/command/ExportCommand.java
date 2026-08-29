@@ -18,7 +18,6 @@ import java.util.Map;
 
 public final class ExportCommand {
 
-    private static final DateTimeFormatter FileFmt = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
     private static final DateTimeFormatter LogFmt = com.raven.utils.RavenConstants.TimestampFmt;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path OUT_DIR = Paths.get("exports");
@@ -138,7 +137,7 @@ public final class ExportCommand {
     }
 
     private void WriteRaw(String Name, String Ext, String Content) {
-        String Filename = Name + "_" + LocalDateTime.now().format(FileFmt) + "." + Ext;
+        String Filename = Name + "_" + LocalDateTime.now().format(com.raven.utils.RavenConstants.FilenameFmt) + "." + Ext;
         Path File = OUT_DIR.resolve(Filename);
         try {
             Files.writeString(File, Content);

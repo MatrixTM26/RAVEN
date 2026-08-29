@@ -1,5 +1,7 @@
 package com.raven.interfaces.CLI;
 
+import com.raven.utils.Helper;
+
 import com.raven.core.command.AgentCommandDispatcher;
 import com.raven.core.command.AgentCommandDispatcher.CommandResult;
 import com.raven.core.command.CommandRegistry;
@@ -242,7 +244,7 @@ public final class CLI {
             }
             case "help" -> ShowHelp();
             case "clean" -> {
-                TerminalHelper.Clear();
+                SystemHelper.ClearScreen();
                 return 1;
             }
             case "status" -> {
@@ -272,7 +274,7 @@ public final class CLI {
             }
             case "webstart" -> {
                 String WebHost = P.length > 1 ? P[1] : Config.GetWebHost();
-                int WebPort = P.length > 2 ? ParseIntSafe(P[2], Config.GetWebPort()) : Config.GetWebPort();
+                int WebPort = P.length > 2 ? Helper.ParseInt(P[2], Config.GetWebPort()) : Config.GetWebPort();
                 WebPanelManager.Start(WebHost, WebPort, Server, ServerStartTime);
             }
             case "webstop" -> WebPanelManager.Stop();
@@ -426,12 +428,12 @@ public final class CLI {
                 }
             }
             case "history" -> {
-                int AgentId = P.length > 1 ? ParseIntSafe(P[1], 0) : 0;
-                int Limit = P.length > 2 ? ParseIntSafe(P[2], 50) : 50;
+                int AgentId = P.length > 1 ? Helper.ParseInt(P[1], 0) : 0;
+                int Limit = P.length > 2 ? Helper.ParseInt(P[2], 50) : 50;
                 ShowCommandHistory(AgentId, Limit);
             }
             case "sessions-history", "sesshistory" -> {
-                int Limit = P.length > 1 ? ParseIntSafe(P[1], 50) : 50;
+                int Limit = P.length > 1 ? Helper.ParseInt(P[1], 50) : 50;
                 List<Map<String, Object>> Sessions = Db.GetSessionHistory(Limit);
                 System.out.println(TerminalHelper.Box("SESSION HISTORY (last " + Limit + ")"));
                 System.out.println();
@@ -656,18 +658,9 @@ public final class CLI {
                 }
                 String SaveName = P[1];
                 String SaveDesc = P.length > 2 ? BuildArgs(P, 2) : "";
-                Map<String, String> CurrentSettings = new java.util.LinkedHashMap<>();
-                CurrentSettings.put("operator.name",                 OperatorName != null ? OperatorName : "");
-                CurrentSettings.put("operator.role",                 OperatorRole != null ? OperatorRole.name() : "MEMBER");
-                CurrentSettings.put("operator.theme",                "dark");
-                CurrentSettings.put("operator.output.box",           "true");
-                CurrentSettings.put("operator.output.timestamp",     "true");
-                CurrentSettings.put("operator.session.log.limit",    "100");
-                CurrentSettings.put("operator.history.limit",        "50");
-                CurrentSettings.put("operator.auto.reconnect",       "true");
-                CurrentSettings.put("operator.chat.notify",          "true");
-                CurrentSettings.put("operator.broadcast.confirm",    "true");
-                CurrentSettings.put("operator.selfdestruct.confirm", "true");
+                Map<String, String> CurrentSettings = new java.util.LinkedHashMap<>(OperatorCfg.ToMap());
+                if (OperatorName != null) CurrentSettings.put("operator.name", OperatorName);
+                if (OperatorRole != null) CurrentSettings.put("operator.role", OperatorRole.name());
                 if (ProfileManager.Save(SaveName, CurrentSettings, SaveDesc)) Logger.Custom("  %s✔ profile saved: %s%s%n%n", AnsiColor.Green, SaveName, AnsiColor.Reset);
                 else Logger.Error("failed to save profile: " + SaveName);
             }
@@ -854,7 +847,7 @@ public final class CLI {
                 String Input = Reader.readLine();
                 if (Input == null || Input.equalsIgnoreCase("back") || Input.equalsIgnoreCase("exit")) break;
                 if (Input.isBlank()) continue;
-                if (Input.trim().equalsIgnoreCase("clean")) { TerminalHelper.Clear(); continue; }
+                if (Input.trim().equalsIgnoreCase("clean")) { SystemHelper.ClearScreen(); continue; }
                 Execute(Id, Input);
             } catch (IOException Ex) {
                 break;
@@ -942,12 +935,12 @@ public final class CLI {
             return;
         }
         for (Map<String, Object> M : Msgs) {
-            String From = M.getOrDefault("from_operator", "?").toString();
-            String To = M.getOrDefault("to_operators", "all").toString();
-            String Ts = M.getOrDefault("timestamp", "").toString();
+            String From = M.getOrDefault("From", "?").toString();
+            String To = M.getOrDefault("To", "all").toString();
+            String Ts = M.getOrDefault("Timestamp", "").toString();
             if (Ts.length() > 19) Ts = Ts.substring(11, 19);
             boolean Mine = From.equals(OperatorName);
-            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("message", ""), AnsiColor.Reset);
+            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
         }
         System.out.println();
     }
@@ -962,12 +955,12 @@ public final class CLI {
             return;
         }
         for (Map<String, Object> M : Msgs) {
-            String From = M.getOrDefault("from_operator", "?").toString();
-            String To = M.getOrDefault("to_operators", "all").toString();
-            String Ts = M.getOrDefault("timestamp", "").toString();
+            String From = M.getOrDefault("From", "?").toString();
+            String To = M.getOrDefault("To", "all").toString();
+            String Ts = M.getOrDefault("Timestamp", "").toString();
             if (Ts.length() > 19) Ts = Ts.substring(11, 19);
             boolean Mine = From.equals(OperatorName);
-            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("message", ""), AnsiColor.Reset);
+            Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
         }
         System.out.println();
     }

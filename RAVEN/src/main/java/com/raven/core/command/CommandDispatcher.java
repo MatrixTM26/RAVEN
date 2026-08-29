@@ -11,6 +11,7 @@ import com.raven.interfaces.CLI.module.chat.ChatManager;
 import com.raven.interfaces.CLI.module.log.LogManager;
 import com.raven.utils.ServerConfig;
 import com.raven.utils.TerminalHelper;
+import com.raven.utils.SystemHelper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +63,7 @@ public final class CommandDispatcher {
             }
             case "help" -> OperatorCommands.ShowHelp();
             case "clean" -> {
-                TerminalHelper.Clear();
+                SystemHelper.ClearScreen();
                 return DispatchResult.UpdateLastCount;
             }
             case "sessions", "agents" -> SessionCommands.ShowSessions();

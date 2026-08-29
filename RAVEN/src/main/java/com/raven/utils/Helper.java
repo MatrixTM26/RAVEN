@@ -45,6 +45,7 @@ public final class Helper {
                 "        -C   -cli             CLI solo — no auth, direct access",
                 "        -G   -gui             GUI solo — no auth",
                 "        -W   -web             Web panel — auth required",
+                "        -wp  -web-port <port> Web panel port for -W/-G (default: web.port)",
                 "        -TSC                  TeamServer CLI — login, no HTTP API",
                 "        -TSW                  TeamServer Web — multi-operator via HTTP",
                 "        -TSG                  TeamServer GUI — login, GUI interface",
@@ -108,6 +109,10 @@ public final class Helper {
             if (Flag.equals(Short) || Flag.equals(Long)) return Args.get(Index + 1);
         }
         return Default;
+    }
+
+    public static int ParseInt(String Value) {
+        return ParseInt(Value, -1);
     }
 
     public static int ParseInt(String Value, int Default) {

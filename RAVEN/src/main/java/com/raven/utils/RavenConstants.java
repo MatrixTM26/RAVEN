@@ -6,7 +6,8 @@ public final class RavenConstants {
 
     private RavenConstants() {}
 
-    public static final DateTimeFormatter TimestampFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public static final DateTimeFormatter TimestampFmt  = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public static final DateTimeFormatter FilenameFmt   = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
     public static final DateTimeFormatter ChatTimeFmt     = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public static final String ServerConfigPath = "config/server/raven.properties";
