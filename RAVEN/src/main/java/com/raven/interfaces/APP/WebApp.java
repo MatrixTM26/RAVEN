@@ -63,7 +63,7 @@ public final class WebApp {
         BroadcastApiHandler = new BroadcastApi(ServerManager, Database, WebLogger);
         HistoryApiHandler = new HistoryApi(Database);
         LogsApiHandler = new LogsApi(WebLogger);
-        OperatorApiHandler = new OperatorApi(Database, WebLogger);
+        OperatorApiHandler = new OperatorApi(Database, WebLogger, AuthApi);
         ChatApiHandler = new ChatApi(Database);
         AgentGenApiHandler = new AgentGenApi(Config);
     }

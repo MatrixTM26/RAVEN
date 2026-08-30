@@ -129,9 +129,9 @@ public abstract class TeamDatabase {
 
     public abstract List<Map<String, Object>> GetAllAgentNotes();
 
-    public abstract boolean CreateOperator(String Username, String PasswordHash, OperatorRole Role);
+    public abstract boolean CreateOperator(String Username, String PlaintextPassword, OperatorRole Role);
 
-    public abstract boolean ValidateOperator(String Username, String PasswordHash);
+    public abstract boolean ValidateOperator(String Username, String PlaintextPassword);
 
     public abstract OperatorRole GetOperatorRole(String Username);
 
@@ -139,7 +139,7 @@ public abstract class TeamDatabase {
 
     public abstract boolean UpdateOperatorRole(String Username, OperatorRole Role);
 
-    public abstract boolean UpdateOperatorPassword(String Username, String PasswordHash);
+    public abstract boolean UpdateOperatorPassword(String Username, String PlaintextPassword);
 
     public abstract boolean DeleteOperator(String Username);
 
@@ -151,13 +151,29 @@ public abstract class TeamDatabase {
 
     public static String HashPassword(String Password) {
         try {
-            java.security.MessageDigest Md = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] Hash = Md.digest((Password + "RAVEN-SALT").getBytes("UTF-8"));
-            StringBuilder Hex = new StringBuilder();
-            for (byte B : Hash) Hex.append(String.format("%02x", B));
-            return Hex.toString();
+            byte[] Salt = new byte[16];
+            new java.security.SecureRandom().nextBytes(Salt);
+            javax.crypto.spec.PBEKeySpec Spec = new javax.crypto.spec.PBEKeySpec(Password.toCharArray(), Salt, 310_000, 256);
+            javax.crypto.SecretKeyFactory Factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] Hash = Factory.generateSecret(Spec).getEncoded();
+            return java.util.Base64.getEncoder().encodeToString(Salt) + ":" + java.util.Base64.getEncoder().encodeToString(Hash);
         } catch (Exception E) {
             throw new RuntimeException("Hash failed: " + E.getMessage());
+        }
+    }
+
+    public static boolean VerifyPassword(String Password, String Stored) {
+        try {
+            String[] Parts = Stored.split(":", 2);
+            if (Parts.length != 2) return false;
+            byte[] Salt = java.util.Base64.getDecoder().decode(Parts[0]);
+            byte[] ExpectedHash = java.util.Base64.getDecoder().decode(Parts[1]);
+            javax.crypto.spec.PBEKeySpec Spec = new javax.crypto.spec.PBEKeySpec(Password.toCharArray(), Salt, 310_000, 256);
+            javax.crypto.SecretKeyFactory Factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            byte[] ActualHash = Factory.generateSecret(Spec).getEncoded();
+            return java.util.Arrays.equals(ExpectedHash, ActualHash);
+        } catch (Exception E) {
+            return false;
         }
     }
 }

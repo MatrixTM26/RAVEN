@@ -157,12 +157,12 @@ public final class MongoDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean CreateOperator(String Username, String PasswordHash, OperatorRole Role) {
+    public boolean CreateOperator(String Username, String PlaintextPassword, OperatorRole Role) {
         try {
             ColOperators.insertOne(
                 new Document()
                     .append("username", Username)
-                    .append("passwordhash", PasswordHash)
+                    .append("passwordhash", HashPassword(PlaintextPassword))
                     .append("role", Role.name())
                     .append("lastseen", "Never")
                     .append("createdat", java.time.LocalDateTime.now().format(com.raven.utils.RavenConstants.TimestampFmt))
@@ -175,9 +175,12 @@ public final class MongoDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean ValidateOperator(String Username, String PasswordHash) {
+    public boolean ValidateOperator(String Username, String PlaintextPassword) {
         try {
-            return ColOperators.find(Filters.and(Filters.eq("username", Username), Filters.eq("passwordhash", PasswordHash))).first() != null;
+            Document Doc = ColOperators.find(Filters.eq("username", Username)).first();
+            if (Doc == null) return false;
+            String Stored = Doc.getString("passwordhash");
+            return Stored != null && VerifyPassword(PlaintextPassword, Stored);
         } catch (Exception E) {
             return false;
         }
@@ -227,9 +230,9 @@ public final class MongoDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean UpdateOperatorPassword(String Username, String PasswordHash) {
+    public boolean UpdateOperatorPassword(String Username, String PlaintextPassword) {
         try {
-            ColOperators.updateOne(Filters.eq("username", Username), Updates.set("passwordhash", PasswordHash));
+            ColOperators.updateOne(Filters.eq("username", Username), Updates.set("passwordhash", HashPassword(PlaintextPassword)));
             return true;
         } catch (Exception E) {
             Logger.Error("Mongo UpdateOperatorPassword: " + E.getMessage());

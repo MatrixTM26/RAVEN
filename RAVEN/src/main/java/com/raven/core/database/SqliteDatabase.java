@@ -23,6 +23,12 @@ public final class SqliteDatabase extends TeamDatabase {
         Files.createDirectories(Paths.get(DbDir));
         Class.forName("org.sqlite.JDBC");
         Conn = DriverManager.getConnection("jdbc:sqlite:" + DbFile);
+        Conn.setAutoCommit(true);
+        try (Statement St = Conn.createStatement()) {
+            St.execute("PRAGMA journal_mode=WAL");
+            St.execute("PRAGMA synchronous=NORMAL");
+            St.execute("PRAGMA busy_timeout=5000");
+        }
         Connected = true;
         CreateTables();
         Migrate();
@@ -127,7 +133,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public void SaveLog(String Entry) {
+    public synchronized void SaveLog(String Entry) {
         try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tclogs (entry,createdat) VALUES (?,?)")) {
             Ps.setString(1, Entry);
             Ps.setString(2, LocalDateTime.now().format(RavenConstants.TimestampFmt));
@@ -138,7 +144,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public void SaveCommandLog(int AgentId, String Operator, String Command, String Output, boolean Success) {
+    public synchronized void SaveCommandLog(int AgentId, String Operator, String Command, String Output, boolean Success) {
         try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tccommands (agentid,operator,command,output,success,timestamp) VALUES (?,?,?,?,?,?)")) {
             Ps.setInt(1, AgentId);
             Ps.setString(2, Operator);
@@ -153,7 +159,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public void SaveSessionEvent(Map<String, Object> Data, String Event) {
+    public synchronized void SaveSessionEvent(Map<String, Object> Data, String Event) {
         try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tcsessions (agentid,hostname,os,username,agentip,event,timestamp) VALUES (?,?,?,?,?,?,?)")) {
             Ps.setString(1, Str(Data, "ID"));
             Ps.setString(2, Str(Data, "Hostname"));
@@ -220,7 +226,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public void SetAgentNote(int AgentId, String Note) {
+    public synchronized void SetAgentNote(int AgentId, String Note) {
         try (PreparedStatement Ps = Conn.prepareStatement("INSERT OR REPLACE INTO tcnotes (agentid,note) VALUES (?,?)")) {
             Ps.setInt(1, AgentId);
             Ps.setString(2, Note);
@@ -260,10 +266,10 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean CreateOperator(String Username, String PasswordHash, OperatorRole Role) {
+    public synchronized boolean CreateOperator(String Username, String PlaintextPassword, OperatorRole Role) {
         try (PreparedStatement Ps = Conn.prepareStatement("INSERT OR IGNORE INTO tcoperators (username,passwordhash,role,createdat,lastseen) VALUES (?,?,?,?,?)")) {
             Ps.setString(1, Username);
-            Ps.setString(2, PasswordHash);
+            Ps.setString(2, HashPassword(PlaintextPassword));
             Ps.setString(3, Role.name());
             Ps.setString(4, LocalDateTime.now().format(RavenConstants.TimestampFmt));
             Ps.setString(5, "Never");
@@ -275,11 +281,13 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean ValidateOperator(String Username, String PasswordHash) {
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT 1 FROM tcoperators WHERE username=? AND passwordhash=?")) {
+    public boolean ValidateOperator(String Username, String PlaintextPassword) {
+        try (PreparedStatement Ps = Conn.prepareStatement("SELECT passwordhash FROM tcoperators WHERE username=?")) {
             Ps.setString(1, Username);
-            Ps.setString(2, PasswordHash);
-            return Ps.executeQuery().next();
+            ResultSet Rs = Ps.executeQuery();
+            if (!Rs.next()) return false;
+            String Stored = Rs.getString("passwordhash");
+            return VerifyPassword(PlaintextPassword, Stored);
         } catch (Exception E) {
             return false;
         }
@@ -316,7 +324,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean UpdateOperatorRole(String Username, OperatorRole Role) {
+    public synchronized boolean UpdateOperatorRole(String Username, OperatorRole Role) {
         try (PreparedStatement Ps = Conn.prepareStatement("UPDATE tcoperators SET role=? WHERE username=?")) {
             Ps.setString(1, Role.name());
             Ps.setString(2, Username);
@@ -328,9 +336,9 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean UpdateOperatorPassword(String Username, String PasswordHash) {
+    public synchronized boolean UpdateOperatorPassword(String Username, String PlaintextPassword) {
         try (PreparedStatement Ps = Conn.prepareStatement("UPDATE tcoperators SET passwordhash=? WHERE username=?")) {
-            Ps.setString(1, PasswordHash);
+            Ps.setString(1, HashPassword(PlaintextPassword));
             Ps.setString(2, Username);
             return Ps.executeUpdate() > 0;
         } catch (Exception E) {
@@ -340,7 +348,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean DeleteOperator(String Username) {
+    public synchronized boolean DeleteOperator(String Username) {
         if ("admin".equalsIgnoreCase(Username)) return false;
         try (PreparedStatement Ps = Conn.prepareStatement("DELETE FROM tcoperators WHERE username=?")) {
             Ps.setString(1, Username);
@@ -352,7 +360,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public void UpdateLastSeen(String Username) {
+    public synchronized void UpdateLastSeen(String Username) {
         try (PreparedStatement Ps = Conn.prepareStatement("UPDATE tcoperators SET lastseen=? WHERE username=?")) {
             Ps.setString(1, LocalDateTime.now().format(RavenConstants.TimestampFmt));
             Ps.setString(2, Username);
@@ -375,7 +383,7 @@ public final class SqliteDatabase extends TeamDatabase {
     }
 
     @Override
-    public void SaveChatLog(String FromOperator, String ToOperators, String Message) {
+    public synchronized void SaveChatLog(String FromOperator, String ToOperators, String Message) {
         try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tcchatlog (fromoperator,tooperators,message,timestamp) VALUES (?,?,?,?)")) {
             Ps.setString(1, FromOperator);
             Ps.setString(2, ToOperators);
@@ -390,15 +398,15 @@ public final class SqliteDatabase extends TeamDatabase {
     @Override
     public List<Map<String, Object>> GetChatLogs(int Limit) {
         List<Map<String, Object>> List = new ArrayList<>();
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT * FROM tcchatlog ORDER BY id DESC LIMIT ?")) {
+        try (PreparedStatement Ps = Conn.prepareStatement("SELECT * FROM tcchatlog ORDER BY id ASC LIMIT ?")) {
             Ps.setInt(1, Limit);
             ResultSet Rs = Ps.executeQuery();
             while (Rs.next()) {
                 Map<String, Object> Row = new LinkedHashMap<>();
-                Row.put("from_operator", Rs.getString("fromoperator"));
-                Row.put("to_operators", Rs.getString("tooperators"));
-                Row.put("message", Rs.getString("message"));
-                Row.put("timestamp", Rs.getString("timestamp"));
+                Row.put("From", Rs.getString("fromoperator"));
+                Row.put("To", Rs.getString("tooperators"));
+                Row.put("Message", Rs.getString("message"));
+                Row.put("Timestamp", Rs.getString("timestamp"));
                 List.add(Row);
             }
         } catch (Exception E) {

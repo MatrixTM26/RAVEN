@@ -166,9 +166,9 @@ public final class PostgresDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean CreateOperator(String Username, String PasswordHash, OperatorRole Role) {
+    public boolean CreateOperator(String Username, String PlaintextPassword, OperatorRole Role) {
         try {
-            exec("INSERT INTO tcoperators (username,passwordhash,role) VALUES (?,?,?)", Username, PasswordHash, Role.name());
+            exec("INSERT INTO tcoperators (username,passwordhash,role) VALUES (?,?,?)", Username, HashPassword(PlaintextPassword), Role.name());
             return true;
         } catch (Exception E) {
             Logger.Error("CreateOperator failed: " + E.getMessage());
@@ -177,9 +177,11 @@ public final class PostgresDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean ValidateOperator(String Username, String PasswordHash) {
-        List<Map<String, Object>> Rows = query("SELECT 1 FROM tcoperators WHERE username=? AND passwordhash=?", Username, PasswordHash);
-        return !Rows.isEmpty();
+    public boolean ValidateOperator(String Username, String PlaintextPassword) {
+        List<Map<String, Object>> Rows = query("SELECT passwordhash FROM tcoperators WHERE username=?", Username);
+        if (Rows.isEmpty()) return false;
+        Object Stored = Rows.get(0).get("passwordhash");
+        return Stored != null && VerifyPassword(PlaintextPassword, Stored.toString());
     }
 
     @Override
@@ -212,8 +214,8 @@ public final class PostgresDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean UpdateOperatorPassword(String Username, String PasswordHash) {
-        exec("UPDATE tcoperators SET passwordhash=? WHERE username=?", PasswordHash, Username);
+    public boolean UpdateOperatorPassword(String Username, String PlaintextPassword) {
+        exec("UPDATE tcoperators SET passwordhash=? WHERE username=?", HashPassword(PlaintextPassword), Username);
         return true;
     }
 

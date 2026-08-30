@@ -72,7 +72,7 @@ public final class OperatorCommands {
             }
             if (Password == null) return false;
 
-            if (!Database.ValidateOperator(Username, TeamDatabase.HashPassword(Password))) {
+            if (!Database.ValidateOperator(Username, Password)) {
                 Logger.Custom("  %sInvalid credentials - Attempt %d/3%s%n%n", AnsiColor.Red, Attempt, AnsiColor.Reset);
                 continue;
             }
@@ -136,7 +136,7 @@ public final class OperatorCommands {
             Logger.Warn("only SUPER can create SUPER accounts");
             return;
         }
-        if (Database.CreateOperator(Username, TeamDatabase.HashPassword(Password), Role)) Logger.Custom("  Operator created: %s [%s]  %s%n", Username, Role, Role.PermissionString());
+        if (Database.CreateOperator(Username, Password, Role)) Logger.Custom("  Operator created: %s [%s]  %s%n", Username, Role, Role.PermissionString());
         else Logger.Warn("username already exists");
     }
 
@@ -193,7 +193,7 @@ public final class OperatorCommands {
             Logger.Warn("password must be >= 8 chars");
             return;
         }
-        if (Database.UpdateOperatorPassword(Username, TeamDatabase.HashPassword(NewPassword))) Logger.Custom("  Password updated: %s%n", Username);
+        if (Database.UpdateOperatorPassword(Username, NewPassword)) Logger.Custom("  Password updated: %s%n", Username);
         else Logger.Warn("operator not found");
     }
 }

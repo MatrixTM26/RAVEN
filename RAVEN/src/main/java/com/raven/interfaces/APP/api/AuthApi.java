@@ -33,7 +33,7 @@ public final class AuthApi {
         String Username = HttpHelper.Str(Body, "Username", "");
         String Password = HttpHelper.Str(Body, "Password", "");
         if (Username.isEmpty() || Password.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Password required"));
-        if (!Database.ValidateOperator(Username, TeamDatabase.HashPassword(Password))) return HttpHelper.Json(Map.of("Error", "Invalid credentials"));
+        if (!Database.ValidateOperator(Username, Password)) return HttpHelper.Json(Map.of("Error", "Invalid credentials"));
         OperatorRole Role = Database.GetOperatorRole(Username);
         String Token = GenerateToken();
         Tokens.put(Token, new TokenInfo(Username, Role, System.currentTimeMillis() + TokenTtlMs));
@@ -53,6 +53,10 @@ public final class AuthApi {
         if (Auth == null || !Auth.startsWith("Bearer ")) return null;
         TokenInfo Token = Tokens.get(Auth.substring(7));
         return Token != null && Token.Valid() ? Token : null;
+    }
+
+    public void InvalidateTokensFor(String Username) {
+        Tokens.entrySet().removeIf(Entry -> Entry.getValue().Username().equals(Username));
     }
 
     private static String GenerateToken() {

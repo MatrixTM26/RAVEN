@@ -6,8 +6,6 @@ import com.raven.core.output.Logger;
 import com.raven.utils.AnsiColor;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,14 +69,12 @@ public final class ChatManager {
         System.out.println(TerminalHelper.Box("CHAT HISTORY (Database - last 100)"));
         System.out.println();
         if (Records.isEmpty()) { Logger.Info("no chat history in database\n"); return; }
-        List<Map<String, Object>> Ordered = new ArrayList<>(Records);
-        Collections.reverse(Ordered);
         String CurrentOperator = OperatorName != null ? OperatorName : "";
-        for (Map<String, Object> Record : Ordered) {
-            String  From      = Record.getOrDefault("from_operator", "?").toString();
-            String  To        = Record.getOrDefault("to_operators", "all").toString();
-            String  Content   = Record.getOrDefault("message", "").toString();
-            String  Timestamp = Record.getOrDefault("timestamp", "").toString();
+        for (Map<String, Object> Record : Records) {
+            String  From      = Record.getOrDefault("From", "?").toString();
+            String  To        = Record.getOrDefault("To", "all").toString();
+            String  Content   = Record.getOrDefault("Message", "").toString();
+            String  Timestamp = Record.getOrDefault("Timestamp", "").toString();
             if (Timestamp.length() > 11) Timestamp = Timestamp.substring(11, Math.min(19, Timestamp.length()));
             boolean IsMine  = From.equals(CurrentOperator);
             String  ToLabel = "all".equals(To) ? "all" : "> " + To;

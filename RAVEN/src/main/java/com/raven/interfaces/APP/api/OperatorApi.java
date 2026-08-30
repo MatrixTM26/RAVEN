@@ -12,10 +12,12 @@ public final class OperatorApi {
 
     private final TeamDatabase Database;
     private final WebLogger Logger;
+    private final AuthApi Auth;
 
-    public OperatorApi(TeamDatabase Database, WebLogger Logger) {
+    public OperatorApi(TeamDatabase Database, WebLogger Logger, AuthApi Auth) {
         this.Database = Database;
         this.Logger = Logger;
+        this.Auth = Auth;
     }
 
     public String GetOperators(HttpExchange Exchange) {
@@ -47,7 +49,7 @@ public final class OperatorApi {
         if (Username.isEmpty() || Password.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Password required"));
         if (Password.length() < 8) return HttpHelper.Json(Map.of("Error", "Password must be at least 8 characters"));
         OperatorRole Role = OperatorRole.FromString(RoleName);
-        if (!Database.CreateOperator(Username, TeamDatabase.HashPassword(Password), Role)) return HttpHelper.Json(Map.of("Error", "Username already exists"));
+        if (!Database.CreateOperator(Username, Password, Role)) return HttpHelper.Json(Map.of("Error", "Username already exists"));
         Logger.Add("[TEAM] Operator created: " + Username + " [" + Role + "]");
         return HttpHelper.Json(Map.of("Success", true, "Username", Username, "Role", Role.name()));
     }
@@ -70,7 +72,7 @@ public final class OperatorApi {
         String NewPassword = HttpHelper.Str(Body, "Password", "");
         if (Username.isEmpty() || NewPassword.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Password required"));
         if (NewPassword.length() < 8) return HttpHelper.Json(Map.of("Error", "Password must be at least 8 characters"));
-        boolean Success = Database.UpdateOperatorPassword(Username, TeamDatabase.HashPassword(NewPassword));
+        boolean Success = Database.UpdateOperatorPassword(Username, NewPassword);
         if (Success) Logger.Add("[TEAM] Password changed: " + Username);
         return HttpHelper.Json(Map.of("Success", Success));
     }
@@ -88,8 +90,8 @@ public final class OperatorApi {
         String Username = HttpHelper.Str(HttpHelper.Body(Exchange), "Username", "");
         if (Username.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username required"));
         if (Username.equals("admin")) return HttpHelper.Json(Map.of("Error", "Cannot kick admin"));
-        boolean Success = Database.DeleteOperator(Username);
-        if (Success) Logger.Add("[TEAM] Operator kicked: " + Username);
-        return HttpHelper.Json(Map.of("Success", Success));
+        Auth.InvalidateTokensFor(Username);
+        Logger.Add("[TEAM] Operator kicked: " + Username);
+        return HttpHelper.Json(Map.of("Success", true));
     }
 }

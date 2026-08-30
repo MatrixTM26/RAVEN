@@ -75,28 +75,38 @@ public final class RavenServer extends BaseServer {
                 SSLContext Ctx = BuildSslContext(Mode == ListenerMode.MTLS);
                 TlsSocket = (SSLServerSocket) Ctx.getServerSocketFactory().createServerSocket(Port, 50, InetAddress.getByName(Host));
                 TlsSocket.setNeedClientAuth(Mode == ListenerMode.MTLS);
-                TlsSocket.setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
+                TlsSocket.setEnabledProtocols(ResolveProtocols(TlsSocket.getSupportedProtocols(), Config.GetTlsProtocol()));
             }
             case HTTPS -> {
                 if (BeaconPort <= 0) BeaconPort = Port;
                 SSLContext Ctx = BuildSslContext(false);
                 BeaconSocket = Ctx.getServerSocketFactory().createServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
                 ((SSLServerSocket) BeaconSocket).setNeedClientAuth(false);
-                ((SSLServerSocket) BeaconSocket).setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
+                ((SSLServerSocket) BeaconSocket).setEnabledProtocols(ResolveProtocols(((SSLServerSocket) BeaconSocket).getSupportedProtocols(), Config.GetTlsProtocol()));
             }
             case FMTLS -> {
                 SSLContext TcpCtx = BuildSslContext(true);
                 TlsSocket = (SSLServerSocket) TcpCtx.getServerSocketFactory().createServerSocket(Port, 50, InetAddress.getByName(Host));
                 TlsSocket.setNeedClientAuth(true);
-                TlsSocket.setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
+                TlsSocket.setEnabledProtocols(ResolveProtocols(TlsSocket.getSupportedProtocols(), Config.GetTlsProtocol()));
                 if (BeaconPort > 0) {
                     SSLContext BeaconCtx = BuildSslContext(true);
                     BeaconSocket = BeaconCtx.getServerSocketFactory().createServerSocket(BeaconPort, 50, InetAddress.getByName(Host));
                     ((SSLServerSocket) BeaconSocket).setNeedClientAuth(true);
-                    ((SSLServerSocket) BeaconSocket).setEnabledProtocols(new String[] { Config.GetTlsProtocol(), "TLSv1.2" });
+                    ((SSLServerSocket) BeaconSocket).setEnabledProtocols(ResolveProtocols(((SSLServerSocket) BeaconSocket).getSupportedProtocols(), Config.GetTlsProtocol()));
                 }
             }
         }
+    }
+
+    private static String[] ResolveProtocols(String[] Supported, String Preferred) {
+        java.util.List<String> Enabled = new java.util.ArrayList<>();
+        java.util.Set<String> SupportedSet = new java.util.HashSet<>(java.util.Arrays.asList(Supported));
+        if (SupportedSet.contains(Preferred)) Enabled.add(Preferred);
+        for (String Fallback : new String[] { "TLSv1.3", "TLSv1.2" }) {
+            if (!Fallback.equals(Preferred) && SupportedSet.contains(Fallback)) Enabled.add(Fallback);
+        }
+        return Enabled.isEmpty() ? Supported : Enabled.toArray(new String[0]);
     }
 
     private SSLContext BuildSslContext(boolean NeedClientAuth) throws Exception {
