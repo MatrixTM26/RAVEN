@@ -69,8 +69,8 @@ public final class TeamServer {
         Router.RegisterStatic();
         HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
         HttpSrv.start();
-        Logger.Info("TeamServer web panel : http:
-        Logger.Info("API base             : http:
+        Logger.Info("TeamServer web panel : http://" + Host + ":" + Port + "/");
+        Logger.Info("API base             : http://" + Host + ":" + Port + "/api/");
         Log.Add("TeamServer initialized — mode: " + Mode.name());
     }
 
@@ -94,7 +94,7 @@ public final class TeamServer {
             WebPanelHost = RequestedHost;
             WebPanelPort = RequestedPort;
             String DisplayHost = RequestedHost.equals("0.0.0.0") ? "localhost" : RequestedHost;
-            String Url = "http:
+            String Url = "http://" + DisplayHost + ":" + RequestedPort + "/";
             Logger.Info("Web panel enabled on " + Url + " by " + Token.Username());
             AddLog("Web panel started on " + Url + " by " + Token.Username());
             return HttpHelper.Json(Map.of("Success", true, "URL", Url));
@@ -121,7 +121,7 @@ public final class TeamServer {
         Response.put("Running", Running);
         if (Running) {
             String DisplayHost = WebPanelHost != null && WebPanelHost.equals("0.0.0.0") ? "localhost" : WebPanelHost;
-            Response.put("URL", "http:
+            Response.put("URL", "http://" + DisplayHost + ":" + WebPanelPort + "/");
             Response.put("Host", WebPanelHost);
             Response.put("Port", WebPanelPort);
         }
@@ -155,26 +155,29 @@ public final class TeamServer {
         HttpSrv.start();
         Logger.Info("RAVEN TeamServer backend running:");
         Logger.Info("  Agent listener : " + AgentHost + ":" + AgentPort + " [" + Mode.name() + "]");
-        Logger.Info("  Operator API   : http:
+        Logger.Info("  Operator API   : http://" + ApiHost + ":" + ApiPort + "/api/");
         Logger.Info("  Connect CLI    : java -jar raven.jar -TSC -ts " + ApiHost + " -tp " + ApiPort);
         Logger.Info("  Connect Web    : java -jar raven.jar -TSW -ts " + ApiHost + " -tp " + ApiPort);
         Log.Add("TeamServer backend initialized — mode: " + Mode.name());
     }
 
     private void RegisterRoutes() {
-
+        // auth
         route("/api/auth/login", this::ApiAuthLogin, false);
         route("/api/auth/logout", this::ApiAuthLogout, true);
 
+        // server control
         route("/api/server/status", this::ApiServerStatus, true);
         route("/api/server/start", this::ApiServerStart, true);
         route("/api/server/stop", this::ApiServerStop, true);
 
+        // agents
         route("/api/agents", this::ApiAgents, true);
         route("/api/agents/kill", this::ApiAgentKill, true);
         route("/api/agents/note", this::ApiAgentNote, true);
         route("/api/agents/notes/all", this::ApiAgentNotesAll, true);
 
+        // commands
         route("/api/command/execute", this::ApiCmdExec, true);
         route("/api/command/broadcast", this::ApiCmdBroadcast, true);
         route("/api/command/broadcastall", this::ApiCmdBroadcastAll, true);
@@ -187,12 +190,16 @@ public final class TeamServer {
         route("/api/command/portfwd", this::ApiCmdPortfwd, true);
         route("/api/command/socks", this::ApiCmdSocks, true);
 
+        // sessions
         route("/api/sessions/history", this::ApiSessionHistory, true);
 
+        // logs
         route("/api/logs", this::ApiLogs, true);
 
+        // export
         route("/api/export", this::ApiExport, true);
 
+        // team — operators
         route("/api/team/operators", this::ApiOpList, true);
         route("/api/team/operators/create", this::ApiOpCreate, true);
         route("/api/team/operators/delete", this::ApiOpDelete, true);
@@ -201,11 +208,13 @@ public final class TeamServer {
         route("/api/team/operators/kick", this::ApiOpKick, true);
         route("/api/team/roles", this::ApiRoles, true);
 
+        // web panel control
         route("/api/server/webpanel/start",  this::ApiWebPanelStart,  true);
         route("/api/server/webpanel/stop",   this::ApiWebPanelStop,   true);
         route("/api/server/webpanel/status", this::ApiWebPanelStatus, true);
         route("/api/tasks",                  this::ApiTasks,          true);
 
+        // team — chat
         route("/api/team/chat/send", this::ApiChatSend, true);
         route("/api/team/chat/messages", this::ApiChatMessages, true);
         route("/api/team/chat/logs", this::ApiChatLogs, true);
@@ -283,6 +292,8 @@ public final class TeamServer {
         return SystemHelper.FormatUptime(Duration.between(ServerStartTime, Instant.now()).getSeconds());
     }
 
+    //  AUTH
+
     private String ApiAuthLogin(HttpExchange E, TokenInfo Ignored) throws Exception {
         Map<String, Object> B = Body(E);
         String User = Str(B, "Username", "");
@@ -306,6 +317,8 @@ public final class TeamServer {
         }
         return HttpHelper.Json(Map.of("Success", true));
     }
+
+    //  SERVER
 
     private String ApiServerStatus(HttpExchange E, TokenInfo T) {
         boolean Up = Server != null && Server.IsRunning();
@@ -353,6 +366,8 @@ public final class TeamServer {
         return HttpHelper.Json(Map.of("Success", true));
     }
 
+    //  AGENTS
+
     private String ApiAgents(HttpExchange E, TokenInfo T) {
         if (Server == null || !Server.IsRunning()) return HttpHelper.Json(Map.of("Agents", List.of()));
         List<Map<String, Object>> Agents = new ArrayList<>();
@@ -399,6 +414,8 @@ public final class TeamServer {
     private String ApiAgentNotesAll(HttpExchange E, TokenInfo T) {
         return HttpHelper.Json(Map.of("Notes", Db.GetAllAgentNotes()));
     }
+
+    //  COMMANDS
 
     private String ApiCmdExec(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanExecute()) return HttpHelper.Json(Map.of("Error", "OPERATOR or ADMIN role required"));
@@ -529,14 +546,20 @@ public final class TeamServer {
         return HttpHelper.Json(Map.of("History", Db.GetCommandHistory(Num(B, "AgentId", 0), Num(B, "Limit", 100))));
     }
 
+    //  SESSIONS
+
     private String ApiSessionHistory(HttpExchange E, TokenInfo T) throws Exception {
         int Limit = Num(Body(E), "Limit", 100);
         return HttpHelper.Json(Map.of("Sessions", Db.GetSessionHistory(Math.min(Limit, 1000))));
     }
 
+    //  LOGS
+
     private String ApiLogs(HttpExchange E, TokenInfo T) {
         return HttpHelper.Json(Map.of("Logs", Log.GetAll(), "Count", Log.Count()));
     }
+
+    //  EXPORT
 
     private String ApiExport(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
@@ -546,6 +569,8 @@ public final class TeamServer {
         Export.Run(Target, Format);
         return HttpHelper.Json(Map.of("Success", true, "Target", Target, "Format", Format));
     }
+
+    //  OPERATORS
 
     private String ApiOpList(HttpExchange E, TokenInfo T) {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
@@ -562,7 +587,7 @@ public final class TeamServer {
         if (Pass.length() < 8) return HttpHelper.Json(Map.of("Error", "Password must be at least 8 characters"));
         OperatorRole R = OperatorRole.FromString(Role);
         if (R == OperatorRole.SUPER && !T.Role().IsSuperAdmin()) return HttpHelper.Json(Map.of("Error", "Only SUPER can create SUPER"));
-        if (!Db.CreateOperator(User, TeamDatabase.HashPassword(Pass), R)) return HttpHelper.Json(Map.of("Error", "Username already exists"));
+        if (!Db.CreateOperator(User, Pass, R)) return HttpHelper.Json(Map.of("Error", "Username already exists"));
         AddLog("[TEAM] Created operator: " + User + " [" + R + "] by " + T.Username());
         return HttpHelper.Json(Map.of("Success", true, "Username", User, "Role", R.name()));
     }
@@ -598,7 +623,7 @@ public final class TeamServer {
         String Pass = Str(B, "Password", "");
         if (User.isEmpty() || Pass.isEmpty()) return HttpHelper.Json(Map.of("Error", "Username and Password required"));
         if (Pass.length() < 8) return HttpHelper.Json(Map.of("Error", "Password must be at least 8 characters"));
-        if (!Db.UpdateOperatorPassword(User, TeamDatabase.HashPassword(Pass))) return HttpHelper.Json(Map.of("Error", "Operator not found"));
+        if (!Db.UpdateOperatorPassword(User, Pass)) return HttpHelper.Json(Map.of("Error", "Operator not found"));
         AddLog("[TEAM] Password changed: " + User + " by " + T.Username());
         return HttpHelper.Json(Map.of("Success", true));
     }
@@ -632,6 +657,8 @@ public final class TeamServer {
         }
         return HttpHelper.Json(Map.of("Roles", Roles));
     }
+
+    //  CHAT
 
     private String ApiChatSend(HttpExchange E, TokenInfo T) throws Exception {
         Map<String, Object> B = Body(E);
@@ -671,6 +698,8 @@ public final class TeamServer {
         int Limit = Num(Body(E), "Limit", 100);
         return HttpHelper.Json(Map.of("Logs", Db.GetChatLogs(Math.min(Limit, 1000))));
     }
+
+    //  EVENTS
 
     private void OnEvent(EventType Type, Map<String, Object> Data) {
         switch (Type) {
