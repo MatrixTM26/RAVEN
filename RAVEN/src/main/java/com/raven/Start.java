@@ -110,7 +110,8 @@ public final class Start {
                 case "teamserver-gui" -> GUI.LaunchTeam(Config);
                 case "teamserver-web" -> {
                     int TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
-                    new TeamServer(Config, Mode).Run(Config.GetWebHost(), TeamPort);
+                    int WebPort  = ParseInt(Arg(Args, "-wp", "-web-port", String.valueOf(Config.GetWebPort())), Config.GetWebPort());
+                    new TeamServer(Config, Mode).RunStandalone(Host, Port, Config.GetWebHost(), TeamPort, WebPort);
                     Thread.currentThread().join();
                 }
                 case "web" -> {
@@ -250,7 +251,7 @@ public final class Start {
         if (Password.length() < 8) { Logger.Error("Password must be at least 8 characters"); return; }
         TeamDatabase Database    = TeamDatabase.Connect(Config);
         OperatorRole OperatorRoleValue = OperatorRole.FromString(Role);
-        if (Database.CreateOperator(Username, TeamDatabase.HashPassword(Password), OperatorRoleValue))
+        if (Database.CreateOperator(Username, Password, OperatorRoleValue))
             Logger.Success("Operator created: " + Username + " [" + OperatorRoleValue + "] — " + OperatorRoleValue.PermissionString());
         else
             Logger.Error("Failed — username may already exist");

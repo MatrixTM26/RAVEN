@@ -65,7 +65,7 @@ public final class TeamServer {
     public void Run(String Host, int Port) throws Exception {
         HttpSrv = HttpServer.create(new InetSocketAddress(Host, Port), 128);
         Router = new HttpRouter(HttpSrv, Config, PathResolver);
-        RegisterRoutes();
+        RegisterRoutesOnServer(HttpSrv);
         Router.RegisterStatic();
         HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
         HttpSrv.start();
@@ -87,6 +87,7 @@ public final class TeamServer {
         try {
             HttpServer Panel = HttpServer.create(new InetSocketAddress(RequestedHost, RequestedPort), 64);
             HttpRouter PanelRouter = new HttpRouter(Panel, Config, PathResolver);
+            RegisterRoutesOn(PanelRouter);
             PanelRouter.RegisterStatic();
             Panel.setExecutor(Executors.newFixedThreadPool(8));
             Panel.start();
@@ -150,7 +151,7 @@ public final class TeamServer {
         AcceptThread.start();
         HttpSrv = HttpServer.create(new InetSocketAddress(ApiHost, ApiPort), 128);
         Router = new HttpRouter(HttpSrv, Config, PathResolver);
-        RegisterRoutes();
+        RegisterRoutesOnServer(HttpSrv);
         HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
         HttpSrv.start();
         Logger.Info("RAVEN TeamServer backend running:");
@@ -161,68 +162,77 @@ public final class TeamServer {
         Log.Add("TeamServer backend initialized — mode: " + Mode.name());
     }
 
-    private void RegisterRoutes() {
-        // auth
-        route("/api/auth/login", this::ApiAuthLogin, false);
-        route("/api/auth/logout", this::ApiAuthLogout, true);
-
-        // server control
-        route("/api/server/status", this::ApiServerStatus, true);
-        route("/api/server/start", this::ApiServerStart, true);
-        route("/api/server/stop", this::ApiServerStop, true);
-
-        // agents
-        route("/api/agents", this::ApiAgents, true);
-        route("/api/agents/kill", this::ApiAgentKill, true);
-        route("/api/agents/note", this::ApiAgentNote, true);
-        route("/api/agents/notes/all", this::ApiAgentNotesAll, true);
-
-        // commands
-        route("/api/command/execute", this::ApiCmdExec, true);
-        route("/api/command/broadcast", this::ApiCmdBroadcast, true);
-        route("/api/command/broadcastall", this::ApiCmdBroadcastAll, true);
-        route("/api/command/history", this::ApiCmdHistory, true);
-        route("/api/command/screenshot", this::ApiCmdScreenshot, true);
-        route("/api/command/download", this::ApiCmdDownload, true);
-        route("/api/command/upload", this::ApiCmdUpload, true);
-        route("/api/command/sleep", this::ApiCmdSleep, true);
-        route("/api/command/pivot", this::ApiCmdPivot, true);
-        route("/api/command/portfwd", this::ApiCmdPortfwd, true);
-        route("/api/command/socks", this::ApiCmdSocks, true);
-
-        // sessions
-        route("/api/sessions/history", this::ApiSessionHistory, true);
-
-        // logs
-        route("/api/logs", this::ApiLogs, true);
-
-        // export
-        route("/api/export", this::ApiExport, true);
-
-        // team — operators
-        route("/api/team/operators", this::ApiOpList, true);
-        route("/api/team/operators/create", this::ApiOpCreate, true);
-        route("/api/team/operators/delete", this::ApiOpDelete, true);
-        route("/api/team/operators/role", this::ApiOpRole, true);
-        route("/api/team/operators/password", this::ApiOpPassword, true);
-        route("/api/team/operators/kick", this::ApiOpKick, true);
-        route("/api/team/roles", this::ApiRoles, true);
-
-        // web panel control
-        route("/api/server/webpanel/start",  this::ApiWebPanelStart,  true);
-        route("/api/server/webpanel/stop",   this::ApiWebPanelStop,   true);
-        route("/api/server/webpanel/status", this::ApiWebPanelStatus, true);
-        route("/api/tasks",                  this::ApiTasks,          true);
-
-        // team — chat
-        route("/api/team/chat/send", this::ApiChatSend, true);
-        route("/api/team/chat/messages", this::ApiChatMessages, true);
-        route("/api/team/chat/logs", this::ApiChatLogs, true);
-
+    public void RunStandalone(String AgentHost, int AgentPort, String ApiHost, int TeamPort, int WebPort) throws Exception {
+        RunAsBackend(AgentHost, AgentPort, ApiHost, TeamPort);
+        HttpServer WebSrv = HttpServer.create(new InetSocketAddress(ApiHost, WebPort), 64);
+        HttpRouter WebRouter = new HttpRouter(WebSrv, Config, PathResolver);
+        RegisterRoutesOn(WebRouter);
+        WebRouter.RegisterStatic();
+        WebSrv.setExecutor(Executors.newFixedThreadPool(8));
+        WebSrv.start();
+        String DisplayHost = ApiHost.equals("0.0.0.0") ? "localhost" : ApiHost;
+        Logger.Info("  Web frontend   : http://" + DisplayHost + ":" + WebPort + "/");
+        Log.Add("Web frontend started on port " + WebPort);
     }
 
     private void route(String Path, RouteHandler H, boolean Auth) {
-        HttpSrv.createContext(Path, E -> Dispatch(E, H, Auth));
+        RouteOn(HttpSrv, Path, H, Auth);
+    }
+
+    private void RouteOn(HttpServer Target, String Path, RouteHandler H, boolean Auth) {
+        Target.createContext(Path, E -> Dispatch(E, H, Auth));
+    }
+
+    private void RegisterRoutesOn(HttpRouter R) {
+        RegisterRoutesOnServer(R.GetServer());
+    }
+
+    private void RegisterRoutesOnServer(HttpServer Target) {
+        RouteOn(Target, "/api/auth/login",  this::ApiAuthLogin, false);
+        RouteOn(Target, "/api/auth/logout", this::ApiAuthLogout, true);
+        RouteOn(Target, "/api/server/status", this::ApiServerStatus, true);
+        RouteOn(Target, "/api/server/start",  this::ApiServerStart,  true);
+        RouteOn(Target, "/api/server/stop",   this::ApiServerStop,   true);
+        RouteOn(Target, "/api/agents",              this::ApiAgents,      true);
+        RouteOn(Target, "/api/agents/kill",         this::ApiAgentKill,   true);
+        RouteOn(Target, "/api/agents/note",         this::ApiAgentNote,   true);
+        RouteOn(Target, "/api/agents/notes/all",    this::ApiAgentNotesAll, true);
+        RouteOn(Target, "/api/command/execute",     this::ApiCmdExec,          true);
+        RouteOn(Target, "/api/command/broadcast",   this::ApiCmdBroadcast,     true);
+        RouteOn(Target, "/api/command/broadcastall",this::ApiCmdBroadcastAll,  true);
+        RouteOn(Target, "/api/command/history",     this::ApiCmdHistory,       true);
+        RouteOn(Target, "/api/command/screenshot",  this::ApiCmdScreenshot,    true);
+        RouteOn(Target, "/api/command/download",    this::ApiCmdDownload,      true);
+        RouteOn(Target, "/api/command/upload",      this::ApiCmdUpload,        true);
+        RouteOn(Target, "/api/command/sleep",       this::ApiCmdSleep,         true);
+        RouteOn(Target, "/api/command/pivot",       this::ApiCmdPivot,         true);
+        RouteOn(Target, "/api/command/portfwd",     this::ApiCmdPortfwd,       true);
+        RouteOn(Target, "/api/command/socks",       this::ApiCmdSocks,         true);
+        RouteOn(Target, "/api/sessions/history",    this::ApiSessionHistory,   true);
+        RouteOn(Target, "/api/logs",                this::ApiLogs,             true);
+        RouteOn(Target, "/api/export",              this::ApiExport,           true);
+        RouteOn(Target, "/api/team/operators",          this::ApiOpList,     true);
+        RouteOn(Target, "/api/team/operators/create",   this::ApiOpCreate,   true);
+        RouteOn(Target, "/api/team/operators/delete",   this::ApiOpDelete,   true);
+        RouteOn(Target, "/api/team/operators/role",     this::ApiOpRole,     true);
+        RouteOn(Target, "/api/team/operators/password", this::ApiOpPassword, true);
+        RouteOn(Target, "/api/team/operators/kick",     this::ApiOpKick,     true);
+        RouteOn(Target, "/api/team/roles",              this::ApiRoles,      true);
+        RouteOn(Target, "/api/server/webpanel/start",   this::ApiWebPanelStart,  true);
+        RouteOn(Target, "/api/server/webpanel/stop",    this::ApiWebPanelStop,   true);
+        RouteOn(Target, "/api/server/webpanel/status",  this::ApiWebPanelStatus, true);
+        RouteOn(Target, "/api/tasks",                   this::ApiTasks,          true);
+        RouteOn(Target, "/api/team/chat/send",     this::ApiChatSend,     true);
+        RouteOn(Target, "/api/team/chat/messages", this::ApiChatMessages, true);
+        RouteOn(Target, "/api/team/chat/logs",     this::ApiChatLogs,     true);
+        RouteOn(Target, "/api/agent/generate",     this::ApiAgentGenerate, true);
+        RouteOn(Target, "/api/agent/list",         this::ApiAgentList,     true);
+        RouteOn(Target, "/api/profiles",           this::ApiProfiles,      true);
+        RouteOn(Target, "/api/profiles/save",      this::ApiProfileSave,   true);
+        RouteOn(Target, "/api/profiles/load",      this::ApiProfileLoad,   true);
+        RouteOn(Target, "/api/profiles/delete",    this::ApiProfileDelete, true);
+        RouteOn(Target, "/api/profiles/clone",     this::ApiProfileClone,  true);
+        RouteOn(Target, "/api/profiles/edit",      this::ApiProfileEdit,   true);
     }
 
     private void Dispatch(HttpExchange E, RouteHandler H, boolean RequireAuth) {

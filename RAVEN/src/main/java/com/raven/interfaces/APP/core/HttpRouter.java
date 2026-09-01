@@ -29,6 +29,10 @@ public final class HttpRouter {
         this.PathResolver = PathResolver;
     }
 
+    public HttpServer GetServer() {
+        return Server;
+    }
+
     public void Register(String Path, RouteHandler Handler) {
         Server.createContext(Path, Exchange -> Route(Exchange, Handler));
     }
