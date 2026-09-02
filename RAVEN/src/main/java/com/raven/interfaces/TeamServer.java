@@ -225,14 +225,6 @@ public final class TeamServer {
         RouteOn(Target, "/api/team/chat/send",     this::ApiChatSend,     true);
         RouteOn(Target, "/api/team/chat/messages", this::ApiChatMessages, true);
         RouteOn(Target, "/api/team/chat/logs",     this::ApiChatLogs,     true);
-        RouteOn(Target, "/api/agent/generate",     this::ApiAgentGenerate, true);
-        RouteOn(Target, "/api/agent/list",         this::ApiAgentList,     true);
-        RouteOn(Target, "/api/profiles",           this::ApiProfiles,      true);
-        RouteOn(Target, "/api/profiles/save",      this::ApiProfileSave,   true);
-        RouteOn(Target, "/api/profiles/load",      this::ApiProfileLoad,   true);
-        RouteOn(Target, "/api/profiles/delete",    this::ApiProfileDelete, true);
-        RouteOn(Target, "/api/profiles/clone",     this::ApiProfileClone,  true);
-        RouteOn(Target, "/api/profiles/edit",      this::ApiProfileEdit,   true);
     }
 
     private void Dispatch(HttpExchange E, RouteHandler H, boolean RequireAuth) {
