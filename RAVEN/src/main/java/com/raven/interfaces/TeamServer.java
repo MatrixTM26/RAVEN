@@ -162,6 +162,19 @@ public final class TeamServer {
         Log.Add("TeamServer backend initialized — mode: " + Mode.name());
     }
 
+    public void RunWebFrontend(String ApiHost, int WebPort) throws Exception {
+        HttpSrv = HttpServer.create(new InetSocketAddress(ApiHost, WebPort), 64);
+        Router = new HttpRouter(HttpSrv, Config, PathResolver);
+        RegisterRoutesOnServer(HttpSrv);
+        Router.RegisterStatic();
+        HttpSrv.setExecutor(Executors.newFixedThreadPool(8));
+        HttpSrv.start();
+        String DisplayHost = ApiHost.equals("0.0.0.0") ? "localhost" : ApiHost;
+        Logger.Info("TeamServer web panel : http://" + DisplayHost + ":" + WebPort + "/");
+        Logger.Info("API base             : http://" + DisplayHost + ":" + WebPort + "/api/");
+        Log.Add("TeamServer web frontend started on port " + WebPort);
+    }
+
     public void RunStandalone(String AgentHost, int AgentPort, String ApiHost, int TeamPort, int WebPort) throws Exception {
         RunAsBackend(AgentHost, AgentPort, ApiHost, TeamPort);
         HttpServer WebSrv = HttpServer.create(new InetSocketAddress(ApiHost, WebPort), 64);

@@ -109,9 +109,14 @@ public final class Start {
                 }
                 case "teamserver-gui" -> GUI.LaunchTeam(Config);
                 case "teamserver-web" -> {
-                    int TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
-                    int WebPort  = ParseInt(Arg(Args, "-wp", "-web-port", String.valueOf(Config.GetWebPort())), Config.GetWebPort());
-                    new TeamServer(Config, Mode).RunStandalone(Host, Port, Config.GetWebHost(), TeamPort, WebPort);
+                    String TeamHost = Arg(Args, "-ts", "-thost", null);
+                    int    TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    int    WebPort  = ParseInt(Arg(Args, "-wp", "-web-port", String.valueOf(Config.GetWebPort())), Config.GetWebPort());
+                    if (TeamHost != null) {
+                        new TeamServer(Config, Mode).RunWebFrontend(Config.GetWebHost(), WebPort);
+                    } else {
+                        new TeamServer(Config, Mode).RunStandalone(Host, Port, Config.GetWebHost(), TeamPort, WebPort);
+                    }
                     Thread.currentThread().join();
                 }
                 case "web" -> {
