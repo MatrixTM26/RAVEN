@@ -864,21 +864,21 @@ async function RunServerCmd() {
             }
             case "chathistory": {
                 let d = await (
-                    await Api("/api/team/chat/history", {
+                    await Api("/api/team/chat/logs", {
                         method: "POST",
                         body: JSON.stringify({ Limit: 50 })
                     })
                 ).json();
-                (d.Chat || []).forEach(m =>
+                (d.Logs || []).forEach(m =>
                     Log(
                         "  [" +
-                            (m.timestamp || "") +
+                            (m.Timestamp || "") +
                             "] " +
-                            m.from_operator +
+                            (m.From || "?") +
                             " → " +
-                            (m.to_operators || "all") +
+                            (m.To || "all") +
                             ": " +
-                            m.message
+                            (m.Message || "")
                     )
                 );
                 break;

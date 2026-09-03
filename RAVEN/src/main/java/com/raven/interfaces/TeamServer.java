@@ -162,17 +162,74 @@ public final class TeamServer {
         Log.Add("TeamServer backend initialized — mode: " + Mode.name());
     }
 
-    public void RunWebFrontend(String ApiHost, int WebPort) throws Exception {
-        HttpSrv = HttpServer.create(new InetSocketAddress(ApiHost, WebPort), 64);
-        Router = new HttpRouter(HttpSrv, Config, PathResolver);
-        RegisterRoutesOnServer(HttpSrv);
-        Router.RegisterStatic();
-        HttpSrv.setExecutor(Executors.newFixedThreadPool(8));
-        HttpSrv.start();
-        String DisplayHost = ApiHost.equals("0.0.0.0") ? "localhost" : ApiHost;
+    public void RunWebFrontend(String BackendHost, int BackendPort, String WebHost, int WebPort) throws Exception {
+        HttpServer WebSrv = HttpServer.create(new InetSocketAddress(WebHost, WebPort), 64);
+        String ProxyBase = "http://" + BackendHost + ":" + BackendPort;
+        WebSrv.createContext("/api/", Exchange -> {
+            try {
+                String Target = ProxyBase + Exchange.getRequestURI().toString();
+                java.net.HttpURLConnection Conn = (java.net.HttpURLConnection) new java.net.URL(Target).openConnection();
+                Conn.setRequestMethod(Exchange.getRequestMethod());
+                Conn.setConnectTimeout(5000);
+                Conn.setReadTimeout(30000);
+                Exchange.getRequestHeaders().forEach((Key, Values) -> {
+                    if (!Key.equalsIgnoreCase("Host") && !Key.equalsIgnoreCase("Transfer-Encoding"))
+                        Values.forEach(Val -> Conn.addRequestProperty(Key, Val));
+                });
+                if (!Exchange.getRequestMethod().equalsIgnoreCase("GET") && !Exchange.getRequestMethod().equalsIgnoreCase("HEAD")) {
+                    Conn.setDoOutput(true);
+                    byte[] Body = Exchange.getRequestBody().readAllBytes();
+                    if (Body.length > 0) Conn.getOutputStream().write(Body);
+                }
+                int Status;
+                InputStream ResponseStream;
+                try {
+                    Status = Conn.getResponseCode();
+                    ResponseStream = Conn.getInputStream();
+                } catch (Exception ConnEx) {
+                    Status = Conn.getResponseCode();
+                    ResponseStream = Conn.getErrorStream();
+                }
+                byte[] ResponseBody = ResponseStream != null ? ResponseStream.readAllBytes() : new byte[0];
+                Conn.getHeaderFields().forEach((Key, Values) -> {
+                    if (Key != null && !Key.equalsIgnoreCase("Transfer-Encoding") && !Key.equalsIgnoreCase("Content-Length"))
+                        Values.forEach(Val -> Exchange.getResponseHeaders().add(Key, Val));
+                });
+                Exchange.sendResponseHeaders(Status, ResponseBody.length);
+                Exchange.getResponseBody().write(ResponseBody);
+                Exchange.getResponseBody().close();
+            } catch (Exception ProxyEx) {
+                byte[] Err = ("{\"Error\":\"Backend unavailable: " + ProxyEx.getMessage() + "\"}").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                Exchange.getResponseHeaders().set("Content-Type", "application/json");
+                Exchange.sendResponseHeaders(502, Err.length);
+                Exchange.getResponseBody().write(Err);
+                Exchange.getResponseBody().close();
+            }
+        });
+        HttpRouter WebRouter = new HttpRouter(WebSrv, Config, PathResolver);
+        WebRouter.RegisterStatic();
+        WebSrv.setExecutor(Executors.newFixedThreadPool(8));
+        WebSrv.start();
+        String DisplayHost = WebHost.equals("0.0.0.0") ? "localhost" : WebHost;
         Logger.Info("TeamServer web panel : http://" + DisplayHost + ":" + WebPort + "/");
-        Logger.Info("API base             : http://" + DisplayHost + ":" + WebPort + "/api/");
-        Log.Add("TeamServer web frontend started on port " + WebPort);
+        Logger.Info("API proxy            : " + ProxyBase + "/api/");
+        Log.Add("TSW web frontend started on port " + WebPort + " (proxy -> " + ProxyBase + ")");
+    }
+
+    public void StartWebPanel(String WebHost, int WebPort) throws Exception {
+        if (WebPanelHttpServer != null) { Logger.Warn("Web panel already running on port " + WebPanelPort); return; }
+        HttpServer Panel = HttpServer.create(new InetSocketAddress(WebHost, WebPort), 64);
+        HttpRouter PanelRouter = new HttpRouter(Panel, Config, PathResolver);
+        RegisterRoutesOn(PanelRouter);
+        PanelRouter.RegisterStatic();
+        Panel.setExecutor(Executors.newFixedThreadPool(8));
+        Panel.start();
+        WebPanelHttpServer = Panel;
+        WebPanelHost = WebHost;
+        WebPanelPort = WebPort;
+        String DisplayHost = WebHost.equals("0.0.0.0") ? "localhost" : WebHost;
+        Logger.Info("  Web panel         : http://" + DisplayHost + ":" + WebPort + "/");
+        Log.Add("Web panel started on port " + WebPort);
     }
 
     public void RunStandalone(String AgentHost, int AgentPort, String ApiHost, int TeamPort, int WebPort) throws Exception {

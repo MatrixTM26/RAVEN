@@ -87,6 +87,7 @@ public final class Helper {
                 "    EXAMPLES",
                 "        java -jar raven.jar -C -M -p 4444",
                 "        java -jar raven.jar -TS -M -p 4444 -tp 5000",
+                "        java -jar raven.jar -TS -M -p 4444 -tp 5000 -wp 8080",
                 "        java -jar raven.jar -TSC -ts 0.0.0.0 -tp 5000",
                 "        java -jar raven.jar -TSW -ts 0.0.0.0 -tp 5000 -wp 8080",
                 "        java -jar raven.jar -TSW -M -p 4444 -tp 5000 -wp 8080",

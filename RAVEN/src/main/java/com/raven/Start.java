@@ -99,7 +99,10 @@ public final class Start {
                 case "gui"            -> GUI.Launch(Config);
                 case "teamserver"     -> {
                     int TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
-                    new TeamServer(Config, Mode).RunAsBackend(Host, Port, Config.GetWebHost(), TeamPort);
+                    int WebPort  = ParseInt(Arg(Args, "-wp", "-web-port", "-1"), -1);
+                    TeamServer BackendServer = new TeamServer(Config, Mode);
+                    BackendServer.RunAsBackend(Host, Port, Config.GetWebHost(), TeamPort);
+                    if (WebPort > 0) BackendServer.StartWebPanel(Config.GetWebHost(), WebPort);
                     Thread.currentThread().join();
                 }
                 case "teamserver-cli" -> {
@@ -109,13 +112,13 @@ public final class Start {
                 }
                 case "teamserver-gui" -> GUI.LaunchTeam(Config);
                 case "teamserver-web" -> {
-                    String TeamHost = Arg(Args, "-ts", "-thost", null);
-                    int    TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
-                    int    WebPort  = ParseInt(Arg(Args, "-wp", "-web-port", String.valueOf(Config.GetWebPort())), Config.GetWebPort());
-                    if (TeamHost != null) {
-                        new TeamServer(Config, Mode).RunWebFrontend(Config.GetWebHost(), WebPort);
+                    String BackendHost = Arg(Args, "-ts", "-thost", null);
+                    int    BackendPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    int    WebPort     = ParseInt(Arg(Args, "-wp", "-web-port", String.valueOf(Config.GetWebPort())), Config.GetWebPort());
+                    if (BackendHost != null) {
+                        new TeamServer(Config, Mode).RunWebFrontend(BackendHost, BackendPort, Config.GetWebHost(), WebPort);
                     } else {
-                        new TeamServer(Config, Mode).RunStandalone(Host, Port, Config.GetWebHost(), TeamPort, WebPort);
+                        new TeamServer(Config, Mode).RunStandalone(Host, Port, Config.GetWebHost(), BackendPort, WebPort);
                     }
                     Thread.currentThread().join();
                 }
