@@ -216,13 +216,14 @@ async function StartSrv() {
     let p = parseInt(
         (document.getElementById("input-port") || {}).value || State.serverPort
     );
+    let m = (document.getElementById("input-mode") || {}).value || "MULTI";
     State.serverHost = h;
     State.serverPort = p;
-    Log("Starting server on " + h + ":" + p + "...", "info");
+    Log("Starting server on " + h + ":" + p + " [" + m + "]...", "info");
     try {
         let r = await Api("/api/server/start", {
             method: "POST",
-            body: JSON.stringify({ Host: h, Port: p })
+            body: JSON.stringify({ Host: h, Port: p, Mode: m })
         });
         let d = await r.json();
         if (d.Success) {
@@ -230,7 +231,7 @@ async function StartSrv() {
             State.serverAddress = d.Host + ":" + d.Port;
             State.sessionKey = d.Key || "";
             State.serverStartedAt = d.StartedAt || Date.now() / 1000;
-            Log("Server started on " + State.serverAddress, "success");
+            Log("Server started on " + State.serverAddress + " [" + (d.Mode || m) + "]", "success");
             StartPoll();
             StartUptime();
             UpdateToggleBtns();

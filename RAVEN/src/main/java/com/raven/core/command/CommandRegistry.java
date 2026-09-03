@@ -35,6 +35,8 @@ public final class CommandRegistry {
 
         Register("status", "status", "Show server mode, uptime, and database status", Category.SERVER, false);
         Register("logs", "logs", "Show recent server event logs", Category.SERVER, false);
+        Register("start", "start -lhost <host> -lport <port> -M <mode>", "Start agent listener (modes: multi, raw, http, https, tls, mtls, fmtls)", Category.SERVER, false);
+        Register("stop", "stop", "Stop the running agent listener", Category.SERVER, false);
 
         Register("sessions", "sessions", "List all active agent sessions", Category.SESSION, false);
         Register("agents", "agents", "Alias for sessions", Category.SESSION, false);

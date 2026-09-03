@@ -98,10 +98,10 @@ public final class Start {
                 case "cli"            -> new CLI(Config).Run(Host, Port, Mode);
                 case "gui"            -> GUI.Launch(Config);
                 case "teamserver"     -> {
-                    int TeamPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
-                    int WebPort  = ParseInt(Arg(Args, "-wp", "-web-port", "-1"), -1);
+                    int ApiPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
+                    int WebPort = ParseInt(Arg(Args, "-wp", "-web-port", "-1"), -1);
                     TeamServer BackendServer = new TeamServer(Config, Mode);
-                    BackendServer.RunAsBackend(Host, Port, Config.GetWebHost(), TeamPort);
+                    BackendServer.RunAsBackend(Config.GetWebHost(), ApiPort);
                     if (WebPort > 0) BackendServer.StartWebPanel(Config.GetWebHost(), WebPort);
                     Thread.currentThread().join();
                 }
@@ -118,7 +118,7 @@ public final class Start {
                     if (BackendHost != null) {
                         new TeamServer(Config, Mode).RunWebFrontend(BackendHost, BackendPort, Config.GetWebHost(), WebPort);
                     } else {
-                        new TeamServer(Config, Mode).RunStandalone(Host, Port, Config.GetWebHost(), BackendPort, WebPort);
+                        new TeamServer(Config, Mode).RunStandalone(Config.GetWebHost(), BackendPort, Config.GetWebHost(), WebPort);
                     }
                     Thread.currentThread().join();
                 }

@@ -464,6 +464,34 @@ public final class TeamClient {
                     else Logger.Ok("operator kicked: " + P[1]);
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
+            case "start" -> {
+                String ListenHost = "0.0.0.0";
+                int    ListenPort = Config.GetServerPort();
+                String ListenMode = "MULTI";
+                for (int Idx = 1; Idx < P.length; Idx++) {
+                    switch (P[Idx]) {
+                        case "-lhost" -> { if (Idx + 1 < P.length) ListenHost = P[++Idx]; }
+                        case "-lport" -> { if (Idx + 1 < P.length) ListenPort = ParseIntSafe(P[++Idx], ListenPort); }
+                        case "-M"     -> { if (Idx + 1 < P.length) ListenMode = P[++Idx].toUpperCase(); }
+                    }
+                }
+                try {
+                    Map<String, Object> Body = new LinkedHashMap<>();
+                    Body.put("Host", ListenHost);
+                    Body.put("Port", ListenPort);
+                    Body.put("Mode", ListenMode);
+                    Map<String, Object> R = Post("/api/server/start", Body);
+                    if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
+                    else Logger.Ok("listener started on " + ListenHost + ":" + ListenPort + " [" + ListenMode + "]");
+                } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
+            }
+            case "stop" -> {
+                try {
+                    Map<String, Object> R = Post("/api/server/stop", Map.of());
+                    if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
+                    else Logger.Ok("listener stopped");
+                } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
+            }
             case "webstart" -> {
                 String WHost = P.length > 1 ? P[1] : "0.0.0.0";
                 int WPort = P.length > 2 ? ParseIntSafe(P[2], 5000) : 5000;

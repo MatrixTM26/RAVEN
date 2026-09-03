@@ -140,26 +140,18 @@ public final class TeamServer {
         Logger.Shutdown();
     }
 
-    public void RunAsBackend(String AgentHost, int AgentPort, String ApiHost, int ApiPort) throws Exception {
-        Server = new RavenServer(AgentHost, AgentPort, Mode, Config);
-        Server.AddEventListener(this::OnEvent);
-        boolean[] Started = Server.StartServer();
-        if (!Started[0]) throw new Exception("failed to start agent listener on " + AgentHost + ":" + AgentPort);
-        ServerStartTime = Instant.now();
-        Thread AcceptThread = new Thread(Server::AcceptConnections, "AcceptConnections");
-        AcceptThread.setDaemon(true);
-        AcceptThread.start();
+    public void RunAsBackend(String ApiHost, int ApiPort) throws Exception {
         HttpSrv = HttpServer.create(new InetSocketAddress(ApiHost, ApiPort), 128);
         Router = new HttpRouter(HttpSrv, Config, PathResolver);
         RegisterRoutesOnServer(HttpSrv);
         HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
         HttpSrv.start();
         Logger.Info("RAVEN TeamServer backend running:");
-        Logger.Info("  Agent listener : " + AgentHost + ":" + AgentPort + " [" + Mode.name() + "]");
         Logger.Info("  Operator API   : http://" + ApiHost + ":" + ApiPort + "/api/");
         Logger.Info("  Connect CLI    : java -jar raven.jar -TSC -ts " + ApiHost + " -tp " + ApiPort);
-        Logger.Info("  Connect Web    : java -jar raven.jar -TSW -ts " + ApiHost + " -tp " + ApiPort);
-        Log.Add("TeamServer backend initialized — mode: " + Mode.name());
+        Logger.Info("  Connect Web    : java -jar raven.jar -TSW -ts " + ApiHost + " -tp " + ApiPort + " -wp <port>");
+        Logger.Info("  Listener       : use 'start' command in CLI/Web/GUI to configure");
+        Log.Add("TeamServer backend initialized");
     }
 
     public void RunWebFrontend(String BackendHost, int BackendPort, String WebHost, int WebPort) throws Exception {
@@ -232,15 +224,15 @@ public final class TeamServer {
         Log.Add("Web panel started on port " + WebPort);
     }
 
-    public void RunStandalone(String AgentHost, int AgentPort, String ApiHost, int TeamPort, int WebPort) throws Exception {
-        RunAsBackend(AgentHost, AgentPort, ApiHost, TeamPort);
-        HttpServer WebSrv = HttpServer.create(new InetSocketAddress(ApiHost, WebPort), 64);
+    public void RunStandalone(String ApiHost, int ApiPort, String WebHost, int WebPort) throws Exception {
+        RunAsBackend(ApiHost, ApiPort);
+        HttpServer WebSrv = HttpServer.create(new InetSocketAddress(WebHost, WebPort), 64);
         HttpRouter WebRouter = new HttpRouter(WebSrv, Config, PathResolver);
         RegisterRoutesOn(WebRouter);
         WebRouter.RegisterStatic();
         WebSrv.setExecutor(Executors.newFixedThreadPool(8));
         WebSrv.start();
-        String DisplayHost = ApiHost.equals("0.0.0.0") ? "localhost" : ApiHost;
+        String DisplayHost = WebHost.equals("0.0.0.0") ? "localhost" : WebHost;
         Logger.Info("  Web frontend   : http://" + DisplayHost + ":" + WebPort + "/");
         Log.Add("Web frontend started on port " + WebPort);
     }
@@ -413,19 +405,26 @@ public final class TeamServer {
 
     private String ApiServerStart(HttpExchange E, TokenInfo T) throws Exception {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
-        if (Server != null && Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server already running"));
+        if (Server != null && Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Listener already running"));
         Map<String, Object> B = Body(E);
-        String Host = Str(B, "Host", Config.GetServerHost());
-        int Port = Num(B, "Port", Config.GetServerPort());
-        Server = new RavenServer(Host, Port, Mode, Config);
+        String Host     = Str(B, "Host", Config.GetServerHost());
+        int Port        = Num(B, "Port", Config.GetServerPort());
+        String ModeStr  = Str(B, "Mode", "MULTI").toUpperCase();
+        ListenerMode ListenMode;
+        try {
+            ListenMode = ListenerMode.valueOf(ModeStr);
+        } catch (IllegalArgumentException Ex) {
+            ListenMode = ListenerMode.FromString(ModeStr.toLowerCase());
+        }
+        Server = new RavenServer(Host, Port, ListenMode, Config);
         Server.AddEventListener(this::OnEvent);
-        if (!Server.StartServer()[0]) return HttpHelper.Json(Map.of("Error", "Failed to start listener"));
+        if (!Server.StartServer()[0]) return HttpHelper.Json(Map.of("Error", "Failed to start listener on " + Host + ":" + Port));
         ServerStartTime = Instant.now();
-        Thread T2 = new Thread(Server::AcceptConnections, "AcceptConnections");
-        T2.setDaemon(true);
-        T2.start();
-        AddLog("Listener started on " + Host + ":" + Port + " by " + T.Username());
-        return HttpHelper.Json(Map.of("Success", true, "Host", Host, "Port", Port));
+        Thread AcceptThread = new Thread(Server::AcceptConnections, "AcceptConnections");
+        AcceptThread.setDaemon(true);
+        AcceptThread.start();
+        AddLog("Listener started on " + Host + ":" + Port + " [" + ListenMode.name() + "] by " + T.Username());
+        return HttpHelper.Json(Map.of("Success", true, "Host", Host, "Port", Port, "Mode", ListenMode.name()));
     }
 
     private String ApiServerStop(HttpExchange E, TokenInfo T) {
