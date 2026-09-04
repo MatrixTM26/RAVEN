@@ -252,6 +252,14 @@ public final class ServerConfig {
         return Number("agent.buffer.size");
     }
 
+    public long GetSleepIntervalMs() {
+        return Number("agent.sleep.interval");
+    }
+
+    public long GetJitterMs() {
+        return Number("agent.jitter.ms");
+    }
+
     public String GetLoggingLevel() {
         return StrObject("logging.level").toUpperCase();
     }

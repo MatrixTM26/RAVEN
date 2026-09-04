@@ -327,7 +327,7 @@ public abstract class BaseServer {
         Thread T = new Thread(() -> {
             while (Running && Sessions.Exists(SessionId)) {
                 try {
-                    Thread.sleep(15_000);
+                    Thread.sleep(Math.max(5_000, Config.GetSleepIntervalMs() + (long)(Math.random() * Config.GetJitterMs())));
                     if (!Running || !Sessions.Exists(SessionId)) break;
                     if (Sock.isClosed() || !Sock.isConnected() || Sock.isOutputShutdown()) throw new IOException("Socket closed");
                     if (!IsRaw) {

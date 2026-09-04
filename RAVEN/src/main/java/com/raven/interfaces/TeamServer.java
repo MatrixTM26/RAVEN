@@ -398,6 +398,8 @@ public final class TeamServer {
         R.put("Permissions", T.Role().PermissionString());
         R.put("DbType", Config.GetDatabaseType());
         R.put("DbOnline", Db.IsConnected());
+        R.put("SleepIntervalMs", Config.GetSleepIntervalMs());
+        R.put("JitterMs", Config.GetJitterMs());
         R.put("LogCount", Log.Count());
         if (Up) R.put("Key", Server.GetKeyBase64());
         return HttpHelper.Json(R);
