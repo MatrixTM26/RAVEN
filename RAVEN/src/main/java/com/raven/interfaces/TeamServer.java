@@ -67,7 +67,7 @@ public final class TeamServer {
         Router = new HttpRouter(HttpSrv, Config, PathResolver);
         RegisterRoutesOnServer(HttpSrv);
         Router.RegisterStatic();
-        HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
+        HttpSrv.setExecutor(Executors.newFixedThreadPool(32, Task -> { Thread W = new Thread(Task); W.setDaemon(true); return W; }));
         HttpSrv.start();
         Logger.Info("TeamServer web panel : http://" + Host + ":" + Port + "/");
         Logger.Info("API base             : http://" + Host + ":" + Port + "/api/");
@@ -89,7 +89,7 @@ public final class TeamServer {
             HttpRouter PanelRouter = new HttpRouter(Panel, Config, PathResolver);
             RegisterRoutesOn(PanelRouter);
             PanelRouter.RegisterStatic();
-            Panel.setExecutor(Executors.newFixedThreadPool(8));
+            Panel.setExecutor(Executors.newFixedThreadPool(8, Task -> { Thread W = new Thread(Task); W.setDaemon(true); return W; }));
             Panel.start();
             WebPanelHttpServer = Panel;
             WebPanelHost = RequestedHost;
@@ -107,12 +107,18 @@ public final class TeamServer {
     private String ApiWebPanelStop(HttpExchange Exchange, AuthApi.TokenInfo Token) throws Exception {
         if (!Token.Role().CanWrite()) return HttpHelper.Json(Map.of("Error", "insufficient permissions"));
         if (WebPanelHttpServer == null) return HttpHelper.Json(Map.of("Error", "web panel not running"));
-        WebPanelHttpServer.stop(1);
+        HttpServer ToStop = WebPanelHttpServer;
         WebPanelHttpServer = null;
         WebPanelHost = null;
         WebPanelPort = -1;
         Logger.Info("Web panel stopped by " + Token.Username());
         AddLog("Web panel stopped by " + Token.Username());
+        Thread Stopper = new Thread(() -> {
+            try { Thread.sleep(300); } catch (InterruptedException Ignored) {}
+            ToStop.stop(0);
+        }, "WebPanelStopper");
+        Stopper.setDaemon(true);
+        Stopper.start();
         return HttpHelper.Json(Map.of("Success", true));
     }
 
@@ -144,7 +150,7 @@ public final class TeamServer {
         HttpSrv = HttpServer.create(new InetSocketAddress(ApiHost, ApiPort), 128);
         Router = new HttpRouter(HttpSrv, Config, PathResolver);
         RegisterRoutesOnServer(HttpSrv);
-        HttpSrv.setExecutor(Executors.newFixedThreadPool(32));
+        HttpSrv.setExecutor(Executors.newFixedThreadPool(32, Task -> { Thread W = new Thread(Task); W.setDaemon(true); return W; }));
         HttpSrv.start();
         Logger.Info("RAVEN TeamServer backend running:");
         Logger.Info("  Operator API   : http://" + ApiHost + ":" + ApiPort + "/api/");
@@ -200,7 +206,7 @@ public final class TeamServer {
         });
         HttpRouter WebRouter = new HttpRouter(WebSrv, Config, PathResolver);
         WebRouter.RegisterStatic();
-        WebSrv.setExecutor(Executors.newFixedThreadPool(8));
+        WebSrv.setExecutor(Executors.newFixedThreadPool(8, Task -> { Thread W = new Thread(Task); W.setDaemon(true); return W; }));
         WebSrv.start();
         String DisplayHost = WebHost.equals("0.0.0.0") ? "localhost" : WebHost;
         Logger.Info("TeamServer web panel : http://" + DisplayHost + ":" + WebPort + "/");
@@ -214,7 +220,7 @@ public final class TeamServer {
         HttpRouter PanelRouter = new HttpRouter(Panel, Config, PathResolver);
         RegisterRoutesOn(PanelRouter);
         PanelRouter.RegisterStatic();
-        Panel.setExecutor(Executors.newFixedThreadPool(8));
+        Panel.setExecutor(Executors.newFixedThreadPool(8, Task -> { Thread W = new Thread(Task); W.setDaemon(true); return W; }));
         Panel.start();
         WebPanelHttpServer = Panel;
         WebPanelHost = WebHost;
@@ -230,7 +236,7 @@ public final class TeamServer {
         HttpRouter WebRouter = new HttpRouter(WebSrv, Config, PathResolver);
         RegisterRoutesOn(WebRouter);
         WebRouter.RegisterStatic();
-        WebSrv.setExecutor(Executors.newFixedThreadPool(8));
+        WebSrv.setExecutor(Executors.newFixedThreadPool(8, Task -> { Thread W = new Thread(Task); W.setDaemon(true); return W; }));
         WebSrv.start();
         String DisplayHost = WebHost.equals("0.0.0.0") ? "localhost" : WebHost;
         Logger.Info("  Web frontend   : http://" + DisplayHost + ":" + WebPort + "/");
@@ -431,11 +437,17 @@ public final class TeamServer {
 
     private String ApiServerStop(HttpExchange E, TokenInfo T) {
         if (!T.Role().CanManage()) return HttpHelper.Json(Map.of("Error", "ADMIN role required"));
-        if (Server == null || !Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
-        Server.StopServer();
+        if (Server == null || !Server.IsRunning()) return HttpHelper.Json(Map.of("Error", "Listener not running"));
+        RavenServer ToStop = Server;
         Server = null;
         ServerStartTime = null;
         AddLog("Listener stopped by " + T.Username());
+        Thread Stopper = new Thread(() -> {
+            try { Thread.sleep(200); } catch (InterruptedException Ignored) {}
+            ToStop.StopServer();
+        }, "ListenerStopper");
+        Stopper.setDaemon(true);
+        Stopper.start();
         return HttpHelper.Json(Map.of("Success", true));
     }
 

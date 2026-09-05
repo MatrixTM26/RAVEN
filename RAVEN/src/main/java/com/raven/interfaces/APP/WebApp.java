@@ -114,7 +114,7 @@ public final class WebApp {
             Router.RegisterStatic();
         }
 
-        HttpSrv.setExecutor(Executors.newFixedThreadPool(20));
+        HttpSrv.setExecutor(Executors.newFixedThreadPool(20, Task -> { Thread W = new Thread(Task); W.setDaemon(true); return W; }));
         HttpSrv.start();
 
         if (ApiOnly) {

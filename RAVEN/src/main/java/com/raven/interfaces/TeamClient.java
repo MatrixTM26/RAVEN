@@ -40,6 +40,7 @@ public final class TeamClient {
     private String OperatorName;
     private OperatorRole OperatorRoleValue;
     private volatile boolean Running = true;
+    private volatile String LastEventTimestamp = "";
     private BufferedReader ConsoleReader;
 
     public TeamClient(ServerConfig Config, String TsHost, int TsPort) {
@@ -52,6 +53,7 @@ public final class TeamClient {
 
     public void Run() {
         if (!Login()) return;
+        StartEventPoller();
         ConsoleReader = new BufferedReader(new InputStreamReader(System.in));
         while (Running) {
             try {
@@ -591,6 +593,7 @@ public final class TeamClient {
                 Token = Resp.getOrDefault("Token", "").toString();
                 OperatorName = Resp.getOrDefault("Username", User.trim()).toString();
                 OperatorRoleValue = OperatorRole.FromString(Resp.getOrDefault("Role", "MEMBER").toString());
+                LastEventTimestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                 System.out.println();
                 Logger.Ok("Welcome, " + OperatorName + " [" + OperatorRoleValue + "]");
                 Logger.Custom(INDENT + "%sConnected to TeamServer at %s:%d%s%n%n", AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
@@ -807,6 +810,45 @@ public final class TeamClient {
         } catch (Exception Ex) {
             Logger.Error(Ex.getMessage());
         }
+    }
+
+    private void StartEventPoller() {
+        Thread Poller = new Thread(() -> {
+            while (Running) {
+                try {
+                    Thread.sleep(2000);
+                    if (!Running) break;
+                    Map<String, Object> Response = Get("/api/logs");
+                    Object RawLogs = Response.get("Logs");
+                    if (!(RawLogs instanceof java.util.List)) continue;
+                    java.util.List<?> Entries = (java.util.List<?>) RawLogs;
+                    for (Object Raw : Entries) {
+                        String Line = String.valueOf(Raw);
+                        if (Line.isEmpty() || Line.isBlank()) continue;
+                        String Timestamp = "";
+                        String Message   = Line;
+                        if (Line.startsWith("[") && Line.contains("] ")) {
+                            int Close = Line.indexOf("] ");
+                            Timestamp = Line.substring(1, Close);
+                            Message   = Line.substring(Close + 2);
+                        }
+                        if (Timestamp.isEmpty() || Timestamp.compareTo(LastEventTimestamp) <= 0) continue;
+                        LastEventTimestamp = Timestamp;
+                        boolean IsSession = Message.contains("[+]") || Message.contains("[-]") || Message.contains("session-");
+                        boolean IsAuth    = Message.contains("[AUTH]");
+                        boolean IsTeam    = Message.contains("[TEAM]") || Message.contains("[>]");
+                        boolean IsError   = Message.contains("[!]") || Message.contains("ERROR");
+                        String Color = IsSession ? AnsiColor.Green : IsAuth ? AnsiColor.Yellow : IsTeam ? AnsiColor.Cyan : IsError ? AnsiColor.Red : AnsiColor.White;
+                        PromptManager.PrintLine(INDENT + Color + "[" + Timestamp + "] " + Message + AnsiColor.Reset);
+                    }
+                } catch (InterruptedException Ex) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception Ignored) {}
+            }
+        }, "EventPoller");
+        Poller.setDaemon(true);
+        Poller.start();
     }
 
     private static String Args(String[] Parts, int FromIndex) {
