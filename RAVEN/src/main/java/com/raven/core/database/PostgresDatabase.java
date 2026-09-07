@@ -9,12 +9,12 @@ import java.util.*;
 public final class PostgresDatabase extends TeamDatabase {
 
     private final Connection Conn;
-    private final ServerConfig Config;
+    private final String AdminUsername;
     private static final Gson GsonInst = new Gson();
 
     public PostgresDatabase(ServerConfig Config) throws Exception {
-        this.Config = Config;
-        String Url = Config.GetDatabaseUrl();
+        this.AdminUsername = Config.GetAdminUsername();
+        String Url  = Config.GetDatabaseUrl();
         String User = Config.GetDatabaseUser();
         String Pass = Config.GetDatabasePassword();
         if (!Url.startsWith("jdbc:postgresql://") && !Url.startsWith("jdbc:postgres://")) {
@@ -100,8 +100,18 @@ public final class PostgresDatabase extends TeamDatabase {
                     timestamp    TIMESTAMP DEFAULT NOW()
                 )"""
             );
-            St.execute("INSERT INTO tcoperators (username,passwordhash,role) VALUES ('" + Config.GetAdminUsername() + "','" + HashPassword(Config.GetAdminPassword()) + "','" + Config.GetAdminRole() + "') ON CONFLICT (username) DO NOTHING");
             Logger.Verbose("PostgreSQL schema ready");
+        }
+        SeedAdmin(Config);
+    }
+
+    private void SeedAdmin(ServerConfig Config) throws SQLException {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT INTO tcoperators (username,passwordhash,role) VALUES (?,?,?) ON CONFLICT (username) DO NOTHING")) {
+            PreparedStatement.setString(1, Config.GetAdminUsername());
+            PreparedStatement.setString(2, HashPassword(Config.GetAdminPassword()));
+            PreparedStatement.setString(3, Config.GetAdminRole());
+            PreparedStatement.executeUpdate();
         }
     }
 
@@ -221,7 +231,7 @@ public final class PostgresDatabase extends TeamDatabase {
 
     @Override
     public boolean DeleteOperator(String Username) {
-        if ("admin".equalsIgnoreCase(Username)) return false;
+        if (AdminUsername.equalsIgnoreCase(Username)) return false;
         exec("DELETE FROM tcoperators WHERE username=?", Username);
         return true;
     }

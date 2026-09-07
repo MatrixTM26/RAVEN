@@ -1,9 +1,8 @@
 package com.raven.core.database;
 
-import com.raven.utils.ServerConfig;
 import com.raven.utils.RavenConstants;
+import com.raven.utils.ServerConfig;
 import java.time.LocalDateTime;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -13,30 +12,30 @@ public final class MemoryDatabase extends TeamDatabase {
 
     private static final int MaxEntries = 5000;
 
-    private final List<String> LogEntries = new CopyOnWriteArrayList<>();
+    private final String AdminUsername;
+
+    private final List<String> LogEntries               = new CopyOnWriteArrayList<>();
     private final List<Map<String, Object>> CommandLogs = new CopyOnWriteArrayList<>();
     private final List<Map<String, Object>> SessionEvents = new CopyOnWriteArrayList<>();
     private final ConcurrentHashMap<Integer, String> AgentNotes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Map<String, Object>> Operators = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> LastSeenTable = new ConcurrentHashMap<>();
-    private final List<Map<String, Object>> ChatLogs = new CopyOnWriteArrayList<>();
+    private final List<Map<String, Object>> ChatLogs    = new CopyOnWriteArrayList<>();
 
-    public MemoryDatabase(ServerConfig Configuration) {
-        String AdminUsername = Configuration != null ? Configuration.GetAdminUsername() : "admin";
-        String AdminPassword = Configuration != null ? Configuration.GetAdminPassword() : "admin";
-        String AdminRoleName = Configuration != null ? Configuration.GetAdminRole() : "SUPER";
+    public MemoryDatabase(ServerConfig Config) {
+        String Username = Config != null ? Config.GetAdminUsername() : "admin";
+        String Password = Config != null ? Config.GetAdminPassword() : "admin";
+        String RoleName = Config != null ? Config.GetAdminRole()     : "SUPER";
+        this.AdminUsername = Username;
         Map<String, Object> AdminEntry = new LinkedHashMap<>();
-        AdminEntry.put("Username", AdminUsername);
-        AdminEntry.put("PasswordHash", HashPassword(AdminPassword));
-        AdminEntry.put("Role", OperatorRole.FromString(AdminRoleName).name());
-        AdminEntry.put("CreatedAt", LocalDateTime.now().format(RavenConstants.TimestampFmt));
-        Operators.put(AdminUsername, AdminEntry);
+        AdminEntry.put("Username",     Username);
+        AdminEntry.put("PasswordHash", HashPassword(Password));
+        AdminEntry.put("Role",         OperatorRole.FromString(RoleName).name());
+        AdminEntry.put("CreatedAt",    LocalDateTime.now().format(RavenConstants.TimestampFmt));
+        Operators.put(Username, AdminEntry);
     }
 
-    @Override
-    public boolean IsConnected() {
-        return true;
-    }
+    @Override public boolean IsConnected() { return true; }
 
     @Override
     public void SaveLog(String Entry) {
@@ -47,11 +46,11 @@ public final class MemoryDatabase extends TeamDatabase {
     @Override
     public void SaveCommandLog(int AgentId, String Operator, String Command, String Output, boolean Success) {
         Map<String, Object> Row = new LinkedHashMap<>();
-        Row.put("AgentId", AgentId);
-        Row.put("Operator", Operator);
-        Row.put("Command", Command);
-        Row.put("Output", Output);
-        Row.put("Success", Success);
+        Row.put("AgentId",   AgentId);
+        Row.put("Operator",  Operator);
+        Row.put("Command",   Command);
+        Row.put("Output",    Output);
+        Row.put("Success",   Success);
         Row.put("Timestamp", LocalDateTime.now().format(RavenConstants.TimestampFmt));
         CommandLogs.add(Row);
         if (CommandLogs.size() > MaxEntries) CommandLogs.remove(0);
@@ -80,15 +79,8 @@ public final class MemoryDatabase extends TeamDatabase {
         return new ArrayList<>(SessionEvents.subList(StartIndex, SessionEvents.size()));
     }
 
-    @Override
-    public void SetAgentNote(int AgentId, String Note) {
-        AgentNotes.put(AgentId, Note);
-    }
-
-    @Override
-    public String GetAgentNote(int AgentId) {
-        return AgentNotes.getOrDefault(AgentId, "");
-    }
+    @Override public void SetAgentNote(int AgentId, String Note) { AgentNotes.put(AgentId, Note); }
+    @Override public String GetAgentNote(int AgentId) { return AgentNotes.getOrDefault(AgentId, ""); }
 
     @Override
     public List<Map<String, Object>> GetAllAgentNotes() {
@@ -96,7 +88,7 @@ public final class MemoryDatabase extends TeamDatabase {
         AgentNotes.forEach((AgentId, Note) -> {
             Map<String, Object> Row = new LinkedHashMap<>();
             Row.put("AgentId", AgentId);
-            Row.put("Note", Note);
+            Row.put("Note",    Note);
             Result.add(Row);
         });
         return Result;
@@ -106,17 +98,17 @@ public final class MemoryDatabase extends TeamDatabase {
     public boolean CreateOperator(String Username, String PlaintextPassword, OperatorRole Role) {
         if (Operators.containsKey(Username)) return false;
         Map<String, Object> Entry = new LinkedHashMap<>();
-        Entry.put("Username", Username);
+        Entry.put("Username",     Username);
         Entry.put("PasswordHash", HashPassword(PlaintextPassword));
-        Entry.put("Role", Role.name());
-        Entry.put("CreatedAt", LocalDateTime.now().format(RavenConstants.TimestampFmt));
+        Entry.put("Role",         Role.name());
+        Entry.put("CreatedAt",    LocalDateTime.now().format(RavenConstants.TimestampFmt));
         Operators.put(Username, Entry);
         return true;
     }
 
     @Override
     public boolean DeleteOperator(String Username) {
-        if ("admin".equalsIgnoreCase(Username)) return false;
+        if (AdminUsername.equalsIgnoreCase(Username)) return false;
         return Operators.remove(Username) != null;
     }
 
@@ -139,14 +131,14 @@ public final class MemoryDatabase extends TeamDatabase {
 
     @Override
     public List<Map<String, Object>> GetOperators() {
-        return Operators.values()
-            .stream()
+        return Operators.values().stream()
             .map(Operator -> {
                 Map<String, Object> SafeView = new LinkedHashMap<>();
-                SafeView.put("Username", Operator.getOrDefault("Username", ""));
-                SafeView.put("Role", Operator.getOrDefault("Role", "MEMBER"));
+                SafeView.put("Username",  Operator.getOrDefault("Username", ""));
+                SafeView.put("Role",      Operator.getOrDefault("Role", "MEMBER"));
                 SafeView.put("CreatedAt", Operator.getOrDefault("CreatedAt", ""));
-                SafeView.put("LastSeen", LastSeenTable.getOrDefault(Operator.getOrDefault("Username", "").toString(), "Never"));
+                SafeView.put("LastSeen",  LastSeenTable.getOrDefault(
+                    Operator.getOrDefault("Username", "").toString(), "Never"));
                 return SafeView;
             })
             .collect(Collectors.toList());
@@ -168,15 +160,8 @@ public final class MemoryDatabase extends TeamDatabase {
         return true;
     }
 
-    @Override
-    public void UpdateLastSeen(String Username) {
-        LastSeenTable.put(Username, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-    }
-
-    @Override
-    public String GetLastSeen(String Username) {
-        return LastSeenTable.getOrDefault(Username, "Never");
-    }
+    @Override public void UpdateLastSeen(String Username) { LastSeenTable.put(Username, LocalDateTime.now().format(RavenConstants.TimestampFmt)); }
+    @Override public String GetLastSeen(String Username)  { return LastSeenTable.getOrDefault(Username, "Never"); }
 
     @Override
     public void SaveChatLog(String FromOperator, String ToOperators, String Message) {
@@ -195,6 +180,5 @@ public final class MemoryDatabase extends TeamDatabase {
         return new ArrayList<>(ChatLogs.subList(StartIndex, ChatLogs.size()));
     }
 
-    @Override
-    public void Close() {}
+    @Override public void Close() {}
 }

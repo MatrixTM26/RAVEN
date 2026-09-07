@@ -496,7 +496,7 @@ public final class TeamClient {
             }
             case "webstart" -> {
                 String WHost = P.length > 1 ? P[1] : "0.0.0.0";
-                int WPort = P.length > 2 ? ParseIntSafe(P[2], 5000) : 5000;
+                int WPort = P.length > 2 ? ParseIntSafe(P[2], 8080) : 8080;
                 try {
                     Map<String, Object> R = Post("/api/server/webpanel/start",
                         Map.of("Host", WHost, "Port", WPort, "Operator", OperatorName));
@@ -564,8 +564,8 @@ public final class TeamClient {
         } catch (java.net.ConnectException Ex) {
             Logger.Error("connection refused — " + TsHost + ":" + TsPort);
             System.out.println();
-            Logger.Custom(INDENT + "TeamClient requires a running TeamServer Web (-TSW).%n");
-            Logger.Custom(INDENT + "Start with: java -jar raven.jar -TSW -p 4444 -tp %d%n%n", TsPort);
+            Logger.Custom(INDENT + "TeamClient requires a running TeamServer backend.%n");
+            Logger.Custom(INDENT + "Start with: java -jar raven.jar -TS -tp %d%n%n", TsPort);
             return false;
         } catch (Exception Ex) {
             Logger.Error("TeamServer unreachable: " + Ex.getMessage());
@@ -580,7 +580,11 @@ public final class TeamClient {
                 if (User == null || User.isBlank()) return false;
                 Logger.Custom(INDENT + "%sPassword:%s ", AnsiColor.White, AnsiColor.Reset);
                 System.out.flush();
-                String Pass = Reader.readLine();
+                char[] PassChars = System.console() != null
+                    ? System.console().readPassword()
+                    : Reader.readLine().toCharArray();
+                String Pass = new String(PassChars);
+                java.util.Arrays.fill(PassChars, '\0');
                 if (Pass == null) return false;
                 Map<String, Object> Body = new LinkedHashMap<>();
                 Body.put("Username", User.trim());
@@ -814,11 +818,18 @@ public final class TeamClient {
 
     private void StartEventPoller() {
         Thread Poller = new Thread(() -> {
+            int ConsecutiveFailures = 0;
+            boolean DropReported    = false;
             while (Running) {
                 try {
                     Thread.sleep(2000);
                     if (!Running) break;
                     Map<String, Object> Response = Get("/api/logs");
+                    if (ConsecutiveFailures > 0) {
+                        ConsecutiveFailures = 0;
+                        DropReported        = false;
+                        PromptManager.PrintLine(INDENT + AnsiColor.Green + "⟳ reconnected to TeamServer" + AnsiColor.Reset);
+                    }
                     Object RawLogs = Response.get("Logs");
                     if (!(RawLogs instanceof java.util.List)) continue;
                     java.util.List<?> Entries = (java.util.List<?>) RawLogs;
@@ -841,10 +852,16 @@ public final class TeamClient {
                         String Color = IsSession ? AnsiColor.Green : IsAuth ? AnsiColor.Yellow : IsTeam ? AnsiColor.Cyan : IsError ? AnsiColor.Red : AnsiColor.White;
                         PromptManager.PrintLine(INDENT + Color + "[" + Timestamp + "] " + Message + AnsiColor.Reset);
                     }
-                } catch (InterruptedException Ex) {
+                } catch (InterruptedException InterruptedException) {
                     Thread.currentThread().interrupt();
                     break;
-                } catch (Exception Ignored) {}
+                } catch (Exception PollException) {
+                    ConsecutiveFailures++;
+                    if (ConsecutiveFailures >= 3 && !DropReported) {
+                        DropReported = true;
+                        PromptManager.PrintLine(INDENT + AnsiColor.Red + "⚠ TeamServer connection lost — retrying..." + AnsiColor.Reset);
+                    }
+                }
             }
         }, "EventPoller");
         Poller.setDaemon(true);

@@ -53,7 +53,7 @@ public final class CLI {
     private String ActiveProfileName = com.raven.utils.RavenConstants.DefaultProfile;
 
     private String OperatorName;
-    private OperatorRole OperatorRole;
+    private OperatorRole CurrentRole;
     private volatile boolean Running = true;
 
     private static volatile RavenServer SharedServer;
@@ -77,31 +77,9 @@ public final class CLI {
         this.ActiveMode = Mode;
         this.IsTeamMode = false;
         this.OperatorName = OperatorCfg.GetAdminUsername();
-        this.OperatorRole = OperatorRole.SUPER;
+        this.CurrentRole = OperatorRole.SUPER;
         WebPanelManager.SetActiveMode(Mode);
         if (!StartListener(Host, Port, Mode)) return;
-        RunLoop();
-    }
-
-    public void RunTeamServer(String Host, int Port, ListenerMode Mode) {
-        this.ActiveMode = Mode;
-        this.IsTeamMode = true;
-        WebPanelManager.SetActiveMode(Mode);
-        BufferedReader Reader = new BufferedReader(new InputStreamReader(System.in));
-        if (!Login(Reader)) return;
-        if (!StartListener(Host, Port, Mode)) return;
-        int ApiPort = Config.GetTeamServerPort();
-        String ApiHost = Config.GetWebHost();
-        new Thread(() -> {
-            try {
-                com.raven.interfaces.APP.WebApp TcApi = new com.raven.interfaces.APP.WebApp(Config, Mode);
-                TcApi.SetApiOnly(true);
-                TcApi.AttachServer(Server, ServerStartTime);
-                TcApi.Run(ApiHost, ApiPort);
-            } catch (Exception Exception) {
-                Logger.Error("TeamClient API failed to start on port " + ApiPort + ": " + Exception.getMessage());
-            }
-        }, "TeamClientApiThread").start();
         RunLoop();
     }
 
@@ -127,16 +105,16 @@ public final class CLI {
                     Pass = Reader.readLine();
                 }
                 if (Pass == null) return false;
-                if (!Db.ValidateOperator(User, TeamDatabase.HashPassword(Pass))) {
+                if (!Db.ValidateOperator(User, Pass)) {
                     Logger.Custom("  %sInvalid credentials — attempt %d/3%s%n%n", AnsiColor.Red, Try, AnsiColor.Reset);
                     continue;
                 }
                 OperatorName = User;
-                OperatorRole = Db.GetOperatorRole(User);
+                CurrentRole = Db.GetOperatorRole(User);
                 Db.UpdateLastSeen(User);
-                Logger.Info("Operator login: " + User + " [" + OperatorRole + "]");
-                Logger.Custom("  %n%sWelcome, %s [%s]%s%n", AnsiColor.Green, User, OperatorRole, AnsiColor.Reset);
-                Logger.Custom("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, OperatorRole.PermissionString());
+                Logger.Info("Operator login: " + User + " [" + CurrentRole + "]");
+                Logger.Custom("  %n%sWelcome, %s [%s]%s%n", AnsiColor.Green, User, CurrentRole, AnsiColor.Reset);
+                Logger.Custom("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, CurrentRole.PermissionString());
                 return true;
             } catch (IOException Ex) {
                 return false;
@@ -261,7 +239,7 @@ public final class CLI {
                 }
                 Logger.Custom("  %sUptime    %s%s%n", AnsiColor.Red, AnsiColor.White, SystemHelper.FormatUptime(Uptime));
                 Logger.Custom("  %sDatabase  %s%s (%s)%n%n", AnsiColor.Red, AnsiColor.White, Db.IsConnected() ? "connected" : "memory", Config.GetDatabaseType());
-                if (IsTeamMode) Logger.Custom("  %sOperator  %s%s [%s]%n%n", AnsiColor.Red, AnsiColor.White, OperatorName, OperatorRole);
+                if (IsTeamMode) Logger.Custom("  %sOperator  %s%s [%s]%n%n", AnsiColor.Red, AnsiColor.White, OperatorName, CurrentRole);
             }
             case "logs" -> {
                 System.out.println(TerminalHelper.Box("RECENT LOGS"));
@@ -489,11 +467,11 @@ public final class CLI {
                     break;
                 }
                 OperatorRole NewRole = OperatorRole.FromString(AddRole);
-                if (NewRole == OperatorRole.SUPER && !OperatorRole.IsSuperAdmin()) {
+                if (NewRole == OperatorRole.SUPER && (CurrentRole == null || !CurrentRole.IsSuperAdmin())) {
                     Logger.Warn("only SUPER can create SUPER operators");
                     break;
                 }
-                if (Db.CreateOperator(P[1], TeamDatabase.HashPassword(AddPass), NewRole)) Logger.Custom("  %s✔ operator created: %s [%s]%s%n%n", AnsiColor.Green, P[1], NewRole, AnsiColor.Reset);
+                if (Db.CreateOperator(P[1], AddPass, NewRole)) Logger.Custom("  %s✔ operator created: %s [%s]%s%n%n", AnsiColor.Green, P[1], NewRole, AnsiColor.Reset);
                 else Logger.Warn("username already exists: " + P[1]);
             }
             case "delopt", "deleteoperator" -> {
@@ -513,7 +491,7 @@ public final class CLI {
                 else Logger.Warn("operator not found: " + P[1]);
             }
             case "kick", "kickopt" -> {
-                if (OperatorRole == null || !OperatorRole.CanKickOperator()) {
+                if (CurrentRole == null || !CurrentRole.CanKickOperator()) {
                     Logger.Warn("SUPER role required");
                     break;
                 }
@@ -562,7 +540,7 @@ public final class CLI {
                     Logger.Warn("password must be at least 8 characters");
                     break;
                 }
-                if (Db.UpdateOperatorPassword(P[1], TeamDatabase.HashPassword(P[2]))) Logger.Custom("  %s✔ password updated: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
+                if (Db.UpdateOperatorPassword(P[1], P[2])) Logger.Custom("  %s✔ password updated: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
                 else Logger.Warn("operator not found: " + P[1]);
             }
             case "chat" -> ShowChat();
@@ -660,7 +638,7 @@ public final class CLI {
                 String SaveDesc = P.length > 2 ? BuildArgs(P, 2) : "";
                 Map<String, String> CurrentSettings = new java.util.LinkedHashMap<>(OperatorCfg.ToMap());
                 if (OperatorName != null) CurrentSettings.put("operator.name", OperatorName);
-                if (OperatorRole != null) CurrentSettings.put("operator.role", OperatorRole.name());
+                if (CurrentRole != null) CurrentSettings.put("operator.role", CurrentRole.name());
                 if (ProfileManager.Save(SaveName, CurrentSettings, SaveDesc)) Logger.Custom("  %s✔ profile saved: %s%s%n%n", AnsiColor.Green, SaveName, AnsiColor.Reset);
                 else Logger.Error("failed to save profile: " + SaveName);
             }
@@ -746,8 +724,8 @@ public final class CLI {
         System.out.println(TerminalHelper.Box("COMMAND REFERENCE"));
         System.out.println();
         if (IsTeamMode && OperatorName != null) {
-            Logger.Custom("  %s[TEAMSERVER]%s  Operator: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, OperatorRole != null ? OperatorRole.name() : "?", AnsiColor.Reset);
-            if (OperatorRole != null) Logger.Custom("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, OperatorRole.PermissionString());
+            Logger.Custom("  %s[TEAMSERVER]%s  Operator: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, CurrentRole != null ? CurrentRole.name() : "?", AnsiColor.Reset);
+            if (CurrentRole != null) Logger.Custom("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, CurrentRole.PermissionString());
         }
         for (Category Cat : Category.values()) {
             List<CommandDef> Cmds = CommandRegistry.ByCategory(Cat);
@@ -978,11 +956,11 @@ public final class CLI {
     }
 
     private boolean CanExecute() {
-        return !IsTeamMode || (OperatorRole != null && OperatorRole.CanExecute());
+        return !IsTeamMode || (CurrentRole != null && CurrentRole.CanExecute());
     }
 
     private boolean CanManage() {
-        return !IsTeamMode || (OperatorRole != null && OperatorRole.CanManage());
+        return !IsTeamMode || (CurrentRole != null && CurrentRole.CanManage());
     }
 
     private String Usage(String Cmd) {
