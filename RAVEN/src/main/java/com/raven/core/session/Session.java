@@ -37,21 +37,25 @@ public class Session {
     private boolean RawMode;
     private boolean Encrypted;
     private String  Status;
+    private long    SleepIntervalMs;
+    private long    JitterMs;
 
     public Session() {
-        JoinedAt    = LocalDateTime.now().format(RavenConstants.TimestampFmt);
-        SessionType = Type.RAVEN;
-        Status      = "Online";
-        Encrypted   = true;
-        ShellMode   = "Standard";
-        Os          = "Unknown";
-        Hostname    = "Unknown";
-        User        = "Unknown";
-        Arch        = "Unknown";
-        AgentIp     = "Unknown";
-        CertCn      = "N/A";
-        AgentId     = GenerateAgentId();
-        SessionKey  = GenerateSessionKey();
+        JoinedAt        = LocalDateTime.now().format(RavenConstants.TimestampFmt);
+        SessionType     = Type.RAVEN;
+        Status          = "Online";
+        Encrypted       = true;
+        ShellMode       = "Standard";
+        Os              = "Unknown";
+        Hostname        = "Unknown";
+        User            = "Unknown";
+        Arch            = "Unknown";
+        AgentIp         = "Unknown";
+        CertCn          = "N/A";
+        AgentId         = GenerateAgentId();
+        SessionKey      = GenerateSessionKey();
+        SleepIntervalMs = 5000;
+        JitterMs        = 1000;
     }
 
     private static String GenerateAgentId() {
@@ -124,6 +128,12 @@ public class Session {
 
     public String  GetStatus()             { return Status; }
     public void    SetStatus(String Value) { Status = Value; }
+
+    public long    GetSleepIntervalMs()              { return SleepIntervalMs; }
+    public void    SetSleepIntervalMs(long Value)    { SleepIntervalMs = Math.max(0, Value); }
+
+    public long    GetJitterMs()                     { return JitterMs; }
+    public void    SetJitterMs(long Value)           { JitterMs = Math.max(0, Value); }
 
     public String GetDisplayName() {
         if (CertCn != null && !CertCn.equals("N/A") && !CertCn.isBlank()) return CertCn.toUpperCase();

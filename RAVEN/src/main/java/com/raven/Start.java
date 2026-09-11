@@ -269,7 +269,7 @@ public final class Start {
     private static void HandleRemoveOperator(List<String> Args) {
         String Username = Arg(Args, "-u", "-user", null);
         if (Username == null) { Logger.Error("Usage: -RO | -rmop  -u <user>"); return; }
-        if (Username.equals("admin")) { Logger.Error("Cannot remove the admin account"); return; }
+        if (Username.equals(Config.GetAdminUsername())) { Logger.Error("Cannot remove the admin account"); return; }
         TeamDatabase Database = TeamDatabase.Connect(Config);
         if (Database.DeleteOperator(Username)) Logger.Success("Operator removed: " + Username);
         else                                   Logger.Error("Operator not found: " + Username);
@@ -286,7 +286,7 @@ public final class Start {
             return;
         }
         if (Username == null || Role == null) { Logger.Error("Usage: -OP | -setperm  -u <user>  -ro <ROLE>"); return; }
-        if (Username.equals("admin"))         { Logger.Error("Cannot change the admin role"); return; }
+        if (Username.equals(Config.GetAdminUsername()))         { Logger.Error("Cannot change the admin role"); return; }
         TeamDatabase Database          = TeamDatabase.Connect(Config);
         OperatorRole OperatorRoleValue = OperatorRole.FromString(Role);
         if (Database.UpdateOperatorRole(Username, OperatorRoleValue))

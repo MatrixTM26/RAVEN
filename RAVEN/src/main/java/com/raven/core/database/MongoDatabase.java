@@ -11,6 +11,7 @@ public final class MongoDatabase extends TeamDatabase {
 
     private final MongoClient Client;
     private final com.mongodb.client.MongoDatabase MongoDatabaseRef;
+    private final String AdminUsername;
     private final MongoCollection<Document> ColLogs;
     private final MongoCollection<Document> ColCommands;
     private final MongoCollection<Document> ColSessions;
@@ -19,6 +20,7 @@ public final class MongoDatabase extends TeamDatabase {
     private final MongoCollection<Document> ColChatLogs;
 
     public MongoDatabase(ServerConfig Config) throws Exception {
+        this.AdminUsername = Config.GetAdminUsername();
         String Url = Config.GetMongoUri();
         if (!Url.startsWith("mongodb://") && !Url.startsWith("mongodb+srv://")) {
             throw new Exception("Invalid MongoDB URL — must start with mongodb:// or mongodb+srv://");
@@ -242,7 +244,7 @@ public final class MongoDatabase extends TeamDatabase {
 
     @Override
     public boolean DeleteOperator(String Username) {
-        if ("admin".equalsIgnoreCase(Username)) return false;
+        if (AdminUsername.equalsIgnoreCase(Username)) return false;
         try {
             ColOperators.deleteOne(Filters.eq("username", Username));
             return true;
