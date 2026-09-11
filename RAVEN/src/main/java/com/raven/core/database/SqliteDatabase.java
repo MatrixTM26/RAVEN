@@ -1,53 +1,48 @@
 package com.raven.core.database;
 
 import com.raven.core.output.Logger;
-import com.raven.utils.ServerConfig;
 import com.raven.utils.RavenConstants;
+import com.raven.utils.ServerConfig;
 import java.nio.file.*;
 import java.sql.*;
 import java.time.LocalDateTime;
-
 import java.util.*;
 
 public final class SqliteDatabase extends TeamDatabase {
 
-
     private final Connection Conn;
-    private final ServerConfig Config;
+    private final String AdminUsername;
     private boolean Connected = false;
 
     public SqliteDatabase(ServerConfig Config) throws Exception {
-        this.Config = Config;
-        String DbDir = Config.GetDatabasePath();
+        this.AdminUsername = Config.GetAdminUsername();
+        String DbDir  = Config.GetDatabasePath();
         String DbFile = DbDir + "/raven.db";
         Files.createDirectories(Paths.get(DbDir));
         Class.forName("org.sqlite.JDBC");
         Conn = DriverManager.getConnection("jdbc:sqlite:" + DbFile);
         Conn.setAutoCommit(true);
-        try (Statement St = Conn.createStatement()) {
-            St.execute("PRAGMA journal_mode=WAL");
-            St.execute("PRAGMA synchronous=NORMAL");
-            St.execute("PRAGMA busy_timeout=5000");
+        try (Statement Statement = Conn.createStatement()) {
+            Statement.execute("PRAGMA journal_mode=WAL");
+            Statement.execute("PRAGMA synchronous=NORMAL");
+            Statement.execute("PRAGMA busy_timeout=5000");
         }
         Connected = true;
         CreateTables();
         Migrate();
-        SeedAdmin();
+        SeedAdmin(Config);
         Logger.Info("SQLite database: " + Paths.get(DbFile).toAbsolutePath());
     }
 
     private void CreateTables() throws Exception {
-        try (Statement St = Conn.createStatement()) {
-            St.executeUpdate(
-                """
+        try (Statement Statement = Conn.createStatement()) {
+            Statement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS tclogs (
                     id        INTEGER PRIMARY KEY AUTOINCREMENT,
                     entry     TEXT    NOT NULL,
                     createdat TEXT    NOT NULL
-                )"""
-            );
-            St.executeUpdate(
-                """
+                )""");
+            Statement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS tccommands (
                     id        INTEGER PRIMARY KEY AUTOINCREMENT,
                     agentid   INTEGER NOT NULL,
@@ -56,10 +51,8 @@ public final class SqliteDatabase extends TeamDatabase {
                     output    TEXT,
                     success   INTEGER NOT NULL DEFAULT 0,
                     timestamp TEXT    NOT NULL
-                )"""
-            );
-            St.executeUpdate(
-                """
+                )""");
+            Statement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS tcsessions (
                     id        INTEGER PRIMARY KEY AUTOINCREMENT,
                     agentid   TEXT,
@@ -69,194 +62,186 @@ public final class SqliteDatabase extends TeamDatabase {
                     agentip   TEXT,
                     event     TEXT    NOT NULL,
                     timestamp TEXT    NOT NULL
-                )"""
-            );
-            St.executeUpdate(
-                """
+                )""");
+            Statement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS tcnotes (
                     agentid   INTEGER PRIMARY KEY,
                     note      TEXT    NOT NULL DEFAULT ''
-                )"""
-            );
-            St.executeUpdate(
-                """
+                )""");
+            Statement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS tcoperators (
                     username     TEXT PRIMARY KEY,
                     passwordhash TEXT NOT NULL,
                     role         TEXT NOT NULL DEFAULT 'MEMBER',
                     createdat    TEXT NOT NULL,
                     lastseen     TEXT NOT NULL DEFAULT 'Never'
-                )"""
-            );
-            St.executeUpdate(
-                """
+                )""");
+            Statement.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS tcchatlog (
                     id           INTEGER PRIMARY KEY AUTOINCREMENT,
                     fromoperator TEXT    NOT NULL,
                     tooperators  TEXT,
                     message      TEXT    NOT NULL,
                     timestamp    TEXT    NOT NULL
-                )"""
-            );
+                )""");
         }
     }
 
     private void Migrate() {
-        try (Statement St = Conn.createStatement()) {
-            try {
-                St.executeUpdate("ALTER TABLE tcoperators ADD COLUMN lastseen TEXT NOT NULL DEFAULT 'Never'");
-            } catch (Exception Ignored) {}
+        try (Statement Statement = Conn.createStatement()) {
+            try { Statement.executeUpdate("ALTER TABLE tcoperators ADD COLUMN lastseen TEXT NOT NULL DEFAULT 'Never'"); }
+            catch (Exception Ignored) {}
         } catch (Exception Ignored) {}
     }
 
-    private void SeedAdmin() throws Exception {
-        String AdminUser = Config.GetAdminUsername();
-        String AdminPass = Config.GetAdminPassword();
-        String AdminRole = Config.GetAdminRole();
-        try (PreparedStatement Ps = Conn.prepareStatement("INSERT OR IGNORE INTO tcoperators (username,passwordhash,role,createdat,lastseen) VALUES (?,?,?,?,?)")) {
-            Ps.setString(1, AdminUser);
-            Ps.setString(2, HashPassword(AdminPass));
-            Ps.setString(3, AdminRole);
-            Ps.setString(4, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-            Ps.setString(5, "Never");
-            Ps.executeUpdate();
+    private void SeedAdmin(ServerConfig Config) throws Exception {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT OR IGNORE INTO tcoperators (username,passwordhash,role,createdat,lastseen) VALUES (?,?,?,?,?)")) {
+            PreparedStatement.setString(1, Config.GetAdminUsername());
+            PreparedStatement.setString(2, HashPassword(Config.GetAdminPassword()));
+            PreparedStatement.setString(3, Config.GetAdminRole());
+            PreparedStatement.setString(4, LocalDateTime.now().format(RavenConstants.TimestampFmt));
+            PreparedStatement.setString(5, "Never");
+            PreparedStatement.executeUpdate();
         }
     }
 
     @Override
     public boolean IsConnected() {
-        try {
-            return Connected && Conn != null && !Conn.isClosed();
-        } catch (Exception E) {
-            return false;
-        }
+        try { return Connected && Conn != null && !Conn.isClosed(); }
+        catch (Exception Exception) { return false; }
     }
 
     @Override
     public synchronized void SaveLog(String Entry) {
-        try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tclogs (entry,createdat) VALUES (?,?)")) {
-            Ps.setString(1, Entry);
-            Ps.setString(2, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-            Ps.executeUpdate();
-        } catch (Exception E) {
-            Logger.Verbose("SQLite SaveLog: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT INTO tclogs (entry,createdat) VALUES (?,?)")) {
+            PreparedStatement.setString(1, Entry);
+            PreparedStatement.setString(2, LocalDateTime.now().format(RavenConstants.TimestampFmt));
+            PreparedStatement.executeUpdate();
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite SaveLog: " + Exception.getMessage());
         }
     }
 
     @Override
     public synchronized void SaveCommandLog(int AgentId, String Operator, String Command, String Output, boolean Success) {
-        try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tccommands (agentid,operator,command,output,success,timestamp) VALUES (?,?,?,?,?,?)")) {
-            Ps.setInt(1, AgentId);
-            Ps.setString(2, Operator);
-            Ps.setString(3, Command);
-            Ps.setString(4, Output);
-            Ps.setInt(5, Success ? 1 : 0);
-            Ps.setString(6, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-            Ps.executeUpdate();
-        } catch (Exception E) {
-            Logger.Verbose("SQLite SaveCommandLog: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT INTO tccommands (agentid,operator,command,output,success,timestamp) VALUES (?,?,?,?,?,?)")) {
+            PreparedStatement.setInt(1, AgentId);
+            PreparedStatement.setString(2, Operator);
+            PreparedStatement.setString(3, Command);
+            PreparedStatement.setString(4, Output);
+            PreparedStatement.setInt(5, Success ? 1 : 0);
+            PreparedStatement.setString(6, LocalDateTime.now().format(RavenConstants.TimestampFmt));
+            PreparedStatement.executeUpdate();
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite SaveCommandLog: " + Exception.getMessage());
         }
     }
 
     @Override
     public synchronized void SaveSessionEvent(Map<String, Object> Data, String Event) {
-        try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tcsessions (agentid,hostname,os,username,agentip,event,timestamp) VALUES (?,?,?,?,?,?,?)")) {
-            Ps.setString(1, Str(Data, "ID"));
-            Ps.setString(2, Str(Data, "Hostname"));
-            Ps.setString(3, Str(Data, "OS"));
-            Ps.setString(4, Str(Data, "User"));
-            Ps.setString(5, Str(Data, "AgentIP"));
-            Ps.setString(6, Event);
-            Ps.setString(7, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-            Ps.executeUpdate();
-        } catch (Exception E) {
-            Logger.Verbose("SQLite SaveSessionEvent: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT INTO tcsessions (agentid,hostname,os,username,agentip,event,timestamp) VALUES (?,?,?,?,?,?,?)")) {
+            PreparedStatement.setString(1, Str(Data, "ID"));
+            PreparedStatement.setString(2, Str(Data, "Hostname"));
+            PreparedStatement.setString(3, Str(Data, "OS"));
+            PreparedStatement.setString(4, Str(Data, "User"));
+            PreparedStatement.setString(5, Str(Data, "AgentIP"));
+            PreparedStatement.setString(6, Event);
+            PreparedStatement.setString(7, LocalDateTime.now().format(RavenConstants.TimestampFmt));
+            PreparedStatement.executeUpdate();
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite SaveSessionEvent: " + Exception.getMessage());
         }
     }
 
     @Override
-    public List<Map<String, Object>> GetCommandHistory(int AgentId, int Limit) {
+    public synchronized List<Map<String, Object>> GetCommandHistory(int AgentId, int Limit) {
         List<Map<String, Object>> List = new ArrayList<>();
-        String Sql = AgentId == 0 ? "SELECT * FROM tccommands ORDER BY id DESC LIMIT ?" : "SELECT * FROM tccommands WHERE agentid=? ORDER BY id DESC LIMIT ?";
-        try (PreparedStatement Ps = Conn.prepareStatement(Sql)) {
-            if (AgentId == 0) {
-                Ps.setInt(1, Limit);
-            } else {
-                Ps.setInt(1, AgentId);
-                Ps.setInt(2, Limit);
-            }
-            ResultSet Rs = Ps.executeQuery();
-            while (Rs.next()) {
+        String Sql = AgentId == 0
+            ? "SELECT * FROM tccommands ORDER BY id DESC LIMIT ?"
+            : "SELECT * FROM tccommands WHERE agentid=? ORDER BY id DESC LIMIT ?";
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(Sql)) {
+            if (AgentId == 0) { PreparedStatement.setInt(1, Limit); }
+            else { PreparedStatement.setInt(1, AgentId); PreparedStatement.setInt(2, Limit); }
+            ResultSet ResultSet = PreparedStatement.executeQuery();
+            while (ResultSet.next()) {
                 Map<String, Object> Row = new LinkedHashMap<>();
-                Row.put("AgentId", Rs.getInt("agentid"));
-                Row.put("Operator", Rs.getString("operator"));
-                Row.put("Command", Rs.getString("command"));
-                Row.put("Output", Rs.getString("output"));
-                Row.put("Success", Rs.getInt("success") == 1);
-                Row.put("Timestamp", Rs.getString("timestamp"));
+                Row.put("AgentId",   ResultSet.getInt("agentid"));
+                Row.put("Operator",  ResultSet.getString("operator"));
+                Row.put("Command",   ResultSet.getString("command"));
+                Row.put("Output",    ResultSet.getString("output"));
+                Row.put("Success",   ResultSet.getInt("success") == 1);
+                Row.put("Timestamp", ResultSet.getString("timestamp"));
                 List.add(Row);
             }
-        } catch (Exception E) {
-            Logger.Verbose("SQLite GetCommandHistory: " + E.getMessage());
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetCommandHistory: " + Exception.getMessage());
         }
         return List;
     }
 
     @Override
-    public List<Map<String, Object>> GetSessionHistory(int Limit) {
+    public synchronized List<Map<String, Object>> GetSessionHistory(int Limit) {
         List<Map<String, Object>> List = new ArrayList<>();
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT * FROM tcsessions ORDER BY id DESC LIMIT ?")) {
-            Ps.setInt(1, Limit);
-            ResultSet Rs = Ps.executeQuery();
-            while (Rs.next()) {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "SELECT * FROM tcsessions ORDER BY id DESC LIMIT ?")) {
+            PreparedStatement.setInt(1, Limit);
+            ResultSet ResultSet = PreparedStatement.executeQuery();
+            while (ResultSet.next()) {
                 Map<String, Object> Row = new LinkedHashMap<>();
-                Row.put("ID", Rs.getString("agentid"));
-                Row.put("Hostname", Rs.getString("hostname"));
-                Row.put("OS", Rs.getString("os"));
-                Row.put("User", Rs.getString("username"));
-                Row.put("AgentIP", Rs.getString("agentip"));
-                Row.put("Event", Rs.getString("event"));
-                Row.put("Timestamp", Rs.getString("timestamp"));
+                Row.put("ID",        ResultSet.getString("agentid"));
+                Row.put("Hostname",  ResultSet.getString("hostname"));
+                Row.put("OS",        ResultSet.getString("os"));
+                Row.put("User",      ResultSet.getString("username"));
+                Row.put("AgentIP",   ResultSet.getString("agentip"));
+                Row.put("Event",     ResultSet.getString("event"));
+                Row.put("Timestamp", ResultSet.getString("timestamp"));
                 List.add(Row);
             }
-        } catch (Exception E) {
-            Logger.Verbose("SQLite GetSessionHistory: " + E.getMessage());
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetSessionHistory: " + Exception.getMessage());
         }
         return List;
     }
 
     @Override
     public synchronized void SetAgentNote(int AgentId, String Note) {
-        try (PreparedStatement Ps = Conn.prepareStatement("INSERT OR REPLACE INTO tcnotes (agentid,note) VALUES (?,?)")) {
-            Ps.setInt(1, AgentId);
-            Ps.setString(2, Note);
-            Ps.executeUpdate();
-        } catch (Exception E) {
-            Logger.Verbose("SQLite SetAgentNote: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT OR REPLACE INTO tcnotes (agentid,note) VALUES (?,?)")) {
+            PreparedStatement.setInt(1, AgentId);
+            PreparedStatement.setString(2, Note);
+            PreparedStatement.executeUpdate();
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite SetAgentNote: " + Exception.getMessage());
         }
     }
 
     @Override
-    public String GetAgentNote(int AgentId) {
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT note FROM tcnotes WHERE agentid=?")) {
-            Ps.setInt(1, AgentId);
-            ResultSet Rs = Ps.executeQuery();
-            if (Rs.next()) return Rs.getString("note");
-        } catch (Exception E) {
-            Logger.Verbose("SQLite GetAgentNote: " + E.getMessage());
+    public synchronized String GetAgentNote(int AgentId) {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "SELECT note FROM tcnotes WHERE agentid=?")) {
+            PreparedStatement.setInt(1, AgentId);
+            ResultSet ResultSet = PreparedStatement.executeQuery();
+            if (ResultSet.next()) return ResultSet.getString("note");
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetAgentNote: " + Exception.getMessage());
         }
         return "";
     }
 
     @Override
-    public List<Map<String, Object>> GetAllAgentNotes() {
+    public synchronized List<Map<String, Object>> GetAllAgentNotes() {
         List<Map<String, Object>> Result = new ArrayList<>();
-        try (PreparedStatement Statement = Conn.prepareStatement("SELECT agentid, note FROM tcnotes ORDER BY agentid")) {
-            ResultSet ResultSet = Statement.executeQuery();
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "SELECT agentid, note FROM tcnotes ORDER BY agentid")) {
+            ResultSet ResultSet = PreparedStatement.executeQuery();
             while (ResultSet.next()) {
                 Map<String, Object> Row = new LinkedHashMap<>();
                 Row.put("AgentId", ResultSet.getInt("agentid"));
-                Row.put("Note", ResultSet.getString("note"));
+                Row.put("Note",    ResultSet.getString("note"));
                 Result.add(Row);
             }
         } catch (Exception Exception) {
@@ -267,164 +252,178 @@ public final class SqliteDatabase extends TeamDatabase {
 
     @Override
     public synchronized boolean CreateOperator(String Username, String PlaintextPassword, OperatorRole Role) {
-        try (PreparedStatement Ps = Conn.prepareStatement("INSERT OR IGNORE INTO tcoperators (username,passwordhash,role,createdat,lastseen) VALUES (?,?,?,?,?)")) {
-            Ps.setString(1, Username);
-            Ps.setString(2, HashPassword(PlaintextPassword));
-            Ps.setString(3, Role.name());
-            Ps.setString(4, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-            Ps.setString(5, "Never");
-            return Ps.executeUpdate() > 0;
-        } catch (Exception E) {
-            Logger.Verbose("SQLite CreateOperator: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT OR IGNORE INTO tcoperators (username,passwordhash,role,createdat,lastseen) VALUES (?,?,?,?,?)")) {
+            PreparedStatement.setString(1, Username);
+            PreparedStatement.setString(2, HashPassword(PlaintextPassword));
+            PreparedStatement.setString(3, Role.name());
+            PreparedStatement.setString(4, LocalDateTime.now().format(RavenConstants.TimestampFmt));
+            PreparedStatement.setString(5, "Never");
+            return PreparedStatement.executeUpdate() > 0;
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite CreateOperator: " + Exception.getMessage());
             return false;
         }
     }
 
     @Override
-    public boolean ValidateOperator(String Username, String PlaintextPassword) {
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT passwordhash FROM tcoperators WHERE username=?")) {
-            Ps.setString(1, Username);
-            ResultSet Rs = Ps.executeQuery();
-            if (!Rs.next()) return false;
-            String Stored = Rs.getString("passwordhash");
-            return VerifyPassword(PlaintextPassword, Stored);
-        } catch (Exception E) {
+    public synchronized boolean ValidateOperator(String Username, String PlaintextPassword) {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "SELECT passwordhash FROM tcoperators WHERE username=?")) {
+            PreparedStatement.setString(1, Username);
+            ResultSet ResultSet = PreparedStatement.executeQuery();
+            if (!ResultSet.next()) return false;
+            return VerifyPassword(PlaintextPassword, ResultSet.getString("passwordhash"));
+        } catch (Exception Exception) {
             return false;
         }
     }
 
     @Override
-    public OperatorRole GetOperatorRole(String Username) {
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT role FROM tcoperators WHERE username=?")) {
-            Ps.setString(1, Username);
-            ResultSet Rs = Ps.executeQuery();
-            if (Rs.next()) return OperatorRole.FromString(Rs.getString("role"));
-        } catch (Exception E) {
-            Logger.Verbose("SQLite GetOperatorRole: " + E.getMessage());
+    public synchronized OperatorRole GetOperatorRole(String Username) {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "SELECT role FROM tcoperators WHERE username=?")) {
+            PreparedStatement.setString(1, Username);
+            ResultSet ResultSet = PreparedStatement.executeQuery();
+            if (ResultSet.next()) return OperatorRole.FromString(ResultSet.getString("role"));
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetOperatorRole: " + Exception.getMessage());
         }
         return OperatorRole.MEMBER;
     }
 
     @Override
-    public List<Map<String, Object>> GetOperators() {
+    public synchronized List<Map<String, Object>> GetOperators() {
         List<Map<String, Object>> List = new ArrayList<>();
-        try (Statement St = Conn.createStatement(); ResultSet Rs = St.executeQuery("SELECT username,role,createdat,lastseen FROM tcoperators ORDER BY username")) {
-            while (Rs.next()) {
+        try (Statement Statement = Conn.createStatement();
+             ResultSet ResultSet = Statement.executeQuery(
+                 "SELECT username,role,createdat,lastseen FROM tcoperators ORDER BY username")) {
+            while (ResultSet.next()) {
                 Map<String, Object> Row = new LinkedHashMap<>();
-                Row.put("Username", Rs.getString("username"));
-                Row.put("Role", Rs.getString("role"));
-                Row.put("CreatedAt", Rs.getString("createdat"));
-                Row.put("LastSeen", Rs.getString("lastseen") != null ? Rs.getString("lastseen") : "Never");
+                Row.put("Username",  ResultSet.getString("username"));
+                Row.put("Role",      ResultSet.getString("role"));
+                Row.put("CreatedAt", ResultSet.getString("createdat"));
+                String LastSeen = ResultSet.getString("lastseen");
+                Row.put("LastSeen",  LastSeen != null ? LastSeen : "Never");
                 List.add(Row);
             }
-        } catch (Exception E) {
-            Logger.Verbose("SQLite GetOperators: " + E.getMessage());
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetOperators: " + Exception.getMessage());
         }
         return List;
     }
 
     @Override
     public synchronized boolean UpdateOperatorRole(String Username, OperatorRole Role) {
-        try (PreparedStatement Ps = Conn.prepareStatement("UPDATE tcoperators SET role=? WHERE username=?")) {
-            Ps.setString(1, Role.name());
-            Ps.setString(2, Username);
-            return Ps.executeUpdate() > 0;
-        } catch (Exception E) {
-            Logger.Verbose("SQLite UpdateOperatorRole: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "UPDATE tcoperators SET role=? WHERE username=?")) {
+            PreparedStatement.setString(1, Role.name());
+            PreparedStatement.setString(2, Username);
+            return PreparedStatement.executeUpdate() > 0;
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite UpdateOperatorRole: " + Exception.getMessage());
             return false;
         }
     }
 
     @Override
     public synchronized boolean UpdateOperatorPassword(String Username, String PlaintextPassword) {
-        try (PreparedStatement Ps = Conn.prepareStatement("UPDATE tcoperators SET passwordhash=? WHERE username=?")) {
-            Ps.setString(1, HashPassword(PlaintextPassword));
-            Ps.setString(2, Username);
-            return Ps.executeUpdate() > 0;
-        } catch (Exception E) {
-            Logger.Verbose("SQLite UpdateOperatorPassword: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "UPDATE tcoperators SET passwordhash=? WHERE username=?")) {
+            PreparedStatement.setString(1, HashPassword(PlaintextPassword));
+            PreparedStatement.setString(2, Username);
+            return PreparedStatement.executeUpdate() > 0;
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite UpdateOperatorPassword: " + Exception.getMessage());
             return false;
         }
     }
 
     @Override
     public synchronized boolean DeleteOperator(String Username) {
-        if ("admin".equalsIgnoreCase(Username)) return false;
-        try (PreparedStatement Ps = Conn.prepareStatement("DELETE FROM tcoperators WHERE username=?")) {
-            Ps.setString(1, Username);
-            return Ps.executeUpdate() > 0;
-        } catch (Exception E) {
-            Logger.Verbose("SQLite DeleteOperator: " + E.getMessage());
+        if (AdminUsername.equalsIgnoreCase(Username)) return false;
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "DELETE FROM tcoperators WHERE username=?")) {
+            PreparedStatement.setString(1, Username);
+            return PreparedStatement.executeUpdate() > 0;
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite DeleteOperator: " + Exception.getMessage());
             return false;
         }
     }
 
     @Override
     public synchronized void UpdateLastSeen(String Username) {
-        try (PreparedStatement Ps = Conn.prepareStatement("UPDATE tcoperators SET lastseen=? WHERE username=?")) {
-            Ps.setString(1, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-            Ps.setString(2, Username);
-            Ps.executeUpdate();
-        } catch (Exception E) {
-            Logger.Verbose("SQLite UpdateLastSeen: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "UPDATE tcoperators SET lastseen=? WHERE username=?")) {
+            PreparedStatement.setString(1, LocalDateTime.now().format(RavenConstants.TimestampFmt));
+            PreparedStatement.setString(2, Username);
+            PreparedStatement.executeUpdate();
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite UpdateLastSeen: " + Exception.getMessage());
         }
     }
 
     @Override
-    public String GetLastSeen(String Username) {
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT lastseen FROM tcoperators WHERE username=?")) {
-            Ps.setString(1, Username);
-            ResultSet Rs = Ps.executeQuery();
-            if (Rs.next()) return Rs.getString("lastseen") != null ? Rs.getString("lastseen") : "Never";
-        } catch (Exception E) {
-            Logger.Verbose("SQLite GetLastSeen: " + E.getMessage());
+    public synchronized String GetLastSeen(String Username) {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "SELECT lastseen FROM tcoperators WHERE username=?")) {
+            PreparedStatement.setString(1, Username);
+            ResultSet ResultSet = PreparedStatement.executeQuery();
+            if (ResultSet.next()) {
+                String LastSeen = ResultSet.getString("lastseen");
+                return LastSeen != null ? LastSeen : "Never";
+            }
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetLastSeen: " + Exception.getMessage());
         }
         return "Never";
     }
 
     @Override
     public synchronized void SaveChatLog(String FromOperator, String ToOperators, String Message) {
-        try (PreparedStatement Ps = Conn.prepareStatement("INSERT INTO tcchatlog (fromoperator,tooperators,message,timestamp) VALUES (?,?,?,?)")) {
-            Ps.setString(1, FromOperator);
-            Ps.setString(2, ToOperators);
-            Ps.setString(3, Message);
-            Ps.setString(4, LocalDateTime.now().format(RavenConstants.TimestampFmt));
-            Ps.executeUpdate();
-        } catch (Exception E) {
-            Logger.Verbose("SQLite SaveChatLog: " + E.getMessage());
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "INSERT INTO tcchatlog (fromoperator,tooperators,message,timestamp) VALUES (?,?,?,?)")) {
+            PreparedStatement.setString(1, FromOperator);
+            PreparedStatement.setString(2, ToOperators);
+            PreparedStatement.setString(3, Message);
+            PreparedStatement.setString(4, LocalDateTime.now().format(RavenConstants.TimestampFmt));
+            PreparedStatement.executeUpdate();
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite SaveChatLog: " + Exception.getMessage());
         }
     }
 
     @Override
-    public List<Map<String, Object>> GetChatLogs(int Limit) {
+    public synchronized List<Map<String, Object>> GetChatLogs(int Limit) {
         List<Map<String, Object>> List = new ArrayList<>();
-        try (PreparedStatement Ps = Conn.prepareStatement("SELECT * FROM tcchatlog ORDER BY id ASC LIMIT ?")) {
-            Ps.setInt(1, Limit);
-            ResultSet Rs = Ps.executeQuery();
-            while (Rs.next()) {
+        try (PreparedStatement PreparedStatement = Conn.prepareStatement(
+                "SELECT * FROM tcchatlog ORDER BY id ASC LIMIT ?")) {
+            PreparedStatement.setInt(1, Limit);
+            ResultSet ResultSet = PreparedStatement.executeQuery();
+            while (ResultSet.next()) {
                 Map<String, Object> Row = new LinkedHashMap<>();
-                Row.put("From", Rs.getString("fromoperator"));
-                Row.put("To", Rs.getString("tooperators"));
-                Row.put("Message", Rs.getString("message"));
-                Row.put("Timestamp", Rs.getString("timestamp"));
+                Row.put("From",      ResultSet.getString("fromoperator"));
+                Row.put("To",        ResultSet.getString("tooperators"));
+                Row.put("Message",   ResultSet.getString("message"));
+                Row.put("Timestamp", ResultSet.getString("timestamp"));
                 List.add(Row);
             }
-        } catch (Exception E) {
-            Logger.Verbose("SQLite GetChatLogs: " + E.getMessage());
+        } catch (Exception Exception) {
+            Logger.Verbose("SQLite GetChatLogs: " + Exception.getMessage());
         }
         return List;
     }
 
     @Override
     public void Close() {
-        try {
-            if (Conn != null && !Conn.isClosed()) Conn.close();
-        } catch (Exception Ignored) {}
+        try { if (Conn != null && !Conn.isClosed()) Conn.close(); }
+        catch (Exception Ignored) {}
         Connected = false;
     }
 
-    private static String Str(Map<String, Object> M, String K) {
-        Object V = M.get(K);
-        return V != null ? V.toString() : "";
+    private static String Str(Map<String, Object> Map, String Key) {
+        Object Value = Map.get(Key);
+        return Value != null ? Value.toString() : "";
     }
 }
