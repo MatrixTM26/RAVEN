@@ -327,7 +327,13 @@ public abstract class BaseServer {
         Thread T = new Thread(() -> {
             while (Running && Sessions.Exists(SessionId)) {
                 try {
-                    Thread.sleep(15_000);
+                    Optional<Session> SessOpt = Sessions.Get(SessionId);
+                    if (SessOpt.isEmpty()) break;
+                    Session S = SessOpt.get();
+                    long SleepBase   = Math.max(1_000, S.GetSleepIntervalMs());
+                    long JitterRange = S.GetJitterMs();
+                    long ActualSleep = SleepBase + (JitterRange > 0 ? (long)(Math.random() * JitterRange) : 0);
+                    Thread.sleep(ActualSleep);
                     if (!Running || !Sessions.Exists(SessionId)) break;
                     if (Sock.isClosed() || !Sock.isConnected() || Sock.isOutputShutdown()) throw new IOException("Socket closed");
                     if (!IsRaw) {

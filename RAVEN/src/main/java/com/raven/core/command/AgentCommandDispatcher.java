@@ -48,6 +48,13 @@ public final class AgentCommandDispatcher {
                     UserCommand);
 
         CommandResult Result = Execute(SessionId, AgentCmd);
+        if (Result.Success()) {
+            if (Command.equals("sleep") && !Args.isBlank()) {
+                try { S.SetSleepIntervalMs(Long.parseLong(Args.trim()) * 1000L); } catch (Exception Ignored) {}
+            } else if (Command.equals("jitter") && !Args.isBlank()) {
+                try { S.SetJitterMs(Long.parseLong(Args.trim())); } catch (Exception Ignored) {}
+            }
+        }
         Database.SaveCommandLog(SessionId, Operator, UserCommand, Result.Output(), Result.Success());
         return Result;
     }
