@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.raven.interfaces.GUI.module.UI.controller.LogsController"
+      styleClass="root"
+      stylesheets="@../styles/raven.css"
+      spacing="0" fillWidth="true">
+
+    <HBox styleClass="toolbar-bar" alignment="CENTER_LEFT" spacing="6">
+        <Label text="SYSTEM LOGS" styleClass="stat-label"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="LevelFilter" styleClass="combo-box" prefWidth="110" onAction="#OnFilterLevel"/>
+        <Button text="Export" styleClass="btn,btn-default" onAction="#OnExport"/>
+        <Button text="Clear"  styleClass="btn,btn-danger"  onAction="#OnClear"/>
+    </HBox>
+
+    <HBox styleClass="toolbar-bar" alignment="CENTER_LEFT" spacing="6">
+        <Label fx:id="EntryCount" text="0 entries" styleClass="text-muted"/>
+    </HBox>
+
+    <TextArea fx:id="LogStream" styleClass="terminal-area" editable="false"
+              wrapText="true" VBox.vgrow="ALWAYS"/>
+</VBox>

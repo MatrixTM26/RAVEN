@@ -25,7 +25,7 @@ public final class PostgresDatabase extends TeamDatabase {
             Conn = DriverManager.getConnection(Url, User, Pass);
             Conn.setAutoCommit(true);
             Logger.Info("PostgreSQL connected: " + Url);
-            InitSchema();
+            InitSchema(Config);
         } catch (ClassNotFoundException E) {
             throw new Exception("PostgreSQL driver not found — add postgresql jar to classpath");
         } catch (SQLException E) {
@@ -33,7 +33,7 @@ public final class PostgresDatabase extends TeamDatabase {
         }
     }
 
-    private void InitSchema() throws SQLException {
+    private void InitSchema(ServerConfig Config) throws SQLException {
         try (Statement St = Conn.createStatement()) {
             St.execute(
                 """

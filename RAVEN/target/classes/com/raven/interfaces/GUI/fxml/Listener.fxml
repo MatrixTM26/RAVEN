@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<ScrollPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.raven.interfaces.GUI.module.UI.controller.ListenerController"
+            fitToWidth="true"
+            stylesheets="@../styles/raven.css">
+
+    <VBox spacing="10" fillWidth="true">
+        <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+
+        <VBox styleClass="panel-card" spacing="0">
+            <HBox styleClass="panel-header" alignment="CENTER_LEFT" spacing="7">
+                <Label text="LISTENER CONFIGURATION" styleClass="stat-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="OnlineLabel" text="OFFLINE" styleClass="chip-red"/>
+            </HBox>
+            <GridPane hgap="12" vgap="8">
+                <padding><Insets top="12" right="14" bottom="12" left="14"/></padding>
+                <columnConstraints>
+                    <ColumnConstraints minWidth="80" maxWidth="90"/>
+                    <ColumnConstraints hgrow="ALWAYS"/>
+                </columnConstraints>
+                <Label text="Host"     styleClass="text-muted" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <TextField fx:id="HostField" text="0.0.0.0" styleClass="input-field"
+                           GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <Label text="Port"     styleClass="text-muted" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <TextField fx:id="PortField" text="4444"    styleClass="input-field"
+                           GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Label text="Mode"     styleClass="text-muted" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                <ComboBox fx:id="ModeCombo" styleClass="combo-box" maxWidth="Infinity"
+                          GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label text="Protocol" styleClass="text-muted" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                <ComboBox fx:id="ProtoCombo" styleClass="combo-box" maxWidth="Infinity"
+                          GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+            </GridPane>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                <padding><Insets top="0" right="14" bottom="0" left="14"/></padding>
+                <Label text="SSL" styleClass="text-muted" minWidth="80"/>
+                <fx:include fx:id="SslToggle" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                <padding><Insets top="0" right="14" bottom="0" left="14"/></padding>
+                <Label text="Verbose log" styleClass="text-muted" minWidth="80"/>
+                <fx:include fx:id="VerboseToggle" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                <padding><Insets top="0" right="14" bottom="0" left="14"/></padding>
+                <Label text="Auto-accept" styleClass="text-muted" minWidth="80"/>
+                <fx:include fx:id="AutoAcceptToggle" source="ToggleSwitch.fxml"/>
+            </HBox>
+            <HBox styleClass="toolbar-bar" alignment="CENTER_LEFT" spacing="10">
+                <Label fx:id="StatusText" text="Server is offline" styleClass="text-muted"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="StartBtn" text="Start"  styleClass="btn,btn-success" onAction="#OnStart"/>
+                <Button fx:id="StopBtn"  text="Stop"   styleClass="btn,btn-danger"  onAction="#OnStop"/>
+            </HBox>
+        </VBox>
+
+        <VBox styleClass="panel-card" spacing="0">
+            <HBox styleClass="panel-header" alignment="CENTER_LEFT">
+                <Label text="SERVER STATUS" styleClass="stat-label"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                <Label text="Status"  styleClass="text-muted" minWidth="100"/>
+                <Label fx:id="SrvStatus"  text="Offline"     styleClass="text-red"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                <Label text="Address" styleClass="text-muted" minWidth="100"/>
+                <Label fx:id="SrvAddress" text="Not running" styleClass="text-body"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                <Label text="Mode"    styleClass="text-muted" minWidth="100"/>
+                <Label fx:id="SrvMode"    text="MULTI"       styleClass="text-red"/>
+            </HBox>
+            <HBox styleClass="activity-row" alignment="CENTER_LEFT" spacing="10">
+                <Label text="Connections" styleClass="text-muted" minWidth="100"/>
+                <Label fx:id="SrvConnTotal"  text="0 total" styleClass="text-body"/>
+                <Label text=" / " styleClass="text-muted"/>
+                <Label fx:id="SrvConnActive" text="0 active" styleClass="text-green"/>
+                <Label text=" / " styleClass="text-muted"/>
+                <Label fx:id="SrvConnDrop"   text="0 dropped" styleClass="text-red"/>
+            </HBox>
+        </VBox>
+
+        <VBox styleClass="panel-card" spacing="0">
+            <HBox styleClass="panel-header" alignment="CENTER_LEFT">
+                <Label text="CONNECTION LOG" styleClass="stat-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Clear" styleClass="btn,btn-default" onAction="#OnClearLog"/>
+            </HBox>
+            <TextArea fx:id="ConnLog" styleClass="terminal-area" editable="false"
+                      wrapText="true" prefHeight="160"/>
+        </VBox>
+    </VBox>
+</ScrollPane>

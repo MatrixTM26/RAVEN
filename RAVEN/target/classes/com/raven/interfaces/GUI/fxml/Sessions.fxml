@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.raven.interfaces.GUI.module.UI.controller.SessionsController"
+      styleClass="root"
+      stylesheets="@../styles/raven.css"
+      spacing="0" fillWidth="true">
+
+    <HBox styleClass="toolbar-bar" alignment="CENTER_LEFT" spacing="6">
+        <TextField fx:id="SearchField" styleClass="search-field" promptText="Search sessions..." prefWidth="220"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="BtnRefresh"   text="Refresh"   styleClass="btn,btn-default"   onAction="#OnRefresh"/>
+        <Button fx:id="BtnExecute"   text="Shell"     styleClass="btn,btn-primary"   onAction="#OnExecute"/>
+        <Button fx:id="BtnBroadcast" text="Broadcast" styleClass="btn,btn-default"   onAction="#OnBroadcast"/>
+        <Button fx:id="BtnKill"      text="Kill"      styleClass="btn,btn-danger"    onAction="#OnKill"/>
+    </HBox>
+
+    <SplitPane orientation="VERTICAL" dividerPositions="0.65" VBox.vgrow="ALWAYS">
+        <TableView fx:id="SessionTable" styleClass="session-table" VBox.vgrow="ALWAYS"
+                   columnResizePolicy="$CONSTRAINED_RESIZE_POLICY">
+            <columns>
+                <TableColumn fx:id="ColId"      text="ID"          prefWidth="40"/>
+                <TableColumn fx:id="ColType"    text="TYPE"        prefWidth="80"/>
+                <TableColumn fx:id="ColName"    text="NAME / CERT" prefWidth="160"/>
+                <TableColumn fx:id="ColIp"      text="IP"          prefWidth="120"/>
+                <TableColumn fx:id="ColOs"      text="OS"          prefWidth="100"/>
+                <TableColumn fx:id="ColUser"    text="USER"        prefWidth="110"/>
+                <TableColumn fx:id="ColHost"    text="HOST"        prefWidth="130"/>
+                <TableColumn fx:id="ColKey"     text="SESSION KEY" prefWidth="160"/>
+            </columns>
+            <placeholder>
+                <Label text="No active sessions — start listener to accept connections" styleClass="text-muted"/>
+            </placeholder>
+        </TableView>
+
+        <VBox spacing="0" styleClass="panel-card">
+            <HBox styleClass="panel-header" alignment="CENTER_LEFT" spacing="7">
+                <Label text="OUTPUT" styleClass="stat-label"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="Clear" styleClass="btn,btn-default" onAction="#OnClearLog"/>
+            </HBox>
+            <TextArea fx:id="LogArea" styleClass="terminal-area" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </SplitPane>
+</VBox>
