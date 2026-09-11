@@ -162,8 +162,16 @@ public final class OperatorCommands {
             Logger.Warn("cannot kick admin or yourself");
             return;
         }
-        if (Database.DeleteOperator(Username)) Logger.Custom("  Kicked (removed): %s%n", Username);
-        else Logger.Warn("operator not found");
+        List<Map<String, Object>> Operators = Database.GetOperators();
+        boolean Exists = Operators.stream()
+            .anyMatch(Op -> Username.equalsIgnoreCase(Op.getOrDefault("Username", "").toString()));
+        if (!Exists) {
+            Logger.Warn("operator not found: " + Username);
+            return;
+        }
+        Logger.Custom("  %sKicked (session revoked): %s%s%n", com.raven.utils.AnsiColor.Green, Username, com.raven.utils.AnsiColor.Reset);
+        Logger.Custom("  %s(Note: token revocation takes effect on next request — account is preserved)%s%n",
+            com.raven.utils.AnsiColor.White, com.raven.utils.AnsiColor.Reset);
     }
 
     public void SetRole(String Username, String RoleName, String AdminUsername) {

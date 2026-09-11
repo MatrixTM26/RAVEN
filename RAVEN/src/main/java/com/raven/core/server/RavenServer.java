@@ -464,6 +464,8 @@ public final class RavenServer extends BaseServer {
         S.SetArch(Str(Info, "architecture"));
         S.SetAgentIp(Str(Info, "agentip", RemoteAddr.contains("/") ? RemoteAddr.split("/")[1].split(":")[0] : RemoteAddr));
         S.SetRawMode(IsRaw);
+        S.SetSleepIntervalMs(Config.GetSleepIntervalMs());
+        S.SetJitterMs(Config.GetJitterMs());
         String Name = Str(Info, "hostname");
         S.SetAgentName(Name.equals("Unknown") ? "Agent-" + (Sessions.Count() + 1) : Name);
         return S;
