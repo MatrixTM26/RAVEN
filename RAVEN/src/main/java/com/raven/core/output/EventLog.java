@@ -11,9 +11,7 @@ public final class EventLog {
 
 
     private final List<String> Entries;
-    private final int MaxEntries;
-
-    public EventLog(int MaxEntries) {
+    private final int MaxEntries;    public EventLog(int MaxEntries) {
         this.MaxEntries = MaxEntries;
         this.Entries = new CopyOnWriteArrayList<>();
     }

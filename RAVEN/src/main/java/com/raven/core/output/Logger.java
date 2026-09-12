@@ -23,8 +23,7 @@ public final class Logger {
     }
 
 
-    private static volatile Level CurrentLevel = Level.INFO;
-    private static volatile boolean Verbose = false;
+    private static volatile Level CurrentLevel = Level.INFO;    private static volatile boolean Verbose = false;
     private static volatile boolean FileEnabled = false;
     private static volatile String LogFilePath = "logs/raven.log";
     private static volatile int MaxEntries = 1000;
@@ -142,22 +141,6 @@ public final class Logger {
 
     public static void Custom(String Text, int DelayMs) {
         Custom(Text, (long) DelayMs);
-    }
-
-    public static void Messages(String Message, Object... Args) {
-        Info(Message, Args);
-    }
-
-    public static void Warnings(String Message, Object... Args) {
-        Warn(Message, Args);
-    }
-
-    public static void ErrorMessage(String Message, Object... Args) {
-        Error(Message, Args);
-    }
-
-    public static void Warning(String Message, Object... Args) {
-        Warn(Message, Args);
     }
 
     public static void Shutdown() {
