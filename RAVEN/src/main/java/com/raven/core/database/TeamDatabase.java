@@ -62,15 +62,6 @@ public abstract class TeamDatabase {
             };
         }
 
-        public String ShortPerm() {
-            return switch (this) {
-                case SUPER -> "RWXK";
-                case ADMIN -> "RWX";
-                case OPERATOR -> "RX";
-                case MEMBER -> "R";
-            };
-        }
-
         public static OperatorRole FromString(String S) {
             if (S == null) return MEMBER;
             return switch (S.trim().toUpperCase()) {

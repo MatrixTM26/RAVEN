@@ -77,36 +77,6 @@ public final class AgentApi {
         return HttpHelper.Json(Map.of("Success", Result.Success(), "Output", Result.Output(), "Command", Result.Command()));
     }
 
-    public String Broadcast(HttpExchange Exchange) throws Exception {
-        if (!ServerManager.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
-        Map<String, Object> Body = HttpHelper.Body(Exchange);
-        String Command = HttpHelper.Str(Body, "Command", "");
-        String Operator = HttpHelper.Str(Body, "Operator", "system");
-        if (Command.isEmpty()) return HttpHelper.Json(Map.of("Error", "Command required"));
-        @SuppressWarnings("unchecked")
-        List<Object> RawIds = (List<Object>) Body.getOrDefault("AgentIds", List.of());
-        List<Integer> Ids = new ArrayList<>();
-        for (Object Id : RawIds)
-            try {
-                Ids.add((int) Double.parseDouble(Id.toString()));
-            } catch (Exception Ignored) {}
-        if (Ids.isEmpty()) return HttpHelper.Json(Map.of("Error", "AgentIds required"));
-        Logger.Add("[BROADCAST] [" + Operator + "] > " + Ids.size() + " sessions >> " + Command);
-        Map<Integer, CommandResult> Results = BuildDispatcher(Operator).BroadcastDispatch(Ids, Command);
-        return BuildBroadcastResponse(Results);
-    }
-
-    public String BroadcastAll(HttpExchange Exchange) throws Exception {
-        if (!ServerManager.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
-        Map<String, Object> Body = HttpHelper.Body(Exchange);
-        String Command = HttpHelper.Str(Body, "Command", "");
-        String Operator = HttpHelper.Str(Body, "Operator", "system");
-        if (Command.isEmpty()) return HttpHelper.Json(Map.of("Error", "Command required"));
-        Logger.Add("[BROADCAST-ALL] [" + Operator + "] > " + ServerManager.GetServer().GetSessions().Count() + " sessions >> " + Command);
-        Map<Integer, CommandResult> Results = BuildDispatcher(Operator).BroadcastAllDispatch(Command);
-        return BuildBroadcastResponse(Results);
-    }
-
     public String Screenshot(HttpExchange Exchange) throws Exception {
         if (!ServerManager.IsRunning()) return HttpHelper.Json(Map.of("Error", "Server not running"));
         Map<String, Object> Body = HttpHelper.Body(Exchange);
