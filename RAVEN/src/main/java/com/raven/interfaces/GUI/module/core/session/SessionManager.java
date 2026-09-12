@@ -12,51 +12,48 @@ import javafx.scene.control.Label;
 
 public class SessionManager {
 
-    private final RavenServer server;
-    private final TeamDatabase db;
-    private final ObservableList<SessionRow> rows;
-    private final Label countLabel;
+    private final RavenServer Server;
+    private final TeamDatabase Database;
+    private final ObservableList<SessionRow> Rows;
+    private final Label CountLabel;
 
-    public SessionManager(RavenServer server, TeamDatabase db, ObservableList<SessionRow> rows, Label countLabel) {
-        this.server = server;
-        this.db = db;
-        this.rows = rows;
-        this.countLabel = countLabel;
+    public SessionManager(RavenServer Server, TeamDatabase Database, ObservableList<SessionRow> Rows, Label CountLabel) {
+        this.Server     = Server;
+        this.Database   = Database;
+        this.Rows       = Rows;
+        this.CountLabel = CountLabel;
     }
 
     public void Refresh() {
-        if (server == null) return;
+        if (Server == null) return;
         Platform.runLater(() -> {
-            rows.clear();
-            server
-                .GetSessions()
-                .GetAll()
-                .forEach(s -> rows.add(new SessionRow(s)));
-            int n = rows.size();
-            countLabel.setText(n + " session" + (n != 1 ? "s" : ""));
+            Rows.clear();
+            Server.GetSessions().GetAll().forEach(AgentSession -> Rows.add(new SessionRow(AgentSession)));
+            int Count = Rows.size();
+            CountLabel.setText(Count + " session" + (Count != 1 ? "s" : ""));
         });
     }
 
-    public void Kill(int sid) {
-        server.RemoveSession(sid);
+    public void Kill(int SessionId) {
+        Server.RemoveSession(SessionId);
         Refresh();
     }
 
-    public void RunAgentCommand(int sid, String cmd, String operator, Consumer<String> log) {
-        if (server == null || !server.IsRunning()) {
-            log.accept("[!] Server not running");
+    public void RunAgentCommand(int SessionId, String Command, String Operator, Consumer<String> LogConsumer) {
+        if (Server == null || !Server.IsRunning()) {
+            LogConsumer.accept("[!] Server not running");
             return;
         }
-        log.accept("> SESSION-" + sid + " — " + cmd);
+        LogConsumer.accept("> SESSION-" + SessionId + " — " + Command);
         Executors.newSingleThreadExecutor().submit(() -> {
-            String[] result = server.ExecuteCommand(sid, cmd);
-            boolean ok = Boolean.parseBoolean(result[0]);
-            db.SaveCommandLog(sid, operator != null ? operator : "gui", cmd, result[1], ok);
-            Platform.runLater(() -> log.accept(result[1]));
+            String[] Result = Server.ExecuteCommand(SessionId, Command);
+            boolean Success = Boolean.parseBoolean(Result[0]);
+            Database.SaveCommandLog(SessionId, Operator != null ? Operator : "gui", Command, Result[1], Success);
+            Platform.runLater(() -> LogConsumer.accept(Result[1]));
         });
     }
 
-    public Optional<Session> Get(int sid) {
-        return server.GetSessions().Get(sid);
+    public Optional<Session> Get(int SessionId) {
+        return Server.GetSessions().Get(SessionId);
     }
 }
