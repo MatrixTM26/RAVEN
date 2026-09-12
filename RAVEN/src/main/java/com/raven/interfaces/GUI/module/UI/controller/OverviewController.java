@@ -97,9 +97,4 @@ public class OverviewController {
         });
     }
 
-    private Region Divider() {
-        Region D = new Region();
-        D.getStyleClass().add("h-div");
-        return D;
-    }
 }
