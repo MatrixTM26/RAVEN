@@ -58,7 +58,7 @@ public final class TeamServer {
         this.Mode        = Mode;
         this.Db          = TeamDatabase.Connect(Config);
         this.Log         = new EventLog(Config.GetMaxLogEntries());
-        this.Export      = new ExportCommand(Db, Log);
+        this.Export      = new ExportCommand(Db, Log, Config.GetExportDir());
         this.PathResolver = new PathResolver(TeamServer.class);
     }
 

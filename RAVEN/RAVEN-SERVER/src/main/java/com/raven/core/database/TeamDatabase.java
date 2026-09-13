@@ -74,13 +74,14 @@ public abstract class TeamDatabase {
     }
 
     private static volatile TeamDatabase MemoryInstance;
+    private static volatile String MemoryInstanceConfigKey;
 
     public static TeamDatabase Connect(ServerConfig Config) {
         String Type = Config.GetDatabaseType().toLowerCase();
         try {
             return switch (Type) {
                 case "postgresql", "postgres" -> new PostgresDatabase(Config);
-                case "mongodb", "mongo"       -> new MongoDatabase(Config);
+                case "mongodb",    "mongo"    -> new MongoDatabase(Config);
                 case "sqlite"                 -> new SqliteDatabase(Config);
                 default                       -> GetSharedMemoryInstance(Config);
             };
@@ -91,9 +92,11 @@ public abstract class TeamDatabase {
     }
 
     private static synchronized TeamDatabase GetSharedMemoryInstance(ServerConfig Config) {
-        if (MemoryInstance == null) {
+        String ConfigKey = Config.GetAdminUsername() + ":" + Config.GetDatabasePath();
+        if (MemoryInstance == null || !ConfigKey.equals(MemoryInstanceConfigKey)) {
             Logger.Info("DB disabled — using in-memory store");
-            MemoryInstance = new MemoryDatabase(Config);
+            MemoryInstance          = new MemoryDatabase(Config);
+            MemoryInstanceConfigKey = ConfigKey;
         }
         return MemoryInstance;
     }

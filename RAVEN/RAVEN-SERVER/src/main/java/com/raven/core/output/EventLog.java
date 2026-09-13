@@ -2,18 +2,18 @@ package com.raven.core.output;
 
 import com.raven.utils.RavenConstants;
 import java.time.LocalDateTime;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class EventLog {
 
-
     private final List<String> Entries;
-    private final int MaxEntries;    public EventLog(int MaxEntries) {
+    private final int MaxEntries;
+
+    public EventLog(int MaxEntries) {
         this.MaxEntries = MaxEntries;
-        this.Entries = new CopyOnWriteArrayList<>();
+        this.Entries    = new CopyOnWriteArrayList<>();
     }
 
     public void Add(String Message, boolean PrintNow) {
@@ -35,9 +35,9 @@ public final class EventLog {
         return new ArrayList<>(Entries);
     }
 
-    public List<String> GetLast(int N) {
-        List<String> All = GetAll();
-        int Start = Math.max(0, All.size() - N);
-        return All.subList(Start, All.size());
+    public List<String> GetLast(int Count) {
+        List<String> All   = GetAll();
+        int StartIndex     = Math.max(0, All.size() - Count);
+        return All.subList(StartIndex, All.size());
     }
 }

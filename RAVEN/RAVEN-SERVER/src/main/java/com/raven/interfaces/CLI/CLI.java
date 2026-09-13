@@ -66,7 +66,7 @@ public final class CLI {
         this.Config = Configuration;
         this.Db = TeamDatabase.Connect(Configuration);
         this.Log = new EventLog(Configuration.GetMaxLogEntries());
-        this.Export = new ExportCommand(Db, Log);
+        this.Export = new ExportCommand(Db, Log, Config.GetExportDir());
         this.WebPanelManager = new WebPanelManager(Configuration);
         this.OperatorCfg = new OperatorConfig();
         ProfileManager.Initialize();
