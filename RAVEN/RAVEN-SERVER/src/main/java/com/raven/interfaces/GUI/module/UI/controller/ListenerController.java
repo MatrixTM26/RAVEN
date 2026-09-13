@@ -46,10 +46,14 @@ public class ListenerController {
         OnStop  = Stop;
     }
 
+    private int DefaultPort = 4444;
+
+    public void SetDefaultPort(int Port) { this.DefaultPort = Port; }
+
     public String GetHost()  { return HostField.getText().trim(); }
     public int    GetPort()  {
         try { return Integer.parseInt(PortField.getText().trim()); }
-        catch (NumberFormatException E) { return 4444; }
+        catch (NumberFormatException ParseException) { return DefaultPort; }
     }
     public String GetMode()  { return ModeCombo.getValue(); }
     public String GetProto() { return ProtoCombo.getValue(); }

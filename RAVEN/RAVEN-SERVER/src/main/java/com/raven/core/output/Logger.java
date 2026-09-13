@@ -22,7 +22,6 @@ public final class Logger {
         ERROR
     }
 
-
     private static volatile Level CurrentLevel = Level.INFO;    private static volatile boolean Verbose = false;
     private static volatile boolean FileEnabled = false;
     private static volatile String LogFilePath = "logs/raven.log";
@@ -65,8 +64,8 @@ public final class Logger {
                         break;
                     }
                 }
-            } catch (IOException E) {
-                System.err.println("[Logger] File writer failed: " + E.getMessage());
+            } catch (IOException WriteException) {
+                PromptManager.PrintLine("[ERROR] Log file writer failed: " + WriteException.getMessage());
             }
         }, "LogFileWriter");
         WriterThread.setDaemon(true);
@@ -89,9 +88,8 @@ public final class Logger {
     private static void Emit(Level MessageLevel, String PlainTag, String ColorCode, String Message, Object[] Args) {
         if (MessageLevel.ordinal() < CurrentLevel.ordinal()) return;
         String Formatted = Format(Message, Args);
-        String Times = Timestamp();
-        String PlainLine = "  [" + Times + "] [" + PlainTag + "] " + Formatted;
-        String ColorLine = AnsiColor.White + "  [" + ColorCode + PlainTag + AnsiColor.White + "] " + AnsiColor.Dim + Formatted + AnsiColor.Reset;
+        String ColorLine  = ColorCode + "[" + PlainTag + "]" + AnsiColor.Reset + " " + Formatted;
+        String PlainLine  = "[" + Timestamp() + "] [" + PlainTag + "] " + Formatted;
         PromptManager.PrintLine(ColorLine);
         if (FileEnabled) FileQueue.offer(PlainLine);
     }

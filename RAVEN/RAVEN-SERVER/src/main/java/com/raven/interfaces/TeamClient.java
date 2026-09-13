@@ -467,7 +467,7 @@ public final class TeamClient {
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "start" -> {
-                String ListenHost = "0.0.0.0";
+                String ListenHost = Config.GetServerHost();
                 int    ListenPort = Config.GetServerPort();
                 String ListenMode = "MULTI";
                 for (int Idx = 1; Idx < P.length; Idx++) {
@@ -495,8 +495,8 @@ public final class TeamClient {
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "webstart" -> {
-                String WHost = P.length > 1 ? P[1] : "0.0.0.0";
-                int WPort = P.length > 2 ? ParseIntSafe(P[2], 8080) : 8080;
+                String WHost = P.length > 1 ? P[1] : Config.GetWebHost();
+                int WPort = P.length > 2 ? ParseIntSafe(P[2], Config.GetWebPort()) : Config.GetWebPort();
                 try {
                     Map<String, Object> R = Post("/api/server/webpanel/start",
                         Map.of("Host", WHost, "Port", WPort, "Operator", OperatorName));

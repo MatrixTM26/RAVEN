@@ -763,8 +763,8 @@ public final class TeamServer {
         if (!Token.Role().CanWrite()) { SetStatus(403); return HttpHelper.Json(Map.of("Error", "insufficient permissions")); }
         if (WebPanelHttpServer != null) { SetStatus(409); return HttpHelper.Json(Map.of("Error", "web panel already running on port " + WebPanelPort)); }
         Map<String, Object> RequestBody = Body(Exchange);
-        String RequestedHost = Str(RequestBody, "Host", "0.0.0.0");
-        int    RequestedPort = Num(RequestBody, "Port", 8080);
+        String RequestedHost = Str(RequestBody, "Host", Config.GetWebHost());
+        int    RequestedPort = Num(RequestBody, "Port", Config.GetWebPort());
         try {
             HttpServer Panel = HttpServer.create(new InetSocketAddress(RequestedHost, RequestedPort), 64);
             HttpRouter PanelRouter = new HttpRouter(Panel, Config, PathResolver);

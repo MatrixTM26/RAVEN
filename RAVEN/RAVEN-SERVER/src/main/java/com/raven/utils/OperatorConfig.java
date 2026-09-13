@@ -21,39 +21,22 @@ public final class OperatorConfig {
 
     public OperatorConfig(String Path) {
         this.FilePath = Path;
-        LoadDefaults();
+        LoadFromResource();
         LoadFromFile(Path);
     }
 
     OperatorConfig(Properties Merged) {
         this.FilePath = RavenConstants.OperatorConfigPath;
-        LoadDefaults();
-        Merged.forEach((K, V) -> Props.setProperty(K.toString(), V.toString()));
+        LoadFromResource();
+        Merged.forEach((Key, Value) -> Props.setProperty(Key.toString(), Value.toString()));
     }
 
-    private void LoadDefaults() {
-        Def("operator.name",               "");
-        Def("operator.role",               "MEMBER");
-        Def("operator.theme",              "dark");
-        Def("operator.prompt.color",       "red");
-        Def("operator.output.box",         "true");
-        Def("operator.output.timestamp",   "true");
-        Def("operator.session.log.limit",  "100");
-        Def("operator.history.limit",      "50");
-        Def("operator.auto.reconnect",     "true");
-        Def("operator.chat.notify",        "true");
-        Def("operator.timezone",           "UTC");
-        Def("operator.date.format",        "yyyy-MM-dd HH:mm:ss");
-        Def("operator.interactive.exit",   "back");
-        Def("operator.broadcast.confirm",  "true");
-        Def("operator.selfdestruct.confirm","true");
-        Def("admin.username",              "admin");
-        Def("admin.password",              "admin");
-        Def("admin.role",                  "SUPER");
-    }
-
-    private void Def(String Key, String Value) {
-        Props.setProperty(Key, Value);
+    private void LoadFromResource() {
+        try (InputStream Stream = OperatorConfig.class.getResourceAsStream(RavenConstants.OperatorDefaultsResource)) {
+            if (Stream != null) Props.load(Stream);
+        } catch (IOException Exception) {
+            Logger.Warn("OperatorConfig: could not load embedded defaults — " + Exception.getMessage());
+        }
     }
 
     private void LoadFromFile(String Path) {
@@ -101,12 +84,12 @@ public final class OperatorConfig {
     public boolean IsBroadcastConfirm()      { return Bool("operator.broadcast.confirm"); }
     public boolean IsSelfDestructConfirm()   { return Bool("operator.selfdestruct.confirm"); }
 
-    public void SetOperatorName(String Name) { Def("operator.name", Name); }
-    public void SetOperatorRole(String Role) { Def("operator.role", Role.toUpperCase()); }
-    public void SetTheme(String Theme)       { Def("operator.theme", Theme); }
+    public void SetOperatorName(String Name) { Props.setProperty("operator.name", Name); }
+    public void SetOperatorRole(String Role) { Props.setProperty("operator.role", Role.toUpperCase()); }
+    public void SetTheme(String Theme)       { Props.setProperty("operator.theme", Theme); }
 
     public String  Get(String Key, String Default) { return Props.getProperty(Key, Default); }
-    public void    Put(String Key, String Value)    { Def(Key, Value); }
+    public void Put(String Key, String Value)    { Props.setProperty(Key, Value); }
 
     public String GetAdminUsername()  { return Str("admin.username"); }
     public String GetAdminPassword()  { return Str("admin.password"); }

@@ -211,6 +211,7 @@ public class GUI extends Application {
 
         LoadResult<Node> LiResult = FxmlLoader.Load("Listener.fxml");
         ListenerCtrl = LiResult.GetController();
+        ListenerCtrl.SetDefaultPort(Config.GetServerPort());
         ListenerCtrl.SetCallbacks(this::StartServer, this::StopServer);
         Pages.put("Listener", LiResult.Root());
 
