@@ -1,5 +1,6 @@
 package com.raven.utils;
 
+import com.raven.core.output.Logger;
 import java.util.List;
 
 public final class Helper {
@@ -8,7 +9,7 @@ public final class Helper {
 
     public static void PrintHelp() {
         String Newline = "\n";
-        System.out.println(
+        Logger.Custom("%s%n",
             String.join(
                 Newline,
                 "",

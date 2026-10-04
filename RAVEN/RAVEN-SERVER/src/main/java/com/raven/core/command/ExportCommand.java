@@ -91,26 +91,27 @@ public final class ExportCommand {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void ExportAll(Format ExportFormat) {
         Map<String, Object> Bundle = new LinkedHashMap<>();
         Bundle.put("exported_at", LocalDateTime.now().format(LogFmt));
-        Bundle.put("logs",      CollectLogs());
-        Bundle.put("chat",      CollectChat());
-        Bundle.put("history",   CollectHistory());
-        Bundle.put("sessions",  CollectSessions());
-        Bundle.put("operators", CollectOperators());
-        Bundle.put("notes",     CollectNotes());
+        Bundle.put("logs",        CollectLogs());
+        Bundle.put("chat",        CollectChat());
+        Bundle.put("history",     CollectHistory());
+        Bundle.put("sessions",    CollectSessions());
+        Bundle.put("operators",   CollectOperators());
+        Bundle.put("notes",       CollectNotes());
         if (ExportFormat == Format.JSON) {
             WriteRaw("export_all", "json", Gson.toJson(Bundle));
         } else {
             StringBuilder Builder = new StringBuilder();
             Builder.append("RAVEN FULL EXPORT — ").append(LocalDateTime.now().format(LogFmt)).append("\n\n");
-            AppendSection(Builder, "SERVER LOGS",      CollectLogs());
-            AppendSection(Builder, "CHAT HISTORY",     CollectChat());
-            AppendSection(Builder, "COMMAND HISTORY",  CollectHistory());
-            AppendSection(Builder, "SESSION HISTORY",  CollectSessions());
-            AppendSection(Builder, "OPERATORS",        CollectOperators());
-            AppendSection(Builder, "AGENT NOTES",      CollectNotes());
+            AppendSection(Builder, "SERVER LOGS",     (List<Map<String, Object>>) Bundle.get("logs"));
+            AppendSection(Builder, "CHAT HISTORY",    (List<Map<String, Object>>) Bundle.get("chat"));
+            AppendSection(Builder, "COMMAND HISTORY", (List<Map<String, Object>>) Bundle.get("history"));
+            AppendSection(Builder, "SESSION HISTORY", (List<Map<String, Object>>) Bundle.get("sessions"));
+            AppendSection(Builder, "OPERATORS",       (List<Map<String, Object>>) Bundle.get("operators"));
+            AppendSection(Builder, "AGENT NOTES",     (List<Map<String, Object>>) Bundle.get("notes"));
             WriteRaw("export_all", "txt", Builder.toString());
         }
     }

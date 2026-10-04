@@ -114,6 +114,8 @@ public final class ServerConfig {
     public boolean IsFileLoggingEnabled()    { return Bool("logging.file.enabled"); }
     public String  GetInterfaceMode()        { return Str("mode.interface").toLowerCase(); }
     public String  GetExportDir()            { return Str("export.dir"); }
+    public String  GetAgentOutputDir()       { return Str("agent.output.dir"); }
+    public String  GetDownloadDir()          { return Str("agent.download.dir"); }
     public boolean IsMtlsEnabled()           { String Mode = GetServerMode(); return Mode.equals("mtls") || Mode.equals("fmtls"); }
     public String  GetAdminUsername()        { return OperatorCfg.GetAdminUsername(); }
     public String  GetAdminPassword()        { return OperatorCfg.GetAdminPassword(); }

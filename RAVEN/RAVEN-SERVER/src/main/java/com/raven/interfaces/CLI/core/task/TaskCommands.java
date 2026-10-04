@@ -29,13 +29,13 @@ public final class TaskCommands {
         String Title = SessionId == 0
             ? "COMMAND HISTORY (all sessions, last " + Limit + ")"
             : "COMMAND HISTORY - session-" + SessionId + " (last " + Limit + ")";
-        System.out.println(TerminalHelper.Box(Title));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box(Title));
+        Logger.Custom("%n");
         if (History.isEmpty()) { Logger.Info("no command history\n"); return; }
 
         Logger.Custom("  %s%-5s %-12s %-8s %-36s %s%s%n",
             AnsiColor.Red, "SID", "OPERATOR", "STATUS", "COMMAND", "TIMESTAMP", AnsiColor.Reset);
-        System.out.println(TerminalHelper.Divider());
+        Logger.Custom("%s%n", TerminalHelper.Divider());
 
         for (Map<String, Object> Record : History) {
             boolean Success = Boolean.parseBoolean(Record.getOrDefault("Success", "false").toString());
@@ -52,7 +52,7 @@ public final class TaskCommands {
                 Record.getOrDefault("Timestamp", ""),
                 AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     public void SetNote(int SessionId, String NoteText) {
