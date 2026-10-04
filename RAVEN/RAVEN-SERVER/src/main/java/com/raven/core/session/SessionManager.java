@@ -20,13 +20,11 @@ public class SessionManager {
         return Optional.ofNullable(Sessions.get(Id));
     }
 
-    public void Remove(int Id) {
+    public boolean Remove(int Id) {
         Session S = Sessions.remove(Id);
-        if (S != null) {
-            try {
-                S.GetSocket().close();
-            } catch (Exception Ignored) {}
-        }
+        if (S == null) return false;
+        try { S.GetSocket().close(); } catch (Exception Ignored) {}
+        return true;
     }
 
     public List<Session> GetAll() {

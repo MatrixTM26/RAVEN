@@ -34,8 +34,8 @@ public final class SessionCommands {
     public int  GetCurrentSessionId()            { return CurrentSessionId; }
 
     public void ShowSessions() {
-        System.out.println(TerminalHelper.Box("ACTIVE SESSIONS"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("ACTIVE SESSIONS"));
+        Logger.Custom("%n");
 
         if (Server == null) {
             Logger.Info("running in cross-process mode - session list unavailable.");
@@ -48,7 +48,7 @@ public final class SessionCommands {
 
         Logger.Custom("  %s%-5s %-14s %-14s %-16s %-10s %-10s %s%s%n",
             AnsiColor.Blue, "ID", "NAME/CERT", "TYPE", "IP", "OS", "USER", "SESSION-KEY", AnsiColor.Reset);
-        System.out.println(TerminalHelper.Divider());
+        Logger.Custom("%s%n", TerminalHelper.Divider());
 
         for (Session ActiveSession : Sessions) {
             String DisplayName = ActiveSession.GetDisplayName();
@@ -64,7 +64,7 @@ public final class SessionCommands {
                 ActiveSession.GetSessionKey(),
                 AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     public void ShowSessionInfo(int SessionId) {
@@ -73,8 +73,8 @@ public final class SessionCommands {
         if (Found.isEmpty()) { Logger.Warn("session not found"); return; }
         Session ActiveSession = Found.get();
 
-        System.out.println(TerminalHelper.Box("SESSION INFO - #" + SessionId));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("SESSION INFO - #" + SessionId));
+        Logger.Custom("%n");
         Logger.Custom("  %sID          %s%d%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetId());
         Logger.Custom("  %sName        %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetDisplayName());
         Logger.Custom("  %sType        %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetSessionType().name());
@@ -90,15 +90,15 @@ public final class SessionCommands {
         Logger.Custom("  %sShell Mode  %s%s%n",          AnsiColor.Red, AnsiColor.White, ActiveSession.GetShellMode());
         String Note = Database.GetAgentNote(SessionId);
         Logger.Custom("  %sNote        %s%s%n",          AnsiColor.Red, AnsiColor.White, Note.isEmpty() ? "(none)" : Note);
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     public void ShowStats() {
-        System.out.println(TerminalHelper.Box("SESSION STATISTICS"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("SESSION STATISTICS"));
+        Logger.Custom("%n");
         if (Server == null) {
             Logger.Custom("  %sSessions %s(N/A - cross-process mode)%n", AnsiColor.Red, AnsiColor.White);
-            System.out.println();
+            Logger.Custom("%n");
             return;
         }
         Map<String, Integer> Stats = Server.GetSessions().GetStats();
@@ -106,7 +106,7 @@ public final class SessionCommands {
         Logger.Custom("  %sTotal   %s%d%n",    AnsiColor.Red, AnsiColor.White, Stats.get("Total"));
         Logger.Custom("  %sRaven   %s%d%n",    AnsiColor.Red, AnsiColor.White, Stats.get("RAVEN"));
         Logger.Custom("  %sRaw     %s%d%n",    AnsiColor.Red, AnsiColor.White, Stats.get("ReverseShell"));
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     public void Execute(int SessionId, String Command) {
@@ -116,7 +116,7 @@ public final class SessionCommands {
         boolean  Success  = Boolean.parseBoolean(Result[0]);
 
         if (Success) {
-            System.out.println(TerminalHelper.OutputBox(Result[1]));
+            Logger.Custom("%s%n", TerminalHelper.OutputBox(Result[1]));
             LogManager.Add(AnsiColor.Green + "session-" + SessionId + " OK" + AnsiColor.Reset, false);
         } else {
             Logger.Info(Result[1]);
@@ -130,12 +130,12 @@ public final class SessionCommands {
         String Operator = OperatorName != null ? OperatorName : "operator";
         Logger.Custom("  broadcasting to %d session(s): %s%n", SessionIds.size(), Command);
         Map<Integer, String[]> Results = Server.BroadcastCommand(SessionIds, Command);
-        System.out.println(TerminalHelper.Box("BROADCAST RESULTS - " + Results.size() + " sessions"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("BROADCAST RESULTS - " + Results.size() + " sessions"));
+        Logger.Custom("%n");
         for (Map.Entry<Integer, String[]> Entry : Results.entrySet()) {
             boolean Success = Boolean.parseBoolean(Entry.getValue()[0]);
             Logger.Custom("  %ssession-%-3d %s%n", Success ? AnsiColor.Green : AnsiColor.Red, Entry.getKey(), AnsiColor.Reset);
-            System.out.println(TerminalHelper.OutputBox(Entry.getValue()[1]));
+            Logger.Custom("%s%n", TerminalHelper.OutputBox(Entry.getValue()[1]));
             Database.SaveCommandLog(Entry.getKey(), Operator, Command, Entry.getValue()[1], Success);
         }
     }
@@ -147,12 +147,12 @@ public final class SessionCommands {
         String Operator = OperatorName != null ? OperatorName : "operator";
         Logger.Custom("  broadcasting to all %d session(s): %s%n", Total, Command);
         Map<Integer, String[]> Results = Server.BroadcastAll(Command);
-        System.out.println(TerminalHelper.Box("BROADCAST-ALL RESULTS"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("BROADCAST-ALL RESULTS"));
+        Logger.Custom("%n");
         for (Map.Entry<Integer, String[]> Entry : Results.entrySet()) {
             boolean Success = Boolean.parseBoolean(Entry.getValue()[0]);
             Logger.Custom("  %ssession-%-3d %s%n", Success ? AnsiColor.Green : AnsiColor.Red, Entry.getKey(), AnsiColor.Reset);
-            System.out.println(TerminalHelper.OutputBox(Entry.getValue()[1]));
+            Logger.Custom("%s%n", TerminalHelper.OutputBox(Entry.getValue()[1]));
             Database.SaveCommandLog(Entry.getKey(), Operator, Command, Entry.getValue()[1], Success);
         }
     }
@@ -163,7 +163,7 @@ public final class SessionCommands {
         if (Found.isEmpty()) { Logger.Warn("session not found"); return; }
         Session ActiveSession = Found.get();
 
-        System.out.println(TerminalHelper.Box("INTERACTIVE SESSION"));
+        Logger.Custom("%s%n", TerminalHelper.Box("INTERACTIVE SESSION"));
         Logger.Custom(
             "%n  %s[%s%s%s] %sID: %s%d %sUser: %s%s@%s %sOS: %s%s %sArch: %s%s %sIP: %s%s %sType: %s%s %sKey: %s%s%s%n",
             AnsiColor.Blue, AnsiColor.White, ActiveSession.GetDisplayName(), AnsiColor.Blue,
@@ -210,11 +210,11 @@ public final class SessionCommands {
     }
 
     public void ShowTasksQueue() {
-        System.out.println(TerminalHelper.Box("PENDING TASKS"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("PENDING TASKS"));
+        Logger.Custom("%n");
         int Total = Server != null ? Server.GetSessions().Count() : 0;
         Logger.Custom("  %sActive sessions: %s%d%s%n", AnsiColor.Red, AnsiColor.White, Total, AnsiColor.Reset);
         Logger.Info("  use 'broadcast' or 'exec' to queue commands to sessions");
-        System.out.println();
+        Logger.Custom("%n");
     }
 }

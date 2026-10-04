@@ -67,7 +67,9 @@ public final class AgentCommandDispatcher {
 
     public Map<Integer, CommandResult> BroadcastAllDispatch(String UserCommand) {
         Map<Integer, CommandResult> Results = new LinkedHashMap<>();
-        for (Session S : Server.GetSessions().GetAll()) Results.put(S.GetId(), Dispatch(S.GetId(), UserCommand));
+        if (Server == null || !Server.IsRunning()) return Results;
+        for (Session AgentSession : Server.GetSessions().GetAll())
+            Results.put(AgentSession.GetId(), Dispatch(AgentSession.GetId(), UserCommand));
         return Results;
     }
 

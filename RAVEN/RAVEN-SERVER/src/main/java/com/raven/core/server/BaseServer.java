@@ -474,22 +474,15 @@ public abstract class BaseServer {
 
     public Map<Integer, String[]> BroadcastCommand(List<Integer> SessionIds, String Command) {
         Map<Integer, String[]> Results = new ConcurrentHashMap<>();
-        java.util.concurrent.ExecutorService BroadcastPool = java.util.concurrent.Executors.newCachedThreadPool(Task -> {
-            Thread Worker = new Thread(Task, "BroadcastWorker");
-            Worker.setDaemon(true);
-            return Worker;
-        });
         List<CompletableFuture<Void>> Futures = new ArrayList<>();
         for (int Id : SessionIds) {
-            CompletableFuture<Void> Future = CompletableFuture.runAsync(() -> Results.put(Id, ExecuteCommand(Id, Command)), BroadcastPool);
-            Futures.add(Future);
+            Futures.add(CompletableFuture.runAsync(() -> Results.put(Id, ExecuteCommand(Id, Command))));
         }
         try {
-            CompletableFuture.allOf(Futures.toArray(new CompletableFuture[0])).get(Config.GetCommandTimeout() + 5000, TimeUnit.MILLISECONDS);
-        } catch (Exception E) {
-            Logger.Warn("Broadcast partial timeout: " + E.getMessage());
-        } finally {
-            BroadcastPool.shutdownNow();
+            CompletableFuture.allOf(Futures.toArray(new CompletableFuture[0]))
+                .get(Config.GetCommandTimeout() + 5000L, TimeUnit.MILLISECONDS);
+        } catch (Exception Exception) {
+            Logger.Warn("Broadcast partial timeout: " + Exception.getMessage());
         }
         return Results;
     }
@@ -561,7 +554,7 @@ public abstract class BaseServer {
             synchronized (SLck) {
                 Out.write(CmdFrame);
                 Out.flush();
-                Thread.sleep(300);
+                try { Thread.sleep(300); } catch (InterruptedException IntEx) { Thread.currentThread().interrupt(); throw new java.io.IOException("Upload interrupted"); }
                 byte[] Data = Files.readAllBytes(Paths.get(Local));
                 Map<String, Object> Meta = new LinkedHashMap<>();
                 Meta.put("type", "file");
@@ -571,7 +564,7 @@ public abstract class BaseServer {
                 Out.write(MetaEnc);
                 Out.write(MetaMarker);
                 Out.flush();
-                Thread.sleep(100);
+                try { Thread.sleep(100); } catch (InterruptedException IntEx) { Thread.currentThread().interrupt(); throw new java.io.IOException("Upload interrupted"); }
                 Out.write(Data);
                 Out.write(EndMarker);
                 Out.flush();
@@ -601,9 +594,10 @@ public abstract class BaseServer {
 
     private String[] HandleDownload(Session S, SymmetricCryptography Crypto) {
         try {
+            int DownloadTimeout = Config.GetCommandTimeout();
             ByteArrayOutputStream Buf = new ByteArrayOutputStream();
             byte[] Tmp = new byte[Config.GetBufferSize()];
-            S.GetSocket().setSoTimeout(30_000);
+            S.GetSocket().setSoTimeout(DownloadTimeout);
             while (true) {
                 int N;
                 try {
@@ -627,7 +621,7 @@ public abstract class BaseServer {
                 String Filename = (String) Meta.getOrDefault("filename", "received_file");
                 ByteArrayOutputStream FileBuf = new ByteArrayOutputStream();
                 FileBuf.write(Rest);
-                S.GetSocket().setSoTimeout(30_000);
+                S.GetSocket().setSoTimeout(DownloadTimeout);
                 while (!EndsWith(FileBuf.toByteArray(), EndMarker)) {
                     int N;
                     try {
@@ -653,7 +647,7 @@ public abstract class BaseServer {
 
     protected String SaveFile(String Filename, byte[] Data, int SessionId) {
         try {
-            Path Dir = Paths.get("Downloads/Session_" + SessionId);
+            Path Dir = Paths.get(Config.GetDownloadDir()).resolve("Session_" + SessionId);
             Files.createDirectories(Dir);
             String Base = Filename,
                 Ext = "";
@@ -707,7 +701,7 @@ public abstract class BaseServer {
     }
 
     public void RemoveSession(int SessionId) {
-        Sessions.Remove(SessionId);
+        if (!Sessions.Remove(SessionId)) return;
         CommandLocks.remove(SessionId);
         SocketLocks.remove(SessionId);
         SessionCryptos.remove(SessionId);
