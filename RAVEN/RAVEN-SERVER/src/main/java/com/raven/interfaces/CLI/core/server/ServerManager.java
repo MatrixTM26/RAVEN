@@ -103,8 +103,8 @@ public final class ServerManager {
         long UptimeSeconds = ServerStartTime != null
             ? Duration.between(ServerStartTime, Instant.now()).getSeconds() : 0;
 
-        System.out.println(TerminalHelper.Box("SERVER STATUS"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("SERVER STATUS"));
+        Logger.Custom("%n");
 
         if (Server == null || !Server.IsRunning()) {
             if (IsTeamServerMode && ServerStartTime != null) {
@@ -127,7 +127,7 @@ public final class ServerManager {
         Logger.Custom("  %sDatabase  %s%s (%s)%n", AnsiColor.Red, AnsiColor.White, DatabaseState, DatabaseType);
         if (IsTeamServerMode && OperatorName != null)
             Logger.Custom("  %sOperator  %s%s%n", AnsiColor.Red, AnsiColor.White, OperatorName);
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void HandleEvent(EventType Type, Map<String, Object> Data) {

@@ -43,8 +43,8 @@ public final class ChatManager {
     }
 
     public void ShowLocalMessages() {
-        System.out.println(TerminalHelper.Box("CHAT MESSAGES"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("CHAT MESSAGES"));
+        Logger.Custom("%n");
         if (MessageHistory.isEmpty()) { Logger.Info("no messages\n"); return; }
         String CurrentOperator = OperatorName != null ? OperatorName : "";
         for (Map<String, Object> Message : MessageHistory) {
@@ -61,13 +61,13 @@ public final class ChatManager {
                 From, AnsiColor.Reset,
                 ToLabel, Content, AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     public void ShowDatabaseHistory() {
         List<Map<String, Object>> Records = Database.GetChatLogs(100);
-        System.out.println(TerminalHelper.Box("CHAT HISTORY (Database - last 100)"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("CHAT HISTORY (Database - last 100)"));
+        Logger.Custom("%n");
         if (Records.isEmpty()) { Logger.Info("no chat history in database\n"); return; }
         String CurrentOperator = OperatorName != null ? OperatorName : "";
         for (Map<String, Object> Record : Records) {
@@ -85,6 +85,6 @@ public final class ChatManager {
                 From, AnsiColor.Reset,
                 ToLabel, Content, AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 }

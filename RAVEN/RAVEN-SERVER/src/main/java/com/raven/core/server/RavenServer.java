@@ -215,7 +215,7 @@ public final class RavenServer extends BaseServer {
                         CloseQuietly(Client);
                         return;
                     }
-                    HandleBeacon(Client, false);
+                    HandleBeacon(Client, Client instanceof SSLSocket);
                 }
                 default -> {
                     Logger.Warn("unknown protocol from " + RemoteAddr + " — dropping");

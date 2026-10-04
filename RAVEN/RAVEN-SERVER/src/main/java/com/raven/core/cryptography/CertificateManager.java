@@ -36,11 +36,20 @@ public final class CertificateManager {
     }
 
     private void EnsureDirs() {
-        for (String Dir : new String[] { Config.GetAgentCertDir(), Paths.get(Config.GetKeystorePath()).getParent().toString(), Paths.get(Config.GetCaPath()).getParent().toString(), Paths.get(Config.GetTruststorePath()).getParent().toString() }) {
+        java.util.List<String> Dirs = new java.util.ArrayList<>();
+        Dirs.add(Config.GetAgentCertDir());
+        for (String PathStr : new String[] {
+                Config.GetKeystorePath(),
+                Config.GetCaPath(),
+                Config.GetTruststorePath() }) {
+            java.nio.file.Path Parent = Paths.get(PathStr).getParent();
+            if (Parent != null) Dirs.add(Parent.toString());
+        }
+        for (String Dir : Dirs) {
             try {
                 Files.createDirectories(Paths.get(Dir));
-            } catch (IOException E) {
-                Logger.Warn("Cannot create dir [" + Dir + "]: " + E.getMessage());
+            } catch (IOException DirException) {
+                Logger.Warn("Cannot create dir [" + Dir + "]: " + DirException.getMessage());
             }
         }
     }
@@ -244,7 +253,8 @@ public final class CertificateManager {
     }
 
     private void SaveP12(String Path, String Password, String Alias, PrivateKey Key, X509Certificate[] Chain) throws Exception {
-        Files.createDirectories(Paths.get(Path).getParent());
+        java.nio.file.Path Parent = Paths.get(Path).getParent();
+        if (Parent != null) Files.createDirectories(Parent);
         KeyStore Ks = EmptyPkcs12();
         Ks.setKeyEntry(Alias, Key, Password.toCharArray(), Chain);
         SaveKeystore(Ks, Path, Password);
@@ -270,7 +280,8 @@ public final class CertificateManager {
     }
 
     private static void SaveKeystore(KeyStore Ks, String Path, String Password) throws Exception {
-        Files.createDirectories(Paths.get(Path).getParent());
+        java.nio.file.Path Parent = Paths.get(Path).getParent();
+        if (Parent != null) Files.createDirectories(Parent);
         try (OutputStream Out = new FileOutputStream(Path)) {
             Ks.store(Out, Password == null ? new char[0] : Password.toCharArray());
         }

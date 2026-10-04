@@ -80,7 +80,7 @@ public final class TeamServer {
         Logger.Info("  Connect CLI    : java -jar raven.jar -TSC -ts " + ApiHost + " -tp " + ApiPort);
         Logger.Info("  Connect Web    : java -jar raven.jar -TSW -ts " + ApiHost + " -tp " + ApiPort + " -wp <port>");
         Logger.Info("  Listener       : use 'start' command in CLI/Web/GUI to configure");
-        AddLog("TeamServer backend initialized");
+        AddLog("INFO", "TeamServer backend initialized");
     }
 
     public void StartWebPanel(String WebHost, int WebPort) throws Exception {
@@ -104,7 +104,7 @@ public final class TeamServer {
             WebPanelPort       = WebPort;
             String DisplayHost = WebHost.equals("0.0.0.0") ? "localhost" : WebHost;
             Logger.Info("  Web panel         : http://" + DisplayHost + ":" + WebPort + "/");
-            AddLog("Web panel started on port " + WebPort);
+            AddLog("INFO", "Web panel started on port " + WebPort);
         } catch (java.net.BindException BindException) {
             throw new Exception("Port " + WebPort + " is already in use — choose a different -wp port");
         }
@@ -180,7 +180,7 @@ public final class TeamServer {
         String DisplayLocal = LocalHost.equals("0.0.0.0") ? "localhost" : LocalHost;
         Logger.Info("TeamServer web panel (proxy) : http://" + DisplayLocal + ":" + LocalPort + "/");
         Logger.Info("  Proxying API to backend    : http://" + BackendHost + ":" + BackendPort + "/api/");
-        AddLog("TSW proxy frontend started on port " + LocalPort + " → backend " + BackendHost + ":" + BackendPort);
+        AddLog("INFO", "TSW proxy frontend started on port " + LocalPort + " → backend " + BackendHost + ":" + BackendPort);
     }
 
     public void RunStandalone(String ApiHost, int ApiPort, String WebHost, int WebPort) throws Exception {
@@ -200,7 +200,7 @@ public final class TeamServer {
         WebPanelPort       = WebPort;
         String DisplayHost = WebHost.equals("0.0.0.0") ? "localhost" : WebHost;
         Logger.Info("  Web frontend   : http://" + DisplayHost + ":" + WebPort + "/");
-        AddLog("Web frontend started on port " + WebPort);
+        AddLog("INFO", "Web frontend started on port " + WebPort);
     }
 
     public void Stop() {
@@ -318,9 +318,13 @@ public final class TeamServer {
     private String Str(Map<String, Object> DataMap, String Key, String Default) { return HttpHelper.Str(DataMap, Key, Default); }
     private int    Num(Map<String, Object> DataMap, String Key, int Default)    { return HttpHelper.Num(DataMap, Key, Default); }
 
+    private void AddLog(String Level, String Message) {
+        Log.Add(Level, Message, false);
+        Db.SaveLog("[" + Level + "] " + Message);
+    }
+
     private void AddLog(String Message) {
-        Log.Add(Message, false);
-        Db.SaveLog(Message);
+        AddLog("INFO", Message);
     }
 
     private String Uptime() {
@@ -345,7 +349,7 @@ public final class TeamServer {
         String Token = UUID.randomUUID().toString().replace("-", "");
         Tokens.put(Token, new TokenInfo(Username, Role, System.currentTimeMillis() + TokenTtlMs));
         Logger.Info("[AUTH] Login: " + Username + " [" + Role + "]");
-        AddLog("[AUTH] Login: " + Username + " [" + Role + "]");
+        AddLog("AUTH", "Login: " + Username + " [" + Role + "]");
         return HttpHelper.Json(Map.of(
             "Token",       Token,
             "Role",        Role.name(),
@@ -359,7 +363,7 @@ public final class TeamServer {
         String Header = Exchange.getRequestHeaders().getFirst("Authorization");
         if (Header != null && Header.startsWith("Bearer ")) {
             Tokens.remove(Header.substring(7));
-            AddLog("[AUTH] Logout: " + Token.Username());
+            AddLog("AUTH", "Logout: " + Token.Username());
         }
         return HttpHelper.Json(Map.of("Success", true));
     }
@@ -427,7 +431,7 @@ public final class TeamServer {
         RavenServer ToStop = Server;
         Server = null;
         ServerStartTime = null;
-        AddLog("Listener stopped by " + Token.Username());
+        AddLog("INFO", "Listener stopped by " + Token.Username());
         Thread Stopper = new Thread(() -> {
             try { Thread.sleep(200); } catch (InterruptedException Ignored) {}
             ToStop.StopServer();
@@ -476,7 +480,7 @@ public final class TeamServer {
             return HttpHelper.Json(Map.of("Error", "AgentId required"));
         }
         Server.RemoveSession(AgentId);
-        AddLog("[KILL] session-" + AgentId + " by " + Token.Username());
+        AddLog("WARN", "session-" + AgentId + " killed by " + Token.Username());
         return HttpHelper.Json(Map.of("Success", true));
     }
 
@@ -512,7 +516,7 @@ public final class TeamServer {
             SetStatus(400);
             return HttpHelper.Json(Map.of("Error", "AgentId and Command required"));
         }
-        AddLog("[>] [" + Token.Username() + "] session-" + AgentId + " » " + Command);
+        AddLog("CMD", "[" + Token.Username() + "] session-" + AgentId + " » " + Command);
         String[] Result = Server.ExecuteCommand(AgentId, Command);
         boolean Ok = Boolean.parseBoolean(Result[0]);
         Db.SaveCommandLog(AgentId, Token.Username(), Command, Result[1], Ok);
@@ -543,7 +547,7 @@ public final class TeamServer {
             SetStatus(400);
             return HttpHelper.Json(Map.of("Error", "AgentIds required"));
         }
-        AddLog("[BROADCAST] [" + Token.Username() + "] > " + Ids.size() + " agents » " + Command);
+        AddLog("CMD", "[BROADCAST] [" + Token.Username() + "] > " + Ids.size() + " agents » " + Command);
         return BuildBroadcastResult(Server.BroadcastCommand(Ids, Command), Token.Username(), Command);
     }
 
@@ -561,7 +565,7 @@ public final class TeamServer {
             SetStatus(400);
             return HttpHelper.Json(Map.of("Error", "Command required"));
         }
-        AddLog("[BROADCAST-ALL] [" + Token.Username() + "] > " + Server.GetSessions().Count() + " agents » " + Command);
+        AddLog("CMD", "[BROADCAST-ALL] [" + Token.Username() + "] > " + Server.GetSessions().Count() + " agents » " + Command);
         return BuildBroadcastResult(Server.BroadcastAll(Command), Token.Username(), Command);
     }
 
@@ -687,7 +691,7 @@ public final class TeamServer {
         OperatorRole NewRole = OperatorRole.FromString(Role);
         if (NewRole == OperatorRole.SUPER && !Token.Role().IsSuperAdmin()) { SetStatus(403); return HttpHelper.Json(Map.of("Error", "Only SUPER can create SUPER")); }
         if (!Db.CreateOperator(Username, Password, NewRole)) { SetStatus(409); return HttpHelper.Json(Map.of("Error", "Username already exists")); }
-        AddLog("[TEAM] Created operator: " + Username + " [" + NewRole + "] by " + Token.Username());
+        AddLog("TEAM", "Created operator: " + Username + " [" + NewRole + "] by " + Token.Username());
         return HttpHelper.Json(Map.of("Success", true, "Username", Username, "Role", NewRole.name()));
     }
 
@@ -698,7 +702,7 @@ public final class TeamServer {
         if (Username.equalsIgnoreCase(Config.GetAdminUsername())) { SetStatus(403); return HttpHelper.Json(Map.of("Error", "Cannot delete admin")); }
         if (!Db.DeleteOperator(Username)) { SetStatus(404); return HttpHelper.Json(Map.of("Error", "Operator not found")); }
         Tokens.entrySet().removeIf(Entry -> Entry.getValue().Username().equals(Username));
-        AddLog("[TEAM] Deleted operator: " + Username + " by " + Token.Username());
+        AddLog("TEAM", "Deleted operator: " + Username + " by " + Token.Username());
         return HttpHelper.Json(Map.of("Success", true));
     }
 
@@ -711,7 +715,7 @@ public final class TeamServer {
         if (Username.equalsIgnoreCase(Config.GetAdminUsername())) { SetStatus(403); return HttpHelper.Json(Map.of("Error", "Cannot change admin role")); }
         OperatorRole NewRole = OperatorRole.FromString(Role);
         if (!Db.UpdateOperatorRole(Username, NewRole)) { SetStatus(404); return HttpHelper.Json(Map.of("Error", "Operator not found")); }
-        AddLog("[TEAM] Role updated: " + Username + " → " + NewRole + " by " + Token.Username());
+        AddLog("TEAM", "Role updated: " + Username + " → " + NewRole + " by " + Token.Username());
         return HttpHelper.Json(Map.of("Success", true));
     }
 
@@ -723,7 +727,7 @@ public final class TeamServer {
         if (Username.isEmpty() || Password.isEmpty()) { SetStatus(400); return HttpHelper.Json(Map.of("Error", "Username and Password required")); }
         if (Password.length() < 8) { SetStatus(400); return HttpHelper.Json(Map.of("Error", "Password must be at least 8 characters")); }
         if (!Db.UpdateOperatorPassword(Username, Password)) { SetStatus(404); return HttpHelper.Json(Map.of("Error", "Operator not found")); }
-        AddLog("[TEAM] Password changed: " + Username + " by " + Token.Username());
+        AddLog("TEAM", "Password changed: " + Username + " by " + Token.Username());
         return HttpHelper.Json(Map.of("Success", true));
     }
 
@@ -737,7 +741,7 @@ public final class TeamServer {
             .filter(Entry -> Entry.getValue().Username().equals(Username))
             .peek(Entry -> Tokens.remove(Entry.getKey()))
             .count();
-        AddLog("[TEAM] Kicked (tokens revoked=" + RevokedCount + "): " + Username + " by " + Token.Username());
+        AddLog("TEAM", "Kicked: " + Username + " (tokens revoked=" + RevokedCount + ") by " + Token.Username());
         return HttpHelper.Json(Map.of("Success", true, "TokensRevoked", RevokedCount));
     }
 
@@ -782,7 +786,7 @@ public final class TeamServer {
             String DisplayHost = RequestedHost.equals("0.0.0.0") ? "localhost" : RequestedHost;
             String Url = "http://" + DisplayHost + ":" + RequestedPort + "/";
             Logger.Info("Web panel enabled on " + Url + " by " + Token.Username());
-            AddLog("Web panel started on " + Url + " by " + Token.Username());
+            AddLog("INFO", "Web panel started on " + Url + " by " + Token.Username());
             return HttpHelper.Json(Map.of("Success", true, "URL", Url));
         } catch (Exception Exception) {
             SetStatus(500);
@@ -798,7 +802,7 @@ public final class TeamServer {
         WebPanelHost       = null;
         WebPanelPort       = -1;
         Logger.Info("Web panel stopped by " + Token.Username());
-        AddLog("Web panel stopped by " + Token.Username());
+        AddLog("INFO", "Web panel stopped by " + Token.Username());
         Thread Stopper = new Thread(() -> {
             try { Thread.sleep(300); } catch (InterruptedException Ignored) {}
             ToStop.stop(0);
@@ -859,17 +863,17 @@ public final class TeamServer {
 
     private void OnEvent(EventType Type, Map<String, Object> Data) {
         switch (Type) {
-            case ServerStarted -> AddLog("Listener started on " + Data.get("Host") + ":" + Data.get("Port") + " [" + Data.get("Mode") + "]");
+            case ServerStarted -> AddLog("INFO", "Listener started on " + Data.get("Host") + ":" + Data.get("Port") + " [" + Data.get("Mode") + "]");
             case AgentConnected -> {
-                AddLog("[+] session-" + Data.get("ID") + " [" + Data.get("Type") + "] " + Data.get("User") + "@" + Data.get("Hostname") + " " + Data.get("OS") + " key=" + Data.get("SessionKey"));
+                AddLog("SESSION", "[+] session-" + Data.get("ID") + " [" + Data.get("Type") + "] " + Data.get("User") + "@" + Data.get("Hostname") + " " + Data.get("OS") + " key=" + Data.get("SessionKey"));
                 Db.SaveSessionEvent(Data, "connected");
             }
             case AgentDisconnected -> {
-                AddLog("[-] session-" + Data.get("ID") + " disconnected: " + Data.get("Reason"));
+                AddLog("SESSION", "[-] session-" + Data.get("ID") + " disconnected: " + Data.get("Reason"));
                 Db.SaveSessionEvent(Data, "disconnected");
             }
-            case AgentRemoved -> AddLog("[-] session-" + Data.get("ID") + " removed");
-            case Error         -> AddLog("[!] " + Data.get("Message"));
+            case AgentRemoved -> AddLog("SESSION", "[-] session-" + Data.get("ID") + " removed");
+            case Error         -> AddLog("ERROR", Data.get("Message").toString());
         }
     }
 }

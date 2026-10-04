@@ -54,8 +54,8 @@ public class Session {
         CertCn          = "N/A";
         AgentId         = GenerateAgentId();
         SessionKey      = GenerateSessionKey();
-        SleepIntervalMs = 5000;
-        JitterMs        = 1000;
+        SleepIntervalMs = 0;
+        JitterMs        = 0;
     }
 
     private static String GenerateAgentId() {
