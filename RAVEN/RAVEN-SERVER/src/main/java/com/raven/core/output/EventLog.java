@@ -16,15 +16,29 @@ public final class EventLog {
         this.Entries    = new CopyOnWriteArrayList<>();
     }
 
-    public void Add(String Message, boolean PrintNow) {
-        String Entry = "[" + LocalDateTime.now().format(RavenConstants.TimestampFmt) + "] " + Message;
+    public void Add(String Level, String Message, boolean PrintNow) {
+        String Entry = "[" + LocalDateTime.now().format(RavenConstants.TimestampFmt) + "] [" + Level + "] " + Message;
         Entries.add(Entry);
         if (Entries.size() > MaxEntries) Entries.remove(0);
-        if (PrintNow) Logger.Info(Entry);
+        if (PrintNow) {
+            switch (Level) {
+                case "WARN"  -> Logger.Warn(Entry);
+                case "ERROR" -> Logger.Error(Entry);
+                default      -> Logger.Info(Entry);
+            }
+        }
+    }
+
+    public void Add(String Level, String Message) {
+        Add(Level, Message, false);
+    }
+
+    public void Add(String Message, boolean PrintNow) {
+        Add("INFO", Message, PrintNow);
     }
 
     public void Add(String Message) {
-        Add(Message, false);
+        Add("INFO", Message, false);
     }
 
     public int Count() {

@@ -313,8 +313,19 @@ public final class CommandDispatcher {
                 }
             }
             case "webstart" -> {
-                String WebHost = Parts.length > 1 ? Parts[1] : Config.GetWebHost();
-                int WebPort = Parts.length > 2 ? TaskCommands.ParseIntSafe(Parts[2], Config.GetWebPort()) : Config.GetWebPort();
+                String WebHost = Config.GetWebHost();
+                int    WebPort = Config.GetWebPort();
+                for (int FlagIndex = 1; FlagIndex < Parts.length - 1; FlagIndex++) {
+                    switch (Parts[FlagIndex].toLowerCase()) {
+                        case "-lhost", "-host", "-h" -> { WebHost = Parts[FlagIndex + 1]; FlagIndex++; }
+                        case "-lport", "-port", "-p" -> { WebPort = TaskCommands.ParseIntSafe(Parts[FlagIndex + 1], WebPort); FlagIndex++; }
+                    }
+                }
+                if (Parts.length == 2 && !Parts[1].startsWith("-")) WebHost = Parts[1];
+                if (Parts.length == 3 && !Parts[1].startsWith("-")) {
+                    WebHost = Parts[1];
+                    WebPort = TaskCommands.ParseIntSafe(Parts[2], WebPort);
+                }
                 WebPanelManager.Start(WebHost, WebPort, ServerManager.GetServer(), ServerManager.GetServerStartTime());
             }
             case "webstop" -> WebPanelManager.Stop();
