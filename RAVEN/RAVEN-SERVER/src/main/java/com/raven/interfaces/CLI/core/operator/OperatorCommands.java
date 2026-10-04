@@ -49,8 +49,8 @@ public final class OperatorCommands {
     }
 
     public boolean Login(BufferedReader Reader) throws IOException {
-        System.out.println(TerminalHelper.Box("TEAMSERVER LOGIN"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("TEAMSERVER LOGIN"));
+        Logger.Custom("%n");
         Logger.Custom("  %sDefault credentials: admin / admin (change after first login)%s%n%n", AnsiColor.White, AnsiColor.Reset);
 
         for (int Attempt = 1; Attempt <= 3; Attempt++) {
@@ -91,23 +91,23 @@ public final class OperatorCommands {
     }
 
     public void ShowHelp() {
-        System.out.println(TerminalHelper.Box("COMMAND REFERENCE"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("COMMAND REFERENCE"));
+        Logger.Custom("%n");
         CLIBanner.Print();
         if (IsTeamServerMode && OperatorName != null) {
-            System.out.println();
+            Logger.Custom("%n");
             Logger.Custom("  %s[TEAMSERVER MODE]%s  Operator: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, OperatorRoleValue != null ? OperatorRoleValue.name() : "?", AnsiColor.Reset);
             if (OperatorRoleValue != null) Logger.Custom("  %sPermissions:%s %s%n", AnsiColor.Red, AnsiColor.White, OperatorRoleValue.PermissionString());
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     public void ShowOperators() {
         List<Map<String, Object>> Operators = Database.GetOperators();
-        System.out.println(TerminalHelper.Box("OPERATORS (" + Operators.size() + ")"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("OPERATORS (" + Operators.size() + ")"));
+        Logger.Custom("%n");
         Logger.Custom("  %s%-18s %-14s %-30s %-20s%s%n", AnsiColor.Green, "USERNAME", "ROLE", "PERMISSIONS", "LAST SEEN", AnsiColor.Reset);
-        System.out.println(TerminalHelper.Divider());
+        Logger.Custom("%s%n", TerminalHelper.Divider());
 
         for (Map<String, Object> Operator : Operators) {
             OperatorRole Role = OperatorRole.FromString(Operator.get("Role").toString());
@@ -116,10 +116,10 @@ public final class OperatorCommands {
             Logger.Custom("  %s%-18s %-14s %-30s %-20s%s%s%n", AnsiColor.White, Operator.get("Username"), Role.name(), Role.PermissionString(), Operator.getOrDefault("LastSeen", "Never"), Mark, AnsiColor.Reset);
         }
 
-        System.out.println();
+        Logger.Custom("%n");
         Logger.Custom("  %sRole Reference:%s%n", AnsiColor.Red, AnsiColor.Reset);
         for (OperatorRole Role : OperatorRole.values()) Logger.Custom("    %s%-14s%s %s%n", AnsiColor.White, Role.name(), AnsiColor.Reset, Role.PermissionString());
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     public void AddOperator(String Username, String Password, String RoleName, String AdminUsername) {

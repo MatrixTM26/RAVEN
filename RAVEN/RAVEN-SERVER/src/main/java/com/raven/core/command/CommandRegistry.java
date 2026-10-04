@@ -35,7 +35,7 @@ public final class CommandRegistry {
 
         Register("status", "status", "Show server mode, uptime, and database status", Category.SERVER, false);
         Register("logs", "logs", "Show recent server event logs", Category.SERVER, false);
-        Register("start", "start -lhost <host> -lport <port> -M <mode>", "Start agent listener (modes: multi, raw, http, https, tls, mtls, fmtls)", Category.SERVER, false);
+        Register("start", "start [-lhost <host>] [-lport <port>] [-M <mode>]", "Start agent listener  modes: multi|raw|http|https|tls|mtls|fmtls  flags: -h/-host/-lhost  -p/-port/-lport  -m/-M/-mode", Category.SERVER, false);
         Register("stop", "stop", "Stop the running agent listener", Category.SERVER, false);
 
         Register("sessions", "sessions", "List all active agent sessions", Category.SESSION, false);
@@ -134,7 +134,7 @@ public final class CommandRegistry {
         Register("cloneprofile", "cloneprofile <source> <target>", "Clone an existing profile under a new name", Category.PROFILE, false);
         Register("editprofile", "editprofile <name> <key> <value>", "Set a single key in a saved profile", Category.PROFILE, false);
 
-        Register("webstart", "webstart [host] [port]", "Start the web panel server", Category.WEB, false);
+        Register("webstart", "webstart [-lhost <host>] [-lport <port>]", "Start web panel  flags: -h/-host/-lhost  -p/-port/-lport  (or positional: webstart <host> <port>)", Category.WEB, false);
         Register("webstop", "webstop", "Stop the web panel server", Category.WEB, false);
         Register("webstatus", "webstatus", "Show web panel current status", Category.WEB, false);
     }

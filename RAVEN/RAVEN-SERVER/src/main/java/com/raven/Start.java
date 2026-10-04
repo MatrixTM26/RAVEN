@@ -99,10 +99,7 @@ public final class Start {
                 case "gui"            -> GUI.Launch(Config);
                 case "teamserver"     -> {
                     int ApiPort = ParseInt(Arg(Args, "-tp", "-tport", String.valueOf(Config.GetTeamServerPort())), Config.GetTeamServerPort());
-                    int WebPort = ParseInt(Arg(Args, "-wp", "-web-port", "-1"), -1);
-                    TeamServer BackendServer = new TeamServer(Config, Mode);
-                    BackendServer.RunAsBackend(Config.GetWebHost(), ApiPort);
-                    if (WebPort > 0) BackendServer.StartWebPanel(Config.GetWebHost(), WebPort);
+                    new TeamServer(Config, Mode).RunAsBackend(Config.GetWebHost(), ApiPort);
                     Thread.currentThread().join();
                 }
                 case "teamserver-cli" -> {
@@ -216,7 +213,7 @@ public final class Start {
 
     private static void DeployAgent(String AgentId, String CertPath, String Host, int Port,
                                     boolean UseMtls, boolean Persist, boolean Hide, String Lang) throws IOException {
-        String OutputDir = "IMPLANT/" + AgentId.toUpperCase();
+        String OutputDir = Config.GetAgentOutputDir() + "/" + AgentId.toUpperCase();
         Files.createDirectories(Paths.get(OutputDir));
         Files.copy(Paths.get(CertPath),            Paths.get(OutputDir + "/agent.p12"), StandardCopyOption.REPLACE_EXISTING);
         Files.copy(Paths.get(Config.GetCaPath()),   Paths.get(OutputDir + "/ca.p12"),   StandardCopyOption.REPLACE_EXISTING);

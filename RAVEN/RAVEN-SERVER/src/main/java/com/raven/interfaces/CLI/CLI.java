@@ -84,8 +84,8 @@ public final class CLI {
     }
 
     private boolean Login(BufferedReader Reader) {
-        System.out.println(TerminalHelper.Box("TEAMSERVER LOGIN"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("TEAMSERVER LOGIN"));
+        Logger.Custom("%n");
         Logger.Custom("  %sDefault: admin / admin (change after first login)%s%n%n", AnsiColor.White, AnsiColor.Reset);
         for (int Try = 1; Try <= 3; Try++) {
             try {
@@ -194,7 +194,7 @@ public final class CLI {
                     Logger.Info(Current - LastCount + " new event(s) - type 'logs' to view");
                     LastCount = Current;
                 }
-                System.out.println();
+                Logger.Custom("%n");
                 System.out.println(PromptTop);
                 System.out.print(PromptBottom);
                 System.out.flush();
@@ -227,8 +227,8 @@ public final class CLI {
             }
             case "status" -> {
                 long Uptime = ServerStartTime != null ? java.time.Duration.between(ServerStartTime, java.time.Instant.now()).getSeconds() : 0;
-                System.out.println(TerminalHelper.Box("SERVER STATUS"));
-                System.out.println();
+                Logger.Custom("%s%n", TerminalHelper.Box("SERVER STATUS"));
+                Logger.Custom("%n");
                 if (Server != null && Server.IsRunning()) {
                     Logger.Custom("  %sStatus    %sONLINE%n", AnsiColor.Red, AnsiColor.Green);
                     Logger.Custom("  %sMode      %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveMode.name());
@@ -242,12 +242,12 @@ public final class CLI {
                 if (IsTeamMode) Logger.Custom("  %sOperator  %s%s [%s]%n%n", AnsiColor.Red, AnsiColor.White, OperatorName, CurrentRole);
             }
             case "logs" -> {
-                System.out.println(TerminalHelper.Box("RECENT LOGS"));
-                System.out.println();
+                Logger.Custom("%s%n", TerminalHelper.Box("RECENT LOGS"));
+                Logger.Custom("%n");
                 List<String> Entries = Log.GetLast(30);
                 if (Entries.isEmpty()) Logger.Info("  no logs");
                 else Entries.forEach(Entry -> Logger.Custom("  %s%s%s%n", AnsiColor.White, Entry, AnsiColor.Reset));
-                System.out.println();
+                Logger.Custom("%n");
                 return 1;
             }
             case "webstart" -> {
@@ -413,15 +413,15 @@ public final class CLI {
             case "sessions-history", "sesshistory" -> {
                 int Limit = P.length > 1 ? Helper.ParseInt(P[1], 50) : 50;
                 List<Map<String, Object>> Sessions = Db.GetSessionHistory(Limit);
-                System.out.println(TerminalHelper.Box("SESSION HISTORY (last " + Limit + ")"));
-                System.out.println();
+                Logger.Custom("%s%n", TerminalHelper.Box("SESSION HISTORY (last " + Limit + ")"));
+                Logger.Custom("%n");
                 if (Sessions.isEmpty()) {
                     Logger.Info("  no session history");
-                    System.out.println();
+                    Logger.Custom("%n");
                     break;
                 }
                 Sessions.forEach(Session -> Logger.Custom("  %s%s%s%n", AnsiColor.White, Session, AnsiColor.Reset));
-                System.out.println();
+                Logger.Custom("%n");
             }
             case "note" -> {
                 if (P.length < 3) {
@@ -580,11 +580,11 @@ public final class CLI {
             }
             case "profiles" -> {
                 List<String> ProfileList = ProfileManager.ListProfiles();
-                System.out.println(TerminalHelper.Box("SAVED PROFILES (" + ProfileList.size() + ")"));
-                System.out.println();
+                Logger.Custom("%s%n", TerminalHelper.Box("SAVED PROFILES (" + ProfileList.size() + ")"));
+                Logger.Custom("%n");
                 if (ProfileList.isEmpty()) {
                     Logger.Info("  no profiles found");
-                    System.out.println();
+                    Logger.Custom("%n");
                     break;
                 }
                 for (String ProfileName : ProfileList) {
@@ -593,7 +593,7 @@ public final class CLI {
                     String Mark = ProfileName.equals(ActiveProfileName) ? AnsiColor.Green + " ◀ active" + AnsiColor.Reset : "";
                     Logger.Custom("  %s%-20s%s %s%s%n", AnsiColor.White, ProfileName, AnsiColor.Reset, Desc, Mark);
                 }
-                System.out.println();
+                Logger.Custom("%n");
             }
             case "profile" -> {
                 String ViewName = P.length > 1 ? P[1] : ActiveProfileName;
@@ -603,8 +603,8 @@ public final class CLI {
                     break;
                 }
                 var ActiveProfile = ProfileOpt.get();
-                System.out.println(TerminalHelper.Box("PROFILE — " + ViewName));
-                System.out.println();
+                Logger.Custom("%s%n", TerminalHelper.Box("PROFILE — " + ViewName));
+                Logger.Custom("%n");
                 Logger.Custom("  %sName       %s%s%n", AnsiColor.Red, AnsiColor.White, ActiveProfile.Name());
                 Logger.Custom("  %sDescription%s %s%n", AnsiColor.Red, AnsiColor.White, ActiveProfile.Description());
                 Logger.Custom("  %sCreated    %s%s%n%n", AnsiColor.Red, AnsiColor.White, ActiveProfile.CreatedAt());
@@ -612,7 +612,7 @@ public final class CLI {
                     String KeyStr = Key.toString();
                     if (!KeyStr.startsWith("profile.")) Logger.Custom("  %s%-36s%s %s%n", AnsiColor.Red, KeyStr, AnsiColor.White, Value);
                 });
-                System.out.println();
+                Logger.Custom("%n");
             }
             case "loadprofile" -> {
                 if (P.length < 2) {
@@ -721,8 +721,8 @@ public final class CLI {
     }
 
     private void ShowHelp() {
-        System.out.println(TerminalHelper.Box("COMMAND REFERENCE"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("COMMAND REFERENCE"));
+        Logger.Custom("%n");
         if (IsTeamMode && OperatorName != null) {
             Logger.Custom("  %s[TEAMSERVER]%s  Operator: %s%s%s  Role: %s%s%s%n", AnsiColor.Red, AnsiColor.Reset, AnsiColor.White, OperatorName, AnsiColor.Reset, AnsiColor.White, CurrentRole != null ? CurrentRole.name() : "?", AnsiColor.Reset);
             if (CurrentRole != null) Logger.Custom("  %sPermissions:%s %s%n%n", AnsiColor.Red, AnsiColor.White, CurrentRole.PermissionString());
@@ -735,7 +735,7 @@ public final class CLI {
                 if (Def.RequireTeamMode() && !IsTeamMode) continue;
                 Logger.Custom("    %s%-42s%s %s%n", AnsiColor.White, Def.Usage(), AnsiColor.Reset, Def.Description());
             }
-            System.out.println();
+            Logger.Custom("%n");
         }
     }
 
@@ -745,19 +745,19 @@ public final class CLI {
             return;
         }
         List<Session> All = Server.GetSessions().GetAll();
-        System.out.println(TerminalHelper.Box("ACTIVE SESSIONS (" + All.size() + ")"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("ACTIVE SESSIONS (" + All.size() + ")"));
+        Logger.Custom("%n");
         if (All.isEmpty()) {
             Logger.Info("  no active sessions");
-            System.out.println();
+            Logger.Custom("%n");
             return;
         }
         Logger.Custom("  %s%-5s %-14s %-16s %-14s %-10s %-10s %s%s%n", AnsiColor.Red, "ID", "NAME", "IP", "TYPE", "OS", "USER", "KEY", AnsiColor.Reset);
-        System.out.println(TerminalHelper.Divider());
+        Logger.Custom("%s%n", TerminalHelper.Divider());
         for (Session S : All) {
             Logger.Custom("  %s#%-4d %-14s %-16s %-14s %-10s %-10s %s%s%n", AnsiColor.White, S.GetId(), TerminalHelper.Truncate(S.GetAgentName(), 14), TerminalHelper.Truncate(S.GetAgentIp(), 16), S.GetSessionType().name(), TerminalHelper.Truncate(S.GetOs(), 10), TerminalHelper.Truncate(S.GetUser(), 10), S.GetSessionKey(), AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void ShowStats() {
@@ -766,17 +766,17 @@ public final class CLI {
             return;
         }
         int Count = Server.GetSessions().Count();
-        System.out.println(TerminalHelper.Box("SESSION STATS"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("SESSION STATS"));
+        Logger.Custom("%n");
         Logger.Custom("  %sTotal Active%s  %d%n", AnsiColor.Red, AnsiColor.White, Count);
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void ShowTasks() {
-        System.out.println(TerminalHelper.Box("TASK QUEUE"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("TASK QUEUE"));
+        Logger.Custom("%n");
         Logger.Info("  (task queue display not implemented — extend here)");
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void ShowSessionInfo(int Id) {
@@ -789,8 +789,8 @@ public final class CLI {
             Logger.Warn("session not found: " + Id);
             return;
         }
-        System.out.println(TerminalHelper.Box("SESSION INFO — #" + Id));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("SESSION INFO — #" + Id));
+        Logger.Custom("%n");
         Logger.Custom("  %sID          %s%d%n", AnsiColor.Red, AnsiColor.White, S.GetId());
         Logger.Custom("  %sName        %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetAgentName());
         Logger.Custom("  %sHostname    %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetHostname());
@@ -803,7 +803,7 @@ public final class CLI {
         Logger.Custom("  %smTLS        %s%b%n", AnsiColor.Red, AnsiColor.White, S.IsMtlsEnabled());
         Logger.Custom("  %sJoined      %s%s%n", AnsiColor.Red, AnsiColor.White, S.GetJoinedAt());
         Logger.Custom("  %sNote        %s%s%n", AnsiColor.Red, AnsiColor.White, Db.GetAgentNote(Id));
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void Interactive(int Id) {
@@ -841,9 +841,9 @@ public final class CLI {
         }
         AddLog("[>] [" + OperatorName + "] session-" + SessionId + " » " + UserCommand, false);
         CommandResult Result = new AgentCommandDispatcher(Server, Db, OperatorName).Dispatch(SessionId, UserCommand);
-        if (Result.Success()) System.out.println(TerminalHelper.OutputBox(Result.Output()));
+        if (Result.Success()) Logger.Custom("%s%n", TerminalHelper.OutputBox(Result.Output()));
         else Logger.Error(Result.Output());
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void Broadcast(List<Integer> Ids, String UserCommand) {
@@ -868,48 +868,48 @@ public final class CLI {
 
     private void ShowCommandHistory(int AgentId, int Limit) {
         List<Map<String, Object>> Hist = Db.GetCommandHistory(AgentId, Limit);
-        System.out.println(TerminalHelper.Box("COMMAND HISTORY (last " + Limit + (AgentId > 0 ? " — session-" + AgentId : "") + ")"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("COMMAND HISTORY (last " + Limit + (AgentId > 0 ? " — session-" + AgentId : "") + ")"));
+        Logger.Custom("%n");
         if (Hist.isEmpty()) {
             Logger.Info("  no history");
-            System.out.println();
+            Logger.Custom("%n");
             return;
         }
         Logger.Custom("  %s%-5s %-12s %-10s %-36s %s%s%n", AnsiColor.Red, "SID", "OPERATOR", "STATUS", "COMMAND", "TIMESTAMP", AnsiColor.Reset);
-        System.out.println(TerminalHelper.Divider());
+        Logger.Custom("%s%n", TerminalHelper.Divider());
         for (Map<String, Object> H : Hist) {
             boolean Ok = Boolean.parseBoolean(H.getOrDefault("Success", "false").toString());
             String Cmd = TerminalHelper.Truncate(H.getOrDefault("Command", "").toString(), 36);
             Logger.Custom("  %s%-5s %-12s %s%-10s%s %-36s %s%s%n", AnsiColor.White, H.getOrDefault("AgentId", "?"), TerminalHelper.Truncate(H.getOrDefault("Operator", "?").toString(), 12), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "✔ ok" : "✘ fail", AnsiColor.White, Cmd, H.getOrDefault("Timestamp", ""), AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void ShowOperators() {
         List<Map<String, Object>> Ops = Db.GetOperators();
-        System.out.println(TerminalHelper.Box("OPERATORS (" + Ops.size() + ")"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("OPERATORS (" + Ops.size() + ")"));
+        Logger.Custom("%n");
         Logger.Custom("  %s%-18s %-14s %-30s %-20s%s%n", AnsiColor.Green, "USERNAME", "ROLE", "PERMISSIONS", "LAST SEEN", AnsiColor.Reset);
-        System.out.println(TerminalHelper.Divider());
+        Logger.Custom("%s%n", TerminalHelper.Divider());
         for (Map<String, Object> Op : Ops) {
             OperatorRole R = OperatorRole.FromString(Op.get("Role").toString());
             boolean Me = Op.get("Username").toString().equals(OperatorName);
             String Tag = Me ? AnsiColor.Green + " ◀ YOU" + AnsiColor.White : "";
             Logger.Custom("  %s%-18s %-14s %-30s %-20s%s%s%n", AnsiColor.White, Op.get("Username"), R.name(), R.PermissionString(), Op.getOrDefault("LastSeen", "Never"), Tag, AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
         Logger.Custom("  %sRole Reference:%s%n", AnsiColor.Red, AnsiColor.Reset);
         for (OperatorRole R : OperatorRole.values()) Logger.Custom("    %s%-14s%s %s%n", AnsiColor.White, R.name(), AnsiColor.Reset, R.PermissionString());
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void ShowChat() {
         List<Map<String, Object>> Msgs = Db.GetChatLogs(100);
-        System.out.println(TerminalHelper.Box("CHAT MESSAGES"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("CHAT MESSAGES"));
+        Logger.Custom("%n");
         if (Msgs.isEmpty()) {
             Logger.Info("  no messages");
-            System.out.println();
+            Logger.Custom("%n");
             return;
         }
         for (Map<String, Object> M : Msgs) {
@@ -920,16 +920,16 @@ public final class CLI {
             boolean Mine = From.equals(OperatorName);
             Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void ShowChatHistory(int Limit) {
         List<Map<String, Object>> Msgs = Db.GetChatLogs(Limit);
-        System.out.println(TerminalHelper.Box("CHAT HISTORY (DB — last " + Limit + ")"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("CHAT HISTORY (DB — last " + Limit + ")"));
+        Logger.Custom("%n");
         if (Msgs.isEmpty()) {
             Logger.Info("  no chat history");
-            System.out.println();
+            Logger.Custom("%n");
             return;
         }
         for (Map<String, Object> M : Msgs) {
@@ -940,7 +940,7 @@ public final class CLI {
             boolean Mine = From.equals(OperatorName);
             Logger.Custom("  %s[%s] %s%s%s [%s]: %s%s%n", Mine ? AnsiColor.Green : AnsiColor.White, Ts, Mine ? AnsiColor.Green : AnsiColor.Red, From, AnsiColor.Reset, To.equals("all") ? "all" : "→ " + To, M.getOrDefault("Message", ""), AnsiColor.Reset);
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 
     private void Shutdown() {

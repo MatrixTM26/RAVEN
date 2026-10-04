@@ -30,8 +30,8 @@ public final class LogManager {
     }
 
     public void Show() {
-        System.out.println(TerminalHelper.Box("RECENT LOGS"));
-        System.out.println();
+        Logger.Custom("%s%n", TerminalHelper.Box("RECENT LOGS"));
+        Logger.Custom("%n");
         List<String> Last = Log.GetLast(25);
         if (Last.isEmpty()) {
             Logger.Info(TerminalHelper.Indent("no logs") + "\n");
@@ -40,6 +40,6 @@ public final class LogManager {
         for (String Entry : Last) {
             Logger.Info(TerminalHelper.Indent(Entry));
         }
-        System.out.println();
+        Logger.Custom("%n");
     }
 }
