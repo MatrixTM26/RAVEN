@@ -341,7 +341,7 @@ public final class CLI {
                     }
                     Server.RemoveSession(KillId);
                     AddLog("[KILL] session-" + KillId + " by " + OperatorName, true);
-                    Logger.Custom("  %s✔ session-%d terminated%s%n%n", AnsiColor.Green, KillId, AnsiColor.Reset);
+                    Logger.Info("session-" + KillId + " terminated");
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -431,7 +431,7 @@ public final class CLI {
                 try {
                     int NoteId = ParseInt(P[1]);
                     Db.SetAgentNote(NoteId, BuildArgs(P, 2));
-                    Logger.Custom("  %s✔ note saved for session-%d%s%n%n", AnsiColor.Green, NoteId, AnsiColor.Reset);
+                    Logger.Info("note saved for session-" + NoteId);
                 } catch (NumberFormatException Ex) {
                     Logger.Warn("invalid session ID");
                 }
@@ -471,7 +471,7 @@ public final class CLI {
                     Logger.Warn("only SUPER can create SUPER operators");
                     break;
                 }
-                if (Db.CreateOperator(P[1], AddPass, NewRole)) Logger.Custom("  %s✔ operator created: %s [%s]%s%n%n", AnsiColor.Green, P[1], NewRole, AnsiColor.Reset);
+                if (Db.CreateOperator(P[1], AddPass, NewRole)) Logger.Info("operator created: " + P[1] + " [" + NewRole + "]");
                 else Logger.Warn("username already exists: " + P[1]);
             }
             case "delopt", "deleteoperator" -> {
@@ -487,7 +487,7 @@ public final class CLI {
                     Logger.Warn("cannot delete the admin account");
                     break;
                 }
-                if (Db.DeleteOperator(P[1])) Logger.Custom("  %s✔ deleted: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
+                if (Db.DeleteOperator(P[1])) Logger.Info("operator deleted: " + P[1]);
                 else Logger.Warn("operator not found: " + P[1]);
             }
             case "kick", "kickopt" -> {
@@ -507,7 +507,7 @@ public final class CLI {
                     Logger.Warn("cannot kick yourself");
                     break;
                 }
-                if (Db.DeleteOperator(P[1])) Logger.Custom("  %s✔ kicked: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
+                if (Db.DeleteOperator(P[1])) Logger.Info("operator kicked: " + P[1]);
                 else Logger.Warn("operator not found: " + P[1]);
             }
             case "setrole", "changerole" -> {
@@ -524,7 +524,7 @@ public final class CLI {
                     break;
                 }
                 OperatorRole SetRole = OperatorRole.FromString(P[2]);
-                if (Db.UpdateOperatorRole(P[1], SetRole)) Logger.Custom("  %s✔ role updated: %s → %s%s%n%n", AnsiColor.Green, P[1], SetRole, AnsiColor.Reset);
+                if (Db.UpdateOperatorRole(P[1], SetRole)) Logger.Info("role updated: " + P[1] + " -> " + SetRole);
                 else Logger.Warn("operator not found: " + P[1]);
             }
             case "passwd", "changepassword" -> {
@@ -540,7 +540,7 @@ public final class CLI {
                     Logger.Warn("password must be at least 8 characters");
                     break;
                 }
-                if (Db.UpdateOperatorPassword(P[1], P[2])) Logger.Custom("  %s✔ password updated: %s%s%n%n", AnsiColor.Green, P[1], AnsiColor.Reset);
+                if (Db.UpdateOperatorPassword(P[1], P[2])) Logger.Info("password updated: " + P[1]);
                 else Logger.Warn("operator not found: " + P[1]);
             }
             case "chat" -> ShowChat();
@@ -627,7 +627,7 @@ public final class CLI {
                 }
                 ProfileManager.LoadAsOperatorConfig(LoadName);
                 ActiveProfileName = LoadName;
-                Logger.Custom("  %s✔ profile loaded: %s%s%n%n", AnsiColor.Green, LoadName, AnsiColor.Reset);
+                Logger.Info("profile loaded: " + LoadName);
             }
             case "saveprofile" -> {
                 if (P.length < 2) {
@@ -639,7 +639,7 @@ public final class CLI {
                 Map<String, String> CurrentSettings = new java.util.LinkedHashMap<>(OperatorCfg.ToMap());
                 if (OperatorName != null) CurrentSettings.put("operator.name", OperatorName);
                 if (CurrentRole != null) CurrentSettings.put("operator.role", CurrentRole.name());
-                if (ProfileManager.Save(SaveName, CurrentSettings, SaveDesc)) Logger.Custom("  %s✔ profile saved: %s%s%n%n", AnsiColor.Green, SaveName, AnsiColor.Reset);
+                if (ProfileManager.Save(SaveName, CurrentSettings, SaveDesc)) Logger.Info("profile saved: " + SaveName);
                 else Logger.Error("failed to save profile: " + SaveName);
             }
             case "delprofile" -> {
@@ -652,7 +652,7 @@ public final class CLI {
                     Logger.Warn("cannot delete active profile — loadprofile default first");
                     break;
                 }
-                if (ProfileManager.Delete(DelName)) Logger.Custom("  %s✔ profile deleted: %s%s%n%n", AnsiColor.Green, DelName, AnsiColor.Reset);
+                if (ProfileManager.Delete(DelName)) Logger.Info("profile deleted: " + DelName);
                 else Logger.Warn("profile not found or could not be deleted: " + DelName);
             }
             case "cloneprofile" -> {
@@ -660,7 +660,7 @@ public final class CLI {
                     Logger.Info(Usage("cloneprofile"));
                     break;
                 }
-                if (ProfileManager.Clone(P[1], P[2])) Logger.Custom("  %s✔ cloned: %s → %s%s%n%n", AnsiColor.Green, P[1], P[2], AnsiColor.Reset);
+                if (ProfileManager.Clone(P[1], P[2])) Logger.Info("profile cloned: " + P[1] + " -> " + P[2]);
                 else Logger.Warn("failed to clone profile: " + P[1]);
             }
             case "editprofile" -> {
@@ -687,7 +687,7 @@ public final class CLI {
                     .forEach((Key, Value) -> EditSettings.put(Key.toString(), Value.toString()));
                 EditSettings.put(EditKey, EditVal);
                 String EditDesc = EditOpt.get().Description();
-                if (ProfileManager.Save(EditName, EditSettings, EditDesc)) Logger.Custom("  %s✔ %s.%s = %s%s%n%n", AnsiColor.Green, EditName, EditKey, EditVal, AnsiColor.Reset);
+                if (ProfileManager.Save(EditName, EditSettings, EditDesc)) Logger.Info("profile updated: " + EditName + "." + EditKey + " = " + EditVal);
                 else Logger.Error("failed to edit profile: " + EditName);
             }
             case "export" -> {
@@ -853,7 +853,7 @@ public final class CLI {
         }
         AddLog("[BROADCAST] [" + OperatorName + "] > " + Ids.size() + " agents » " + UserCommand, true);
         Map<Integer, CommandResult> Results = new AgentCommandDispatcher(Server, Db, OperatorName).BroadcastDispatch(Ids, UserCommand);
-        Results.forEach((SessionId, Result) -> Logger.Custom("  %s[session-%d] %s%s%n", Result.Success() ? AnsiColor.Green : AnsiColor.Red, SessionId, Result.Success() ? "✔ " : "✘ ", Result.Output()));
+        Results.forEach((SessionId, Result) -> Logger.Custom("  %s[session-%d] %s%s%n", Result.Success() ? AnsiColor.Green : AnsiColor.Red, SessionId, Result.Success() ? "[OK] " : "[FAIL] ", Result.Output() + AnsiColor.Reset));
     }
 
     private void BroadcastAll(String UserCommand) {
@@ -863,7 +863,7 @@ public final class CLI {
         }
         AddLog("[BROADCAST-ALL] [" + OperatorName + "] > " + Server.GetSessions().Count() + " agents » " + UserCommand, true);
         Map<Integer, CommandResult> Results = new AgentCommandDispatcher(Server, Db, OperatorName).BroadcastAllDispatch(UserCommand);
-        Results.forEach((SessionId, Result) -> Logger.Custom("  %s[session-%d] %s%s%n", Result.Success() ? AnsiColor.Green : AnsiColor.Red, SessionId, Result.Success() ? "✔ " : "✘ ", Result.Output()));
+        Results.forEach((SessionId, Result) -> Logger.Custom("  %s[session-%d] %s%s%n", Result.Success() ? AnsiColor.Green : AnsiColor.Red, SessionId, Result.Success() ? "[OK] " : "[FAIL] ", Result.Output() + AnsiColor.Reset));
     }
 
     private void ShowCommandHistory(int AgentId, int Limit) {
@@ -880,7 +880,7 @@ public final class CLI {
         for (Map<String, Object> H : Hist) {
             boolean Ok = Boolean.parseBoolean(H.getOrDefault("Success", "false").toString());
             String Cmd = TerminalHelper.Truncate(H.getOrDefault("Command", "").toString(), 36);
-            Logger.Custom("  %s%-5s %-12s %s%-10s%s %-36s %s%s%n", AnsiColor.White, H.getOrDefault("AgentId", "?"), TerminalHelper.Truncate(H.getOrDefault("Operator", "?").toString(), 12), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "✔ ok" : "✘ fail", AnsiColor.White, Cmd, H.getOrDefault("Timestamp", ""), AnsiColor.Reset);
+            Logger.Custom("  %s%-5s %-12s %s%-10s%s %-36s %s%s%n", AnsiColor.White, H.getOrDefault("AgentId", "?"), TerminalHelper.Truncate(H.getOrDefault("Operator", "?").toString(), 12), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "[OK]" : "[FAIL]", AnsiColor.White, Cmd, H.getOrDefault("Timestamp", ""), AnsiColor.Reset);
         }
         Logger.Custom("%n");
     }
@@ -972,13 +972,6 @@ public final class CLI {
         return Integer.parseInt(S.trim());
     }
 
-    private static int ParseIntSafe(String S, int D) {
-        try {
-            return Integer.parseInt(S.trim());
-        } catch (Exception Ex) {
-            return D;
-        }
-    }
 
     private static String BuildArgs(String[] Parts, int StartIndex) {
         if (Parts.length <= StartIndex) return "";

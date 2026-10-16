@@ -370,7 +370,7 @@ public class GUI extends Application {
 
     private void Log(String Msg) {
         if (LogsCtrl != null) {
-            String Level = Msg.startsWith("[+]") ? "OK" : Msg.startsWith("[!]") ? "ERROR" : Msg.startsWith("[-]") ? "WARN" : "INFO";
+            String Level = Msg.startsWith("[+]") ? "INFO" : Msg.startsWith("[!]") ? "ERROR" : Msg.startsWith("[-]") ? "WARN" : "INFO";
             LogsCtrl.AppendEntry(Level, Msg);
         }
         if (SessionsCtrl != null) SessionsCtrl.AppendLog(Msg);
