@@ -58,7 +58,7 @@ public final class CertificateManager {
         Logger.Info("Initializing certificate infrastructure");
         LoadOrCreateCa();
         LoadOrCreateServerCert(ServerHost);
-        Logger.Success("Certificate infrastructure ready");
+        Logger.Info("Certificate infrastructure ready");
     }
 
     public SSLContext BuildSslContext(boolean NeedClientAuth) throws Exception {
@@ -110,7 +110,7 @@ public final class CertificateManager {
             SaveP12(CaPath, CaPass, "ca", CaPrivateKey, new X509Certificate[] { CaCertificate });
             ExportPem(CaPath.replace(".p12", ".pem"), CaCertificate, CaPrivateKey);
             AddToTruststore(CaCertificate, "ca");
-            Logger.Success("CA created — " + CaX500Name);
+            Logger.Info("CA created — " + CaX500Name);
         } catch (Exception E) {
             throw new Exception("CA generation failed: " + E.getMessage(), E);
         }
@@ -162,7 +162,7 @@ public final class CertificateManager {
 
             SaveP12(KsPath, KsPass, "server", Pair.getPrivate(), new X509Certificate[] { Cert, CaCertificate });
             ExportPem(KsPath.replace(".p12", ".pem"), Cert, Pair.getPrivate());
-            Logger.Success("Server certificate created — " + Subject);
+            Logger.Info("Server certificate created — " + Subject);
         } catch (Exception E) {
             throw new Exception("Server cert generation failed: " + E.getMessage(), E);
         }
@@ -202,7 +202,7 @@ public final class CertificateManager {
             SaveP12(AgentPath, Config.GetKeystorePassword(), "agent", Pair.getPrivate(), new X509Certificate[] { Cert, CaCertificate });
             ExportPem(AgentPath.replace(".p12", ".pem"), Cert, Pair.getPrivate());
             AddToTruststore(Cert, AgentName);
-            Logger.Success("Agent cert created: " + AgentPath);
+            Logger.Info("Agent cert created: " + AgentPath);
             return AgentPath;
         } catch (Exception E) {
             throw new Exception("Agent cert generation failed [" + AgentId + "]: " + E.getMessage(), E);

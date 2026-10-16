@@ -17,11 +17,11 @@ public final class Logger {
         VERBOSE, DEBUG, INFO, WARN, ERROR
     }
 
-    private static volatile Level   CurrentLevel = Level.INFO;
-    private static volatile boolean Verbose      = false;
-    private static volatile boolean FileEnabled  = false;
-    private static volatile String  LogFilePath  = "logs/raven.log";
-    private static volatile int     MaxEntries   = 1000;
+    private static volatile Level   CurrentLevel   = Level.INFO;
+    private static volatile boolean VerboseEnabled = false;
+    private static volatile boolean FileEnabled    = false;
+    private static volatile String  LogFilePath    = "logs/raven.log";
+    private static volatile int     MaxEntries     = 1000;
 
     private static final BlockingQueue<String> FileQueue = new ArrayBlockingQueue<>(4096);
     private static Thread WriterThread;
@@ -29,11 +29,11 @@ public final class Logger {
     private Logger() {}
 
     public static void Configure(String LevelName, boolean IsVerbose, boolean EnableFile, String FilePath, int MaxEnt) {
-        CurrentLevel = ParseLevel(LevelName);
-        Verbose      = IsVerbose;
-        FileEnabled  = EnableFile;
-        LogFilePath  = FilePath;
-        MaxEntries   = MaxEnt;
+        CurrentLevel   = ParseLevel(LevelName);
+        VerboseEnabled = IsVerbose;
+        FileEnabled    = EnableFile;
+        LogFilePath    = FilePath;
+        MaxEntries     = MaxEnt;
         if (EnableFile) StartFileWriter(FilePath);
     }
 
@@ -87,9 +87,9 @@ public final class Logger {
 
     private static void Emit(Level MessageLevel, String PlainTag, String LevelColor, String Message, Object[] Args) {
         if (MessageLevel.ordinal() < CurrentLevel.ordinal()) return;
-        String Formatted  = Format(Message, Args);
-        String ColorLine  = AnsiColor.White + "[" + LevelColor + PlainTag + AnsiColor.White + "] " + Formatted + AnsiColor.Reset;
-        String PlainLine  = "[" + Timestamp() + "] [" + PlainTag + "] " + Formatted;
+        String Formatted = Format(Message, Args);
+        String ColorLine = AnsiColor.White + "[" + LevelColor + PlainTag + AnsiColor.White + "] " + Formatted + AnsiColor.Reset;
+        String PlainLine = "[" + Timestamp() + "] [" + PlainTag + "] " + Formatted;
         PromptManager.PrintLine(ColorLine);
         if (FileEnabled) FileQueue.offer(PlainLine);
     }
@@ -110,17 +110,9 @@ public final class Logger {
         Emit(Level.DEBUG, "DEBUG", AnsiColor.Magenta, Message, Args);
     }
 
-    public static void Success(String Message, Object... Args) {
-        Emit(Level.INFO, "OK", AnsiColor.Green, Message, Args);
-    }
-
-    public static void Ok(String Message, Object... Args) {
-        Emit(Level.INFO, "OK", AnsiColor.Green, Message, Args);
-    }
-
     public static void Verbose(String Message, Object... Args) {
-        if (!Verbose) return;
-        Emit(Level.VERBOSE, "TRACE", AnsiColor.Dim, Message, Args);
+        if (!VerboseEnabled) return;
+        Emit(Level.VERBOSE, "VERBOSE", AnsiColor.Dim, Message, Args);
     }
 
     public static void Custom(String Text) {

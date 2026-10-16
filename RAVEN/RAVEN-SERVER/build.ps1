@@ -114,7 +114,7 @@ function CheckAndInstallMaven {
 
 function RunBuild {
     PrintInfo "Running Maven build"
-    & mvn clean package -q -X
+    & mvn clean package
     if ($LASTEXITCODE -ne 0) {
         PrintError "Maven build failed"
         exit 1

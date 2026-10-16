@@ -75,7 +75,7 @@ public final class TeamClient {
             }
         }
         WipeCredentials();
-        Logger.Ok("Disconnected from TeamServer");
+        Logger.Info("Disconnected from TeamServer");
         System.exit(0);
     }
 
@@ -430,7 +430,7 @@ public final class TeamClient {
                     Body.put("Role", AddRole); Body.put("Operator", OperatorName);
                     Map<String, Object> R = Post("/api/team/operators/create", Body);
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("operator created: " + P[1] + " [" + AddRole + "]");
+                    else Logger.Info("operator created: " + P[1] + " [" + AddRole + "]");
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "delopt" -> {
@@ -438,7 +438,7 @@ public final class TeamClient {
                 try {
                     Map<String, Object> R = Post("/api/team/operators/delete", Map.of("Username", P[1], "Operator", OperatorName));
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("operator deleted: " + P[1]);
+                    else Logger.Info("operator deleted: " + P[1]);
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "setrole" -> {
@@ -447,7 +447,7 @@ public final class TeamClient {
                     Map<String, Object> Body = Map.of("Username", P[1], "Role", P[2].toUpperCase(), "Operator", OperatorName);
                     Map<String, Object> R = Post("/api/team/operators/role", Body);
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("role updated: " + P[1] + " → " + P[2].toUpperCase());
+                    else Logger.Info("role updated: " + P[1] + " -> " + P[2].toUpperCase());
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "passwd" -> {
@@ -456,7 +456,7 @@ public final class TeamClient {
                     Map<String, Object> Body = Map.of("Username", P[1], "Password", P[2], "Operator", OperatorName);
                     Map<String, Object> R = Post("/api/team/operators/password", Body);
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("password changed: " + P[1]);
+                    else Logger.Info("password changed: " + P[1]);
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "kick" -> {
@@ -464,7 +464,7 @@ public final class TeamClient {
                 try {
                     Map<String, Object> R = Post("/api/team/operators/kick", Map.of("Username", P[1], "Operator", OperatorName));
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("operator kicked: " + P[1]);
+                    else Logger.Info("operator kicked: " + P[1]);
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "start" -> {
@@ -491,14 +491,14 @@ public final class TeamClient {
                     Body.put("Mode", ListenMode);
                     Map<String, Object> R = Post("/api/server/start", Body);
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("listener started on " + ListenHost + ":" + ListenPort + " [" + ListenMode + "]");
+                    else Logger.Info("listener started on " + ListenHost + ":" + ListenPort + " [" + ListenMode + "]");
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "stop" -> {
                 try {
                     Map<String, Object> R = Post("/api/server/stop", Map.of());
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("listener stopped");
+                    else Logger.Info("listener stopped");
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "webstart" -> {
@@ -518,14 +518,14 @@ public final class TeamClient {
                     Map<String, Object> R = Post("/api/server/webpanel/start",
                         Map.of("Host", WHost, "Port", WPort, "Operator", OperatorName));
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("web panel started → " + R.getOrDefault("URL", ""));
+                    else Logger.Info("web panel started: " + R.getOrDefault("URL", ""));
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "webstop" -> {
                 try {
                     Map<String, Object> R = Post("/api/server/webpanel/stop", Map.of("Operator", OperatorName));
                     if (R.containsKey("Error")) Logger.Error(R.get("Error").toString());
-                    else Logger.Ok("web panel stopped");
+                    else Logger.Info("web panel stopped");
                 } catch (Exception Ex) { Logger.Error(Ex.getMessage()); }
             }
             case "webstatus" -> {
@@ -621,7 +621,7 @@ public final class TeamClient {
                 System.arraycopy(PassChars, 0, StoredPassword, 0, PassChars.length);
                 LastEventTimestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                 Logger.Custom("%n");
-                Logger.Ok("Welcome, " + OperatorName + " [" + OperatorRoleValue + "]");
+                Logger.Info("Welcome, " + OperatorName + " [" + OperatorRoleValue + "]");
                 Logger.Custom(INDENT + "%sConnected to TeamServer at %s:%d%s%n%n", AnsiColor.White, TsHost, TsPort, AnsiColor.Reset);
                 return true;
             } catch (Exception Ex) {
@@ -856,7 +856,7 @@ public final class TeamClient {
             for (Map<String, Object> H : Hist) {
                 boolean Ok = Boolean.parseBoolean(H.getOrDefault("Success", "false").toString());
                 String Cmd = TerminalHelper.Truncate(H.getOrDefault("Command", "").toString(), 36);
-                Logger.Custom(INDENT + "%s%-5s %-12s %s%-10s%s %-36s %s%s%n", AnsiColor.White, H.getOrDefault("AgentId", "?"), TerminalHelper.Truncate(H.getOrDefault("Operator", "?").toString(), 12), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "✔ ok" : "✘ fail", AnsiColor.White, Cmd, H.getOrDefault("Timestamp", ""), AnsiColor.Reset);
+                Logger.Custom(INDENT + "%s%-5s %-12s %s%-10s%s %-36s %s%s%n", AnsiColor.White, H.getOrDefault("AgentId", "?"), TerminalHelper.Truncate(H.getOrDefault("Operator", "?").toString(), 12), Ok ? AnsiColor.Green : AnsiColor.Red, Ok ? "[OK]" : "[FAIL]", AnsiColor.White, Cmd, H.getOrDefault("Timestamp", ""), AnsiColor.Reset);
             }
             Logger.Custom("%n");
         } catch (Exception Ex) {
@@ -891,11 +891,11 @@ public final class TeamClient {
                         ConsecutiveFailures = 0;
                         DropReported        = false;
                         if (!ReAuthenticate()) {
-                            Logger.Warn("⚠ Re-authentication failed — session ended");
+                            Logger.Warn("re-authentication failed — session ended");
                             Running = false;
                             break;
                         }
-                        Logger.Ok("⟳ reconnected and re-authenticated to TeamServer");
+                        Logger.Info("reconnected and re-authenticated to TeamServer");
                     }
                     Object RawLogs = Response.get("Logs");
                     if (!(RawLogs instanceof java.util.List)) continue;
@@ -926,7 +926,7 @@ public final class TeamClient {
                     ConsecutiveFailures++;
                     if (ConsecutiveFailures >= 3 && !DropReported) {
                         DropReported = true;
-                        Logger.Warn("⚠ TeamServer connection lost — retrying...");
+                        Logger.Warn("TeamServer connection lost — retrying...");
                     }
                 }
             }
@@ -990,7 +990,7 @@ public final class TeamClient {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> Res = (Map<String, Object>) V;
                 boolean Ok = Boolean.parseBoolean(Res.getOrDefault("Success", "false").toString());
-                Logger.Custom(INDENT + "%s[session-%s] %s%s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, Id, Ok ? "✔ " : "✘ ", Res.getOrDefault("Output", ""), AnsiColor.Reset);
+                Logger.Custom(INDENT + "%s[session-%s] %s%s%s%n", Ok ? AnsiColor.Green : AnsiColor.Red, Id, Ok ? "[OK] " : "[FAIL] ", Res.getOrDefault("Output", ""), AnsiColor.Reset);
             });
         } catch (Exception Ex) {
             Logger.Error(Ex.getMessage());
@@ -1000,7 +1000,7 @@ public final class TeamClient {
     private void Kill(int Id) {
         try {
             Map<String, Object> R = Post("/api/agents/kill", Map.of("AgentId", Id));
-            if (Boolean.parseBoolean(R.getOrDefault("Success", "false").toString())) Logger.Ok("session-" + Id + " terminated");
+            if (Boolean.parseBoolean(R.getOrDefault("Success", "false").toString())) Logger.Info("session-" + Id + " terminated");
             else Logger.Error("kill failed: " + R.getOrDefault("Error", "?"));
         } catch (Exception Ex) {
             Logger.Error(Ex.getMessage());
@@ -1033,7 +1033,7 @@ public final class TeamClient {
     private void SetNote(int Id, String Note) {
         try {
             Map<String, Object> R = Post("/api/agents/note", Map.of("AgentId", Id, "Note", Note));
-            if (Boolean.parseBoolean(R.getOrDefault("Success", "false").toString())) Logger.Ok("Note saved for session-" + Id);
+            if (Boolean.parseBoolean(R.getOrDefault("Success", "false").toString())) Logger.Info("note saved for session-" + Id);
         } catch (Exception Ex) {
             Logger.Error(Ex.getMessage());
         }
@@ -1111,20 +1111,16 @@ public final class TeamClient {
 
     private static final class Logger {
 
-        static void Ok(String Message) {
-            System.out.printf("  %s✔ %s%s%n%n", AnsiColor.Green, Message, AnsiColor.Reset);
+        static void Info(String Message) {
+            System.out.printf("%s[%sINFO%s] %s%s%n", AnsiColor.White, AnsiColor.Blue, AnsiColor.White, Message, AnsiColor.Reset);
         }
 
         static void Warn(String Message) {
-            System.out.printf("  %s⚠ %s%s%n", AnsiColor.White, Message, AnsiColor.Reset);
+            System.out.printf("%s[%sWARN%s] %s%s%n", AnsiColor.White, AnsiColor.Yellow, AnsiColor.White, Message, AnsiColor.Reset);
         }
 
         static void Error(String Message) {
-            System.out.printf("  %s✘ %s%s%n", AnsiColor.Red, Message, AnsiColor.Reset);
-        }
-
-        static void Info(String Message) {
-            Logger.Custom("%s%n", Message);
+            System.out.printf("%s[%sERROR%s] %s%s%n", AnsiColor.White, AnsiColor.Red, AnsiColor.White, Message, AnsiColor.Reset);
         }
 
         static void Custom(String Format, Object... Args) {
