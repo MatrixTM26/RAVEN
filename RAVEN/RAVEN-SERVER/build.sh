@@ -129,7 +129,7 @@ CheckAndInstallMaven() {
 
 RunBuild() {
     PrintInfo "Running Maven build"
-    if ! mvn clean package -q -X -f $ConfigFile; then
+    if ! mvn clean package -f $ConfigFile; then
         PrintError "Maven build failed"
         exit 1
     fi
@@ -139,7 +139,7 @@ RunBuild() {
         exit 1
     fi
 
-    cp -r target/raven-3.0.0.jar .
+    cp target/raven-3.0.0.jar .
 }
 
 RunApp() {

@@ -25,7 +25,7 @@ public class LogsController {
 
     @FXML
     private void initialize() {
-        LevelFilter.getItems().addAll("ALL", "INFO", "WARN", "ERROR", "OK");
+        LevelFilter.getItems().addAll("ALL", "INFO", "WARN", "ERROR", "DEBUG", "VERBOSE");
         LevelFilter.setValue("ALL");
     }
 
@@ -60,7 +60,7 @@ public class LogsController {
             try (PrintWriter Pw = new PrintWriter(Out)) {
                 AllEntries.forEach(E -> Pw.println("[" + E[0] + "]  " + E[1] + "  " + E[2]));
             }
-            AppendEntry("OK", "Log exported to " + Out.getAbsolutePath());
+            AppendEntry("INFO", "Log exported to " + Out.getAbsolutePath());
         } catch (IOException E) {
             AppendEntry("ERROR", "Export failed: " + E.getMessage());
         }

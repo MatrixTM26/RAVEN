@@ -147,7 +147,7 @@ public final class Start {
         try {
             CertificateManager Manager = new CertificateManager(Config);
             Manager.Initialize(Host);
-            Logger.Success("Certificates stored in: " + Paths.get(Config.GetKeystorePath()).getParent());
+            Logger.Info("Certificates stored in: " + Paths.get(Config.GetKeystorePath()).getParent());
             Logger.Info("Next: java -jar raven.jar -a <agent-id>");
         } catch (Exception Exception) {
             Logger.Error("Certificate init failed: " + Exception.getMessage());
@@ -240,7 +240,7 @@ public final class Start {
             }
         }
 
-        Logger.Success("Agent generated : " + OutputDir);
+        Logger.Info("Agent generated : " + OutputDir);
         Logger.Info("  Source : " + AgentSourceGen.Filename(NormLang));
         Logger.Info("  Server : " + Host + ":" + Port + "  MTLS=" + UseMtls + "  Lang=" + NormLang.toUpperCase());
     }
@@ -257,7 +257,7 @@ public final class Start {
         TeamDatabase Database    = TeamDatabase.Connect(Config);
         OperatorRole OperatorRoleValue = OperatorRole.FromString(Role);
         if (Database.CreateOperator(Username, Password, OperatorRoleValue))
-            Logger.Success("Operator created: " + Username + " [" + OperatorRoleValue + "] — " + OperatorRoleValue.PermissionString());
+            Logger.Info("Operator created: " + Username + " [" + OperatorRoleValue + "] — " + OperatorRoleValue.PermissionString());
         else
             Logger.Error("Failed — username may already exist");
         Database.Close();
@@ -268,7 +268,7 @@ public final class Start {
         if (Username == null) { Logger.Error("Usage: -RO | -rmop  -u <user>"); return; }
         if (Username.equals(Config.GetAdminUsername())) { Logger.Error("Cannot remove the admin account"); return; }
         TeamDatabase Database = TeamDatabase.Connect(Config);
-        if (Database.DeleteOperator(Username)) Logger.Success("Operator removed: " + Username);
+        if (Database.DeleteOperator(Username)) Logger.Info("Operator removed: " + Username);
         else                                   Logger.Error("Operator not found: " + Username);
         Database.Close();
     }
@@ -287,7 +287,7 @@ public final class Start {
         TeamDatabase Database          = TeamDatabase.Connect(Config);
         OperatorRole OperatorRoleValue = OperatorRole.FromString(Role);
         if (Database.UpdateOperatorRole(Username, OperatorRoleValue))
-            Logger.Success("Role updated: " + Username + " → " + OperatorRoleValue + " — " + OperatorRoleValue.PermissionString());
+            Logger.Info("Role updated: " + Username + " → " + OperatorRoleValue + " — " + OperatorRoleValue.PermissionString());
         else
             Logger.Error("Failed to update role for: " + Username);
         Database.Close();
